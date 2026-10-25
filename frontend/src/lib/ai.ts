@@ -5,7 +5,9 @@
 
 /** AI 服务配置 */
 export interface AiConfig {
-  /** 推理强度：off 不发送参数；low/medium/high 透传 reasoning_effort */
+  /** 思考模式：quick 快速回答（直接给答案）；deep 深度思考（先思考再作答） */
+  thinkingMode?: 'quick' | 'deep';
+  /** @deprecated 旧版「推理强度」字段，仅用于读取历史存档后迁移到 thinkingMode */
   reasoningEffort?: 'off' | 'low' | 'medium' | 'high';
   /** 接口基础地址，如 https://api.deepseek.com/v1 */
   baseUrl: string;
@@ -13,6 +15,84 @@ export interface AiConfig {
   /** 模型名，如 deepseek-flash / kimi-k3 / glm-5.3 */
   model: string;
 }
+
+/**
+ * 思考模式：
+ * - quick 快速回答：直接给出答案，不展示思考过程
+ * - deep  深度思考：先展示思考过程，再给出解答
+ */
+export type ThinkingMode = 'quick' | 'deep';
+
+/**
+ * 解析生效的思考模式。
+ * 兼容旧存档：历史存的是推理强度 reasoningEffort，
+ * 这里把 medium/high 视为深度思考，其余视为快速回答。
+ */
+export const resolveThinkingMode = (cfg: AiConfig): ThinkingMode =>
+  cfg.thinkingMode ??
+  (cfg.reasoningEffort === 'medium' || cfg.reasoningEffort === 'high' ? 'deep' : 'quick');
+
+/** 各模式的输出预算与采样温度：快速回答更短更聚焦，深度思考给足推理空间 */
+const MODE_PLAN = {
+  quick: { maxTokens: 2048, temperature: 0.3, thinkingBudget: 512 },
+  deep: { maxTokens: 16384, temperature: 0.2, thinkingBudget: 8192 },
+} as const;
+
+/**
+ * 各模式追加到系统提示词的作答要求。
+ *
+ * 为什么需要它：各家「开启思考」的参数互不通用——OpenAI 用 reasoning_effort，
+ * DeepSeek/GLM/Kimi 用 thinking，通义千问用 enable_thinking。只发参数时，
+ * 遇到不支持的服务商会被静默忽略。因此把模式要求同时写进提示词，
+ * 保证「快速 / 深度」的差异一定可感知。
+ */
+const MODE_GUIDANCE = {
+  quick: '作答方式：快速回答。直接给出结论与关键步骤，不展开思考过程、不做多角度比较，力求简洁准确、直奔答案。',
+  deep: '作答方式：深度思考。先充分分析（枚举可能思路并比较、识别关键条件与易错陷阱），再严格分步推导，最后给出结论；回答可以详尽，但不要堆砌废话。',
+} as const;
+
+/** 取某模式应追加到系统提示词的作答要求 */
+export const getModeGuidance = (mode: ThinkingMode): string => MODE_GUIDANCE[mode];
+
+/**
+ * 按服务商 / 模型决定「开启或关闭思考」的参数写法（各家并不统一）。
+ * deep 开启思考；quick 显式关闭（否则部分模型默认就会思考，快不起来）。
+ */
+const thinkingParams = (
+  baseUrl: string,
+  model: string,
+  mode: ThinkingMode,
+): Record<string, unknown> => {
+  const url = baseUrl.toLowerCase();
+  const m = model.toLowerCase();
+  const on = mode === 'deep';
+  // 通义千问（阿里云百炼）：enable_thinking + thinking_budget
+  if (url.includes('dashscope') || m.startsWith('qwen')) {
+    return { enable_thinking: on, thinking_budget: MODE_PLAN[mode].thinkingBudget };
+  }
+  // DeepSeek / Kimi(Moonshot) / 智谱 GLM：thinking 开关
+  if (
+    url.includes('deepseek') ||
+    url.includes('moonshot') ||
+    url.includes('bigmodel') ||
+    m.includes('deepseek') ||
+    m.startsWith('kimi') ||
+    m.includes('glm')
+  ) {
+    return { thinking: { type: on ? 'enabled' : 'disabled' } };
+  }
+  // SiliconFlow 等聚合平台：按模型名判断
+  if (url.includes('siliconflow')) {
+    if (m.includes('deepseek') || m.includes('glm') || m.includes('kimi')) {
+      return { thinking: { type: on ? 'enabled' : 'disabled' } };
+    }
+    if (m.includes('qwen')) {
+      return { enable_thinking: on, thinking_budget: MODE_PLAN[mode].thinkingBudget };
+    }
+  }
+  // OpenAI 系：深度思考用 reasoning_effort=high；快速回答不发送该参数
+  return on ? { reasoning_effort: 'high' } : {};
+};
 
 /** 常用服务商预设（均为 OpenAI 兼容协议） */
 export interface AiPreset {
@@ -282,28 +362,52 @@ export async function* streamChat(
   messages: ChatMessage[],
   signal?: AbortSignal,
   onMeta?: (meta: ChatMeta) => void,
+  /** 思考过程回调：推理模型的 reasoning_content 会逐段回传，供 UI 展示 */
+  onReasoning?: (text: string) => void,
 ): AsyncGenerator<string, void, unknown> {
   const url = `${config.baseUrl.replace(/\/+$/, '')}/chat/completions`;
-  let res: Response;
-  try {
-    res = await fetch(url, {
+
+  /**
+   * 组装请求体。withThinking=false 时不发送任何厂商推理参数，
+   * 用于服务商不认识这些参数（400）时的降级重试。
+   */
+  const buildBody = (withThinkingParams: boolean): string => {
+    const mode = resolveThinkingMode(config);
+    const plan = MODE_PLAN[mode];
+    const body: Record<string, unknown> = {
+      model: config.model,
+      messages,
+      stream: true,
+      stream_options: { include_usage: true },
+      // 快速回答：输出更短更聚焦；深度思考：给足推理与作答空间
+      temperature: plan.temperature,
+      max_tokens: plan.maxTokens,
+    };
+    // withThinkingParams=false 用于服务商不认识这些参数（400）时的降级重试
+    if (withThinkingParams) {
+      Object.assign(body, thinkingParams(config.baseUrl, config.model, mode));
+    }
+    return JSON.stringify(body);
+  };
+
+  const post = (withThinking: boolean) =>
+    fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${config.apiKey}`,
       },
-      body: JSON.stringify({
-        model: config.model,
-        messages,
-        stream: true,
-        stream_options: { include_usage: true },
-        temperature: 0.3,
-        ...(config.reasoningEffort && config.reasoningEffort !== 'off'
-          ? { reasoning_effort: config.reasoningEffort }
-          : {}),
-      }),
+      body: buildBody(withThinking),
       signal,
     });
+
+  let res: Response;
+  try {
+    res = await post(true);
+    // 服务商不认识思考参数（400）时自动降级重试，避免「选了深度思考就报错」
+    if (!res.ok && res.status === 400) {
+      res = await post(false);
+    }
   } catch (err) {
     throw new Error(describeAiError(err));
   }
@@ -356,9 +460,16 @@ export async function* streamChat(
               : undefined,
           });
         }
+        const choice = json.choices?.[0];
+        // 思考过程：多数推理模型在 delta.reasoning_content 中输出思维链
+        const reasoningDelta: string | undefined =
+          choice?.delta?.reasoning_content ??
+          choice?.delta?.reasoning ??
+          choice?.message?.reasoning_content;
+        if (reasoningDelta) onReasoning?.(reasoningDelta);
         const delta: string | undefined =
-          json.choices?.[0]?.delta?.content ??
-          json.choices?.[0]?.message?.content;
+          choice?.delta?.content ??
+          choice?.message?.content;
         if (delta) yield delta;
       } catch {
         /* 忽略无法解析的行 */

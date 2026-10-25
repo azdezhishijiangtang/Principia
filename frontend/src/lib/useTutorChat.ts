@@ -9,6 +9,8 @@ import {
   type ChatMeta,
   describeAiError,
   MATH_TUTOR_SYSTEM_PROMPT,
+  getModeGuidance,
+  resolveThinkingMode,
   type ChatMessage,
 } from '@/lib/ai';
 import { addQaEntry, type QaSource } from '@/lib/qaHistory';
@@ -20,6 +22,8 @@ import type { Topic } from '@/types';
 export interface TutorMessage {
   role: 'user' | 'assistant';
   content: string;
+  /** 模型的思考过程（assistant 消息，来自 reasoning_content） */
+  reasoning?: string;
   /** 回答引用的文档段落（assistant 消息） */
   sources?: QaSource[];
   /** 接入的模型名（assistant 消息） */
@@ -116,8 +120,13 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       options.onBeforeSend?.();
 
       // ── 组装系统上下文 ──
+      // 思考模式：把「快速回答 / 深度思考」的作答要求写进系统提示词。
+      // 这样即便接入的服务商不支持思考参数，两种模式的差异也一定可感知。
+      // 深度思考时模型会先输出思考过程（reasoning_content），再给出正式解答。
+      const modeGuidance = getModeGuidance(resolveThinkingMode(cfg));
+      const systemPrompt = `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}`;
       const history: ChatMessage[] = [
-        { role: 'system', content: MATH_TUTOR_SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
       ];
       if (topic) {
         history.push({
@@ -187,28 +196,64 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       const controller = new AbortController();
       abortRef.current = controller;
       let acc = '';
+      let reasoningAcc = '';
+      let modelName: string | undefined;
       try {
-        for await (const chunk of streamChat(cfg, history, controller.signal, (meta: ChatMeta) => {
-          if (meta.model) setLastModel(meta.model);
-          if (meta.usage) {
-            setSessionUsage((u) => ({
-              prompt: u.prompt + meta.usage!.prompt,
-              completion: u.completion + meta.usage!.completion,
-              total: u.total + meta.usage!.total,
-            }));
-            setMessages((prev) => [
-              ...prev.slice(0, -1),
-              { role: 'assistant', content: acc, sources, model: meta.model, usage: meta.usage },
-            ]);
-          }
-        })) {
+        for await (const chunk of streamChat(
+          cfg,
+          history,
+          controller.signal,
+          (meta: ChatMeta) => {
+            if (meta.model) {
+              modelName = meta.model;
+              setLastModel(meta.model);
+            }
+            if (meta.usage) {
+              setSessionUsage((u) => ({
+                prompt: u.prompt + meta.usage!.prompt,
+                completion: u.completion + meta.usage!.completion,
+                total: u.total + meta.usage!.total,
+              }));
+              setMessages((prev) => [
+                ...prev.slice(0, -1),
+                {
+                  role: 'assistant',
+                  content: acc,
+                  reasoning: reasoningAcc,
+                  sources,
+                  model: meta.model,
+                  usage: meta.usage,
+                },
+              ]);
+            }
+          },
+          (r: string) => {
+            reasoningAcc += r;
+          },
+        )) {
           acc += chunk;
           const captured = acc;
+          const capturedReasoning = reasoningAcc;
           setMessages((prev) => [
             ...prev.slice(0, -1),
-            { role: 'assistant', content: captured, sources },
+            { role: 'assistant', content: captured, reasoning: capturedReasoning, sources },
           ]);
         }
+        // 收尾：确保思考过程与正文完整保留，且不覆盖已有的 usage / 模型信息
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          return [
+            ...prev.slice(0, -1),
+            {
+              role: 'assistant',
+              content: acc,
+              reasoning: reasoningAcc,
+              sources,
+              model: last?.model ?? modelName,
+              usage: last?.usage,
+            },
+          ];
+        });
         addQaEntry({
           userId,
           question: trimmed,
@@ -217,20 +262,20 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
           topicId: topic?.id,
           topicTitle: topic?.title,
           sources: sources.length > 0 ? sources : undefined,
-          model: lastModel,
+          model: modelName ?? lastModel,
         });
       } catch (err) {
-        if (!acc) {
+        if (!acc && !reasoningAcc) {
           setMessages((prev) => prev.slice(0, -1));
         } else {
-          // 已有部分输出：保留内容并附错误说明
+          // 已有部分输出：保留内容（含思考过程）并附错误说明
           setMessages((prev) => [
             ...prev.slice(0, -1),
-            { role: 'assistant', content: acc },
+            { role: 'assistant', content: acc, reasoning: reasoningAcc },
           ]);
           setError(`${describeAiError(err)}（已保留已生成的部分回答）`);
         }
-        if (!acc) setError(describeAiError(err));
+        if (!acc && !reasoningAcc) setError(describeAiError(err));
       } finally {
         setStreaming(false);
         setStatus('idle');

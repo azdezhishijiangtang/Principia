@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { KeyRound, Check, Eye, EyeOff, AlertCircle, Save, Trash2, Zap, RefreshCw, ListTree, CloudDownload, Database } from 'lucide-react';
+import { KeyRound, Check, Eye, EyeOff, AlertCircle, Save, Trash2, Zap, Brain, RefreshCw, ListTree, CloudDownload, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -12,6 +12,7 @@ import {
   clearAiProfile,
   getActiveProfile,
   setActiveProfile,
+  resolveThinkingMode,
 } from '@/lib/ai';
 import {
   getCatalog,
@@ -19,7 +20,7 @@ import {
   retiredModelHint,
   type CatalogEntry,
 } from '@/lib/modelCatalog';
-import type { AiConfig, AiProfile } from '@/lib/ai';
+import type { AiProfile } from '@/lib/ai';
 
 interface AiSettingsCardProps {
   /** 配置保存成功后的回调 */
@@ -33,7 +34,7 @@ const emptyForm = (): AiProfile => ({
   baseUrl: AI_PRESETS[0].baseUrl,
   apiKey: '',
   model: AI_PRESETS[0].model,
-  reasoningEffort: 'off',
+  thinkingMode: 'quick',
 });
 
 /**
@@ -51,6 +52,8 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
   const [manualModel, setManualModel] = useState(false);
+  /** 当前生效的思考模式（兼容旧存档里只存了 reasoningEffort 的情况） */
+  const mode = resolveThinkingMode(form);
 
   useEffect(() => {
     setSaved(false);
@@ -124,7 +127,8 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
       baseUrl: form.baseUrl.trim(),
       apiKey: form.apiKey.trim(),
       model: form.model.trim(),
-      reasoningEffort: form.reasoningEffort,
+      // 统一按新字段保存：旧存档的 reasoningEffort 会被解析成 thinkingMode
+      thinkingMode: form.thinkingMode ?? resolveThinkingMode(form),
     };
     saveAiProfile(slot, next);
     setProfiles(readAiProfiles());
@@ -340,20 +344,41 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="ai-effort">思考强度（推理模型生效）</Label>
-        <select
-          id="ai-effort"
-          value={form.reasoningEffort ?? 'off'}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, reasoningEffort: e.target.value as AiConfig['reasoningEffort'] }))
-          }
-          className="h-9 w-full border border-input bg-background px-2 text-sm"
-        >
-          <option value="off">关闭（不发送推理参数）</option>
-          <option value="low">低 · 快速回答</option>
-          <option value="medium">中 · 均衡</option>
-          <option value="high">高 · 深度推理</option>
-        </select>
+        <Label>思考模式</Label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, thinkingMode: 'quick' }))}
+            aria-pressed={mode === 'quick'}
+            className={`border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+              mode === 'quick' ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
+            }`}
+          >
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Zap className="h-3.5 w-3.5" />
+              快速回答
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              直接给出答案，不展示思考过程
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, thinkingMode: 'deep' }))}
+            aria-pressed={mode === 'deep'}
+            className={`border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+              mode === 'deep' ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
+            }`}
+          >
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Brain className="h-3.5 w-3.5" />
+              深度思考
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              先展示思考过程，再给出解答
+            </span>
+          </button>
+        </div>
       </div>
 
       <div className="space-y-2">

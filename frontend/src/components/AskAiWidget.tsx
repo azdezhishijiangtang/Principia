@@ -16,6 +16,7 @@ import {
   BookOpen,
   FileSearch,
   Library,
+  Brain,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MathText from '@/components/MathText';
@@ -173,6 +174,21 @@ const AskAiWidget = () => {
                           </span>
                         )}
                       </div>
+                      {/* 深度思考：先展示思考过程，再给出正式解答 */}
+                      {m.reasoning && (
+                        <details
+                          className="mb-2 border border-warning/30 bg-warning/5 px-3 py-2 text-xs"
+                          open={streaming && i === messages.length - 1}
+                        >
+                          <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-warning">
+                            <Brain className="h-3 w-3" />
+                            思考过程
+                          </summary>
+                          <div className="mt-1.5 whitespace-pre-wrap leading-relaxed text-muted-foreground">
+                            {m.reasoning}
+                          </div>
+                        </details>
+                      )}
                       {m.content ? (
                         <>
                           <MathText content={m.content} className="text-sm" />
