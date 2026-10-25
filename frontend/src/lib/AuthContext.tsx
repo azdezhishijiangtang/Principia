@@ -9,7 +9,7 @@ import {
 /** 用户（本地会话，无真实后端） */
 export interface DemoUser {
   id: string;
-  /** 邮箱登录时有值；手机号账户为空字符串 */
+  /** 历史字段：邮箱登录已移除，手机号账户恒为空字符串 */
   email: string;
   name: string;
   avatarUrl: string;
@@ -24,8 +24,6 @@ export interface DemoUser {
 interface AuthContextValue {
   user: DemoUser | null;
   loading: boolean;
-  /** 邮箱 + 密码登录（演示：任意邮箱 + 6 位以上密码） */
-  signIn: (email: string, password: string) => Promise<void>;
   /** 手机号注册：一个手机号一个账号，用户名全局唯一 */
   signUpWithPhone: (phone: string, username: string, password: string) => Promise<void>;
   /** 手机号（或用户名）+ 密码登录 */
@@ -37,16 +35,6 @@ interface AuthContextValue {
 const STORAGE_KEY = 'mathlens-demo-user';
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-/** 从邮箱推导展示名：math.lens@example.com → Math Lens */
-const nameFromEmail = (email: string): string => {
-  const local = email.split('@')[0] ?? 'user';
-  return local
-    .split(/[._-]/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(' ');
-};
 
 /** 基于种子生成稳定的头像（DiceBear API，无需后端） */
 const avatarFromSeed = (seed: string): string =>
@@ -105,28 +93,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => window.removeEventListener('storage', onStorage);
   }, []);
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const normalized = email.trim().toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) {
-      throw new Error('请输入有效的邮箱地址');
-    }
-    if (password.length < 6) {
-      throw new Error('密码至少需要 6 位字符');
-    }
-    // 模拟网络请求延迟
-    await new Promise((r) => setTimeout(r, 600));
-    const demoUser: DemoUser = {
-      id: `demo-${btoa(normalized).replace(/[^a-zA-Z0-9]/g, '').slice(0, 12)}`,
-      email: normalized,
-      name: nameFromEmail(normalized),
-      avatarUrl: avatarFromSeed(normalized),
-      loginAt: Date.now(),
-      loginType: 'email',
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(demoUser));
-    setUser(demoUser);
-  }, []);
-
   const signUpWithPhone = useCallback(
     async (phone: string, username: string, password: string) => {
       const account = await registerPhoneAccount({ phone, username, password });
@@ -150,8 +116,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, signIn, signUpWithPhone, signInWithPhone, signOut }),
-    [user, loading, signIn, signUpWithPhone, signInWithPhone, signOut],
+    () => ({ user, loading, signUpWithPhone, signInWithPhone, signOut }),
+    [user, loading, signUpWithPhone, signInWithPhone, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

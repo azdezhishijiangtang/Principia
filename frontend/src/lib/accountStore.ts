@@ -1,12 +1,22 @@
 /**
- * 手机号账户注册表（本地演示实现）：
- * - 一个手机号只能注册一个账号；用户名全局唯一（同浏览器内）
+ * 手机号账户注册表：
+ * - 一个手机号只能注册一个账号；用户名全局唯一
  * - 密码只存 SHA-256 哈希，不存明文
  * - 支持手机号或用户名 + 密码登录
  *
- * 说明：纯前端演示站，注册数据保存在当前浏览器的 localStorage；
- * 换浏览器/设备需重新注册。要真正跨设备唯一需后端支撑。
+ * 双层存储（解决「换设备/清缓存就登录不上去」）：
+ * 1) 内置层 SEED_ACCOUNTS（src/data/seedAccounts.ts）：随网站代码发布，
+ *    任何设备打开网站都自带这份登记表，里面的账号可直接登录；
+ * 2) 本地层 localStorage：本机新注册的账号。
+ *
+ * 合并规则：内置层优先 —— 同一手机号/用户名以内置层为准，
+ * 这样旧浏览器里遗留的过期账号数据不会覆盖代码里的正确数据。
+ *
+ * 新注册的账号若尚未进入内置层，会出现在「待同步」队列中，
+ * 经 frontend/scripts/sync-accounts.mjs 提交回代码库后全设备生效。
  */
+
+import { SEED_ACCOUNTS } from '@/data/seedAccounts';
 
 export interface PhoneAccount {
   id: string;
@@ -22,7 +32,10 @@ export interface PhoneAccount {
 
 const STORAGE_KEY = 'mathlens-phone-accounts-v1';
 
-const readAll = (): PhoneAccount[] => {
+/* ───────── 存储读写 ───────── */
+
+/** 仅读取本机 localStorage 中的账号 */
+const readLocal = (): PhoneAccount[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
@@ -33,13 +46,30 @@ const readAll = (): PhoneAccount[] => {
   }
 };
 
-const writeAll = (accounts: PhoneAccount[]): void => {
+const writeLocal = (accounts: PhoneAccount[]): void => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(accounts));
   } catch {
     /* 存储失败时静默降级 */
   }
 };
+
+/** 该账号是否已存在于内置登记表（按手机号或用户名匹配） */
+const inSeed = (account: PhoneAccount): boolean =>
+  SEED_ACCOUNTS.some(
+    (s) =>
+      s.phone === account.phone ||
+      s.username.toLowerCase() === account.username.toLowerCase(),
+  );
+
+/**
+ * 合并后的全部账号（内置层优先，本地层去重后追加）。
+ * 登录、注册、唯一性校验都以这份合并结果为准。
+ */
+const readAll = (): PhoneAccount[] => [
+  ...SEED_ACCOUNTS,
+  ...readLocal().filter((a) => !inSeed(a)),
+];
 
 /* ───────── 校验规则 ───────── */
 
@@ -77,7 +107,7 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * 注册手机号账户。
- * 校验：手机号格式、手机号唯一、用户名格式、用户名全局唯一、密码长度。
+ * 校验：手机号格式、手机号唯一（含内置层）、用户名格式、用户名全局唯一、密码长度。
  * 抛出带友好提示的 Error。
  */
 export const registerPhoneAccount = async (input: {
@@ -115,7 +145,7 @@ export const registerPhoneAccount = async (input: {
     passwordHash: await hashPassword(password),
     createdAt: Date.now(),
   };
-  writeAll([...accounts, account]);
+  writeLocal([...readLocal(), account]);
   return account;
 };
 
@@ -142,8 +172,11 @@ export const authenticateAccount = async (
     throw new Error('密码不正确，请重试');
   }
 
-  writeAll(
-    accounts.map((a) => (a.id === account.id ? { ...a, lastLoginAt: Date.now() } : a)),
+  // 仅回写本机副本（内置层账号的 lastLoginAt 不落库到代码）
+  writeLocal(
+    readLocal().map((a) =>
+      a.id === account.id ? { ...a, lastLoginAt: Date.now() } : a,
+    ),
   );
   return account;
 };
@@ -154,3 +187,44 @@ export const listAccounts = (): PhoneAccount[] =>
 
 /** 注册账户总数 */
 export const countAccounts = (): number => readAll().length;
+
+/** 内置登记表账号数 */
+export const countSeedAccounts = (): number => SEED_ACCOUNTS.length;
+
+/** 该账号是否来自内置登记表（全设备生效） */
+export const isSeedAccount = (account: PhoneAccount): boolean => inSeed(account);
+
+/* ───────── 待同步队列（新注册 → 写入代码库） ───────── */
+
+/**
+ * 待同步账号：本机注册、但尚未进入内置登记表的账号。
+ * 内置层已包含的账号不会出现在这里（说明已全设备生效）。
+ */
+export const listPendingSyncAccounts = (): PhoneAccount[] =>
+  readLocal().filter((a) => !inSeed(a));
+
+/**
+ * 生成同步载荷（JSON 字符串）：
+ * 交给 frontend/scripts/sync-accounts.mjs 写入 src/data/seedAccounts.ts。
+ */
+export const buildSyncPayload = (): string =>
+  JSON.stringify(
+    {
+      source: 'mathlens-account-sync',
+      exportedAt: new Date().toISOString(),
+      accounts: listPendingSyncAccounts(),
+    },
+    null,
+    2,
+  );
+
+/** 同步载荷的 Base64 形式（便于在聊天工具里转发；UTF-8 安全） */
+export const buildSyncCode = (): string => {
+  const bytes = new TextEncoder().encode(buildSyncPayload());
+  let bin = '';
+  const chunkSize = 0x8000; // 分块避免超长字符串触发调用栈上限
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(bin);
+};

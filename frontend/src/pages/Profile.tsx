@@ -26,7 +26,7 @@ const Profile = () => {
           </span>
           <h1 className="font-serif text-2xl font-semibold">还未登录</h1>
           <p className="mt-3 text-muted-foreground leading-relaxed">
-            登录后即可查看个人中心。当前为演示登录模式，任意邮箱即可体验。
+            登录后即可查看个人中心。使用手机号注册的账号即可体验全部功能。
           </p>
           <Button asChild className="mt-7 gap-2 bg-info text-info-foreground hover:bg-info/90">
             <Link to="/login">
@@ -118,7 +118,7 @@ const Profile = () => {
       <FadeIn delay={0.2}>
         <div className="mt-12 flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Sigma className="h-3.5 w-3.5" />
-          Principia · 演示登录模式（本地会话）
+          Principia · 手机号账号体系
         </div>
       </FadeIn>
     </div>

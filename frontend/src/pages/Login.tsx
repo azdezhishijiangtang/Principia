@@ -6,15 +6,12 @@ import {
   Loader2,
   Lock,
   LogIn,
-  Mail,
   Phone,
   Sigma,
-  Smartphone,
   UserRound,
   UserPlus,
 } from 'lucide-react';
 import BrandMark from '@/components/BrandMark';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FadeIn } from '@/components/MotionPrimitives';
@@ -24,7 +21,7 @@ import { useAuth } from '@/lib/AuthContext';
 const inputCls = 'pl-10';
 
 const Login = () => {
-  const { signIn, signUpWithPhone, signInWithPhone, user } = useAuth();
+  const { signUpWithPhone, signInWithPhone, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -41,12 +38,6 @@ const Login = () => {
   const [loginPassword, setLoginPassword] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [phoneSubmitting, setPhoneSubmitting] = useState(false);
-
-  /* ── 邮箱演示模式 ── */
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   const handlePhoneRegister = async (e: FormEvent) => {
     e.preventDefault();
@@ -78,27 +69,6 @@ const Login = () => {
     } finally {
       setPhoneSubmitting(false);
     }
-  };
-
-  const handleEmailLogin = async (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setSubmitting(true);
-    try {
-      await signIn(email, password);
-      navigate(from, { replace: true });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '登录失败，请重试');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // 一键填入演示账号
-  const fillDemo = () => {
-    setEmail('math.lens@example.com');
-    setPassword('math123456');
-    setError('');
   };
 
   return (
@@ -147,20 +117,8 @@ const Login = () => {
                 : '输入手机号（或用户名）与密码登录'}
             </p>
 
-            <Tabs defaultValue="phone" className="mt-6">
-              <TabsList className="w-full grid grid-cols-2">
-                <TabsTrigger value="phone" className="gap-1.5">
-                  <Smartphone className="h-4 w-4" />
-                  手机号
-                </TabsTrigger>
-                <TabsTrigger value="email" className="gap-1.5">
-                  <Mail className="h-4 w-4" />
-                  邮箱演示
-                </TabsTrigger>
-              </TabsList>
-
-              {/* ═══════ 手机号 ═══════ */}
-              <TabsContent value="phone" className="mt-6">
+            <div className="mt-6">
+              {/* ═══════ 手机号（本站唯一登录方式） ═══════ */}
                 {/* 注册 / 登录 切换 */}
                 <div className="grid grid-cols-2 gap-1 border border-border bg-secondary/60 p-1">
                   <button
@@ -400,95 +358,7 @@ const Login = () => {
                     </p>
                   </form>
                 )}
-              </TabsContent>
-
-              {/* ═══════ 邮箱演示 ═══════ */}
-              <TabsContent value="email" className="mt-6">
-                <form onSubmit={handleEmailLogin} className="space-y-5" noValidate>
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium mb-2">
-                      邮箱地址
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        type="email"
-                        autoComplete="email"
-                        placeholder="you@example.com"
-                        className={inputCls}
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium mb-2">
-                      密码
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        type="password"
-                        autoComplete="current-password"
-                        placeholder="至少 6 位字符"
-                        className={inputCls}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {error && (
-                    <p
-                      role="alert"
-                      className="border border-destructive/40 bg-destructive/8 px-3 py-2 text-sm text-destructive"
-                    >
-                      {error}
-                    </p>
-                  )}
-
-                  <Button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full gap-2 bg-info text-info-foreground hover:bg-info/90"
-                  >
-                    {submitting ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        正在登录…
-                      </>
-                    ) : (
-                      <>
-                        <LogIn className="h-4 w-4" />
-                        登录
-                      </>
-                    )}
-                  </Button>
-                </form>
-
-                <div className="mt-6 border border-dashed border-border bg-secondary/50 px-4 py-3.5">
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    邮箱为<strong className="text-foreground">演示登录模式</strong>
-                    （本地会话，无需注册）：任意邮箱 + 6 位以上密码即可登录。
-                    正式账号请使用「手机号」标签页注册。
-                  </p>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={fillDemo}
-                    className="mt-2 h-7 px-2 text-xs text-info hover:bg-info/10 hover:text-info"
-                  >
-                    一键填入演示账号
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
+              </div>
 
             <Link
               to="/"

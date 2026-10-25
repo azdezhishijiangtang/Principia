@@ -12,6 +12,7 @@ import {
   Save,
   ShieldX,
   Trash2,
+  Users,
   XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -47,7 +48,15 @@ import {
   removeOverride,
   saveOverride,
 } from '@/lib/contentOverrides';
-import { countAccounts } from '@/lib/accountStore';
+import {
+  countAccounts,
+  countSeedAccounts,
+  isSeedAccount,
+  listAccounts,
+  listPendingSyncAccounts,
+  buildSyncCode,
+  buildSyncPayload,
+} from '@/lib/accountStore';
 import { isDevUser, useAuth } from '@/lib/AuthContext';
 import { InlineMathText } from '@/components/MathText';
 
@@ -462,6 +471,168 @@ const StatsAdmin = () => {
   );
 };
 
+/* ─────────────────────────── 账号管理 ─────────────────────────── */
+const maskPhone = (phone: string): string =>
+  phone.length === 11 ? `${phone.slice(0, 3)}****${phone.slice(-4)}` : phone;
+
+const AccountsAdmin = () => {
+  const [tick, setTick] = useState(0);
+  // 简单刷新：切回标签页或点击刷新按钮时重读
+  const accounts = useMemo(() => listAccounts(), [tick]);
+  const pending = useMemo(() => listPendingSyncAccounts(), [tick]);
+  const seedCount = countSeedAccounts();
+  const total = countAccounts();
+
+  const copyText = async (text: string, okMsg: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(okMsg);
+    } catch {
+      toast.error('复制失败，请手动选择文本复制');
+    }
+  };
+
+  const downloadSyncFile = () => {
+    const blob = new Blob([buildSyncPayload()], {
+      type: 'application/json;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `account-sync-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('同步文件已下载');
+  };
+
+  return (
+    <div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="border border-border bg-card p-4">
+          <p className="font-serif text-3xl font-semibold text-info">{total}</p>
+          <p className="mt-1 text-xs text-muted-foreground">账号总数（含内置）</p>
+        </div>
+        <div className="border border-border bg-card p-4">
+          <p className="font-serif text-3xl font-semibold text-info">{seedCount}</p>
+          <p className="mt-1 text-xs text-muted-foreground">内置登记表账号</p>
+        </div>
+        <div className="border border-border bg-card p-4">
+          <p className="font-serif text-3xl font-semibold text-info">
+            {accounts.length - seedCount}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">本机注册账号</p>
+        </div>
+        <div className="border border-border bg-card p-4">
+          <p
+            className={`font-serif text-3xl font-semibold ${
+              pending.length > 0 ? 'text-destructive' : 'text-info'
+            }`}
+          >
+            {pending.length}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">待同步进代码库</p>
+        </div>
+      </div>
+
+      {/* ── 同步操作区 ── */}
+      <div className="mt-6 border border-border bg-card p-5">
+        <h3 className="font-serif text-lg font-semibold">把新账号写入代码库</h3>
+        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+          新用户注册的账号默认只保存在他自己的浏览器里。导出下面的同步数据并提交进
+          <code className="mx-1 rounded bg-secondary px-1.5 py-0.5 text-xs">
+            frontend/src/data/seedAccounts.ts
+          </code>
+          后，该账号就能在任意设备登录，不会再「登录不上去」。
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            className="gap-1.5 bg-info text-info-foreground hover:bg-info/90"
+            disabled={pending.length === 0}
+            onClick={() => copyText(buildSyncCode(), '同步码已复制，发送给网站维护者即可')}
+          >
+            <Save className="h-4 w-4" />
+            复制同步码（{pending.length}）
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            disabled={pending.length === 0}
+            onClick={downloadSyncFile}
+          >
+            <Save className="h-4 w-4" />
+            下载同步文件
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            className="gap-1.5"
+            onClick={() => setTick((t) => t + 1)}
+          >
+            <RotateCcw className="h-4 w-4" />
+            刷新列表
+          </Button>
+        </div>
+        {pending.length > 0 ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            提示：同步码是一段 Base64 文本，直接通过聊天工具发给维护者；维护者提交并发布后，
+            这里待同步数量会自动清零。
+          </p>
+        ) : (
+          <p className="mt-3 text-xs text-muted-foreground">
+            当前没有待同步的新账号 —— 所有本机注册账号都已在代码库中生效。
+          </p>
+        )}
+      </div>
+
+      {/* ── 账号列表 ── */}
+      <h3 className="mt-8 font-serif text-lg font-semibold">
+        全部账号（{accounts.length}）
+      </h3>
+      <div className="mt-3 divide-y divide-border border border-border">
+        {accounts.map((a) => {
+          const isSeed = isSeedAccount(a);
+          return (
+            <div
+              key={a.id}
+              className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+            >
+              <div className="flex items-center gap-3">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-info/10 text-info">
+                  <Users className="h-4 w-4" />
+                </span>
+                <div>
+                  <p className="text-sm font-medium">{a.username}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {maskPhone(a.phone)} · 注册于{' '}
+                    {new Date(a.createdAt).toLocaleDateString('zh-CN')}
+                    {a.lastLoginAt
+                      ? ` · 最近登录 ${new Date(a.lastLoginAt).toLocaleDateString('zh-CN')}`
+                      : ''}
+                  </p>
+                </div>
+              </div>
+              <span
+                className={`rounded px-2 py-0.5 text-xs ${
+                  isSeed
+                    ? 'bg-info/10 text-info'
+                    : 'bg-secondary text-muted-foreground'
+                }`}
+              >
+                {isSeed ? '内置登记表' : '本机注册'}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 /* ─────────────────────────── 页面 ─────────────────────────── */
 const DevMode = () => {
   const { user } = useAuth();
@@ -491,7 +662,7 @@ const DevMode = () => {
       </div>
 
       <Tabs defaultValue="feedback" className="mt-8">
-        <TabsList className="grid w-full max-w-xl grid-cols-3">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4">
           <TabsTrigger value="feedback" className="gap-1.5">
             <MessageSquare className="h-4 w-4" />
             反馈管理
@@ -499,6 +670,10 @@ const DevMode = () => {
           <TabsTrigger value="content" className="gap-1.5">
             <FilePenLine className="h-4 w-4" />
             内容编辑
+          </TabsTrigger>
+          <TabsTrigger value="accounts" className="gap-1.5">
+            <Users className="h-4 w-4" />
+            账号管理
           </TabsTrigger>
           <TabsTrigger value="stats" className="gap-1.5">
             <BarChart3 className="h-4 w-4" />
@@ -511,6 +686,9 @@ const DevMode = () => {
         </TabsContent>
         <TabsContent value="content" className="mt-6">
           <ContentAdmin />
+        </TabsContent>
+        <TabsContent value="accounts" className="mt-6">
+          <AccountsAdmin />
         </TabsContent>
         <TabsContent value="stats" className="mt-6">
           <StatsAdmin />
