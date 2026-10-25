@@ -1,10 +1,10 @@
 /**
  * 端到端冒烟测试：
  * 1) 全部路由渲染无 console error
- * 2) 首页显示 22 门课程 / 158 个专题
+ * 2) 首页显示 22 门数学课程 / 158 个专题
  * 3) 新课程（初等数论）与专题页 KaTeX 正常
- * 4) 页脚提交反馈 → /dev 解锁 → 回复反馈 → 用户在「我的反馈」看到回复
- * 5) 课程页方向筛选可用
+ * 4) 课程页方向筛选可用
+ * 5) 页脚提交反馈 → 内置开发者账号登录 /dev → 回复反馈 → 用户在「我的反馈」看到回复
  */
 import pw from '/root/.nvm/versions/node/v22.13.1/lib/node_modules/playwright/index.js';
 
@@ -57,7 +57,7 @@ const main = async () => {
   await page.goto(BASE + '/', { waitUntil: 'networkidle' });
   const homeText = (await page.textContent('body')) ?? '';
   results.push(
-    homeText.includes('22 门本科专业课') ? '✓ 首页显示 22 门课程' : '✗ 首页未显示 22 门课程',
+    homeText.includes('22 门课程') ? '✓ 首页显示 22 门数学课程' : '✗ 首页未显示 22 门课程',
   );
   results.push(
     homeText.includes('158') ? '✓ 首页显示 158 个专题' : '✗ 首页未显示 158',
@@ -97,16 +97,23 @@ const main = async () => {
   await page.keyboard.press('Escape');
   await page.waitForTimeout(300);
 
-  // ── 6. 开发者模式解锁 + 回复 ──
+  // ── 6. 开发者模式账号门控（未登录拒绝；种子开发者账号放行并回复反馈）──
   await page.goto(BASE + '/dev', { waitUntil: 'networkidle' });
-  const gateVisible = (await page.textContent('body'))?.includes('输入开发者口令');
-  results.push(gateVisible ? '✓ 开发者模式口令门存在' : '✗ 未显示口令门');
-  await page.getByPlaceholder('请输入口令').fill('mathlens-dev');
-  await page.getByRole('button', { name: '进入开发者模式' }).click();
-  await page.waitForTimeout(700);
-  const devText = (await page.textContent('body')) ?? '';
-  results.push(devText.includes('站点管理台') ? '✓ 开发者模式解锁成功' : '✗ 解锁失败');
-  results.push(devText.includes('自动化测试反馈') ? '✓ 反馈管理能看到测试反馈' : '✗ 反馈管理看不到');
+  let devGate = (await page.textContent('body')) ?? '';
+  results.push(devGate.includes('无权访问') ? '✓ 未登录访问 /dev 被拒绝' : '✗ 未登录竟能进入管理台');
+
+  // 登录内置开发者账号（种子账号，任何设备可用）
+  await page.goto(BASE + '/login', { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: /已有账号登录/ }).click();
+  await page.getByPlaceholder('注册时的手机号或用户名').fill('17736095542');
+  await page.getByPlaceholder('注册时设置的密码').fill('Tao20090406');
+  await page.getByRole('button', { name: '登录', exact: true }).click();
+  await page.waitForURL(`${BASE}/`, { timeout: 10000 });
+
+  await page.goto(BASE + '/dev', { waitUntil: 'networkidle' });
+  devGate = (await page.textContent('body')) ?? '';
+  results.push(devGate.includes('站点管理台') ? '✓ 开发者账号解锁管理台' : '✗ 解锁失败');
+  results.push(devGate.includes('自动化测试反馈') ? '✓ 反馈管理能看到测试反馈' : '✗ 反馈管理看不到');
 
   // 回复该反馈
   const replyButtons = page.getByRole('button', { name: '回复', exact: true });

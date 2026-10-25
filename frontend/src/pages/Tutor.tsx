@@ -22,7 +22,13 @@ import { FadeIn } from '@/components/MotionPrimitives';
 import AiSettingsCard from '@/components/AiSettingsCard';
 import DocLibraryPanel from '@/components/DocLibraryPanel';
 import { useAuth } from '@/lib/AuthContext';
-import { readAiConfig } from '@/lib/ai';
+import { readAiConfig, saveAiConfig } from '@/lib/ai';
+import {
+  getCatalog,
+  describeCatalogAge,
+  retiredModelHint,
+  type CatalogEntry,
+} from '@/lib/modelCatalog';
 import { useTutorChat, QUICK_FOLLOWUPS } from '@/lib/useTutorChat';
 import { useUserDocs } from '@/lib/docLibrary';
 import { getTopic } from '@/data/topics';
@@ -53,6 +59,9 @@ const Tutor = () => {
   const [showSettings, setShowSettings] = useState(!readAiConfig());
   const [useDocs, setUseDocs] = useState(true);
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+  // 模型目录（随服务商自动更新）：缓存新鲜秒回，过期后台刷新，失败回退内置列表
+  const [catalog, setCatalog] = useState<CatalogEntry>({ models: [], source: 'builtin', fetchedAt: 0 });
+  const [catalogLoading, setCatalogLoading] = useState(false);
   const docs = useUserDocs(userId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -88,6 +97,32 @@ const Tutor = () => {
   useEffect(() => {
     if (error?.includes('API Key')) setShowSettings(true);
   }, [error]);
+
+  /** 拉取当前服务商的模型目录；force=true 时强制刷新 */
+  const loadCatalog = async (force = false) => {
+    if (!config) return;
+    setCatalogLoading(true);
+    try {
+      const entry = await getCatalog(config.baseUrl, config.apiKey, { force });
+      setCatalog(entry);
+    } finally {
+      setCatalogLoading(false);
+    }
+  };
+
+  // 配置就绪后自动拉取模型目录（缓存新鲜则秒回，过期则后台静默刷新）
+  useEffect(() => {
+    if (config) void loadCatalog();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [config?.baseUrl, config?.apiKey]);
+
+  /** 侧栏直接切换模型：写回生效配置并刷新目录状态 */
+  const switchModel = (model: string) => {
+    if (!config) return;
+    const next = { ...config, model };
+    saveAiConfig(next);
+    setConfig(readAiConfig() ?? next);
+  };
 
   const copyMessage = async (content: string, idx: number) => {
     try {
@@ -498,6 +533,8 @@ const Tutor = () => {
               onSaved={() => {
                 setConfig(readAiConfig());
                 setError(null);
+                // 保存后收起设置卡片，回到「当前模型」视图（可随时再展开）
+                setShowSettings(false);
                 inputRef.current?.focus();
               }}
             />
@@ -507,15 +544,65 @@ const Tutor = () => {
                 <h3 className="font-serif text-base font-semibold">当前模型</h3>
                 <span className="text-xs text-success">已就绪</span>
               </div>
-              <p className="text-sm font-mono text-info break-all">{config?.model}</p>
-              <p className="mt-1 text-xs text-muted-foreground break-all">{config?.baseUrl}</p>
+
+              {/* 模型切换：选项来自服务商实时目录（随服务商自动更新） */}
+              {catalog.models.length > 0 ? (
+                <div className="space-y-2">
+                  <label htmlFor="tutor-model" className="text-xs text-muted-foreground">
+                    切换模型（{catalog.models.length} 个可选）
+                  </label>
+                  <select
+                    id="tutor-model"
+                    value={config?.model}
+                    onChange={(e) => switchModel(e.target.value)}
+                    className="h-9 w-full border border-input bg-background px-2 text-sm font-mono"
+                  >
+                    {config?.model && !catalog.models.includes(config.model) && (
+                      <option value={config.model}>{config.model}（当前）</option>
+                    )}
+                    {catalog.models.map((m) => (
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-muted-foreground">
+                      {catalog.source === 'remote'
+                        ? `服务商实时列表 · 更新于 ${describeCatalogAge(catalog.fetchedAt)}${catalog.stale ? '（已过期）' : ''}`
+                        : '内置参考列表（实时拉取失败）'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => void loadCatalog(true)}
+                      disabled={catalogLoading}
+                      className="flex items-center gap-1 text-[11px] text-info hover:underline disabled:text-muted-foreground disabled:no-underline"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${catalogLoading ? 'animate-spin' : ''}`} />
+                      刷新
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm font-mono text-info break-all">{config?.model}</p>
+                  <p className="mt-1 text-xs text-muted-foreground break-all">{config?.baseUrl}</p>
+                </>
+              )}
+
+              {retiredModelHint(config?.model ?? '') && (
+                <p className="mt-2 text-[11px] text-warning leading-relaxed">
+                  当前模型已被服务商退役，建议更换为 {retiredModelHint(config?.model ?? '')}
+                </p>
+              )}
+
               <Button
                 variant="outline"
                 size="sm"
                 className="mt-4 w-full"
                 onClick={() => setShowSettings(true)}
               >
-                更换密钥
+                更换密钥 / 接口存档
               </Button>
             </div>
           )}

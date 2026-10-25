@@ -5,7 +5,7 @@
  * 3) 手机号重复被拒绝
  * 4) 用户名+密码登录成功；错误密码被拒绝
  * 5) 刷新后会话保持；个人中心显示脱敏手机号
- * 6) 邮箱演示登录仍然可用
+ * 6) 开发者种子账号 17736095542（内置账号）可正常登录
  */
 import pw from '/root/.nvm/versions/node/v22.13.1/lib/node_modules/playwright/index.js';
 
@@ -93,17 +93,24 @@ const main = async () => {
     body.includes('138****1111') ? '✓ 个人中心显示脱敏手机号' : '✗ 未显示脱敏手机号',
   );
 
-  // ── 6. 邮箱演示登录仍可用 ──
+  // ── 6. 开发者种子账号（内置账号，全设备可用）可正常登录 ──
   await page.getByRole('button', { name: new RegExp(`用户菜单：${USERNAME}`) }).click();
   await page.getByRole('menuitem', { name: '退出登录' }).click();
   await page.waitForTimeout(400);
   await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
-  await page.getByRole('tab', { name: /邮箱演示/ }).click();
-  await page.getByPlaceholder('you@example.com').fill('math.lens@example.com');
-  await page.getByPlaceholder('至少 6 位字符').fill('math123456');
+  await page.getByRole('button', { name: /已有账号登录/ }).click();
+  await page.getByPlaceholder('注册时的手机号或用户名').fill('17736095542');
+  await page.getByPlaceholder('注册时设置的密码').fill('Tao20090406');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await page.waitForURL(`${BASE}/`, { timeout: 10000 });
-  results.push('✓ 邮箱演示登录仍可用');
+  const devMenu = page.getByRole('button', { name: /用户菜单：开发者阿z的知识讲堂/ });
+  results.push(
+    (await devMenu.count()) > 0 ? '✓ 开发者种子账号 17736095542 登录成功' : '✗ 种子账号登录后未显示开发者用户菜单',
+  );
+  // 退出，恢复干净状态
+  await devMenu.click();
+  await page.getByRole('menuitem', { name: '退出登录' }).click();
+  await page.waitForTimeout(400);
 
   await browser.close();
 

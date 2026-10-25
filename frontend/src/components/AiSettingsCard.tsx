@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { KeyRound, Check, Eye, EyeOff, AlertCircle, Save, Trash2, Zap, RefreshCw, ListTree } from 'lucide-react';
+import { KeyRound, Check, Eye, EyeOff, AlertCircle, Save, Trash2, Zap, RefreshCw, ListTree, CloudDownload, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -12,8 +12,13 @@ import {
   clearAiProfile,
   getActiveProfile,
   setActiveProfile,
-  fetchModels,
 } from '@/lib/ai';
+import {
+  getCatalog,
+  describeCatalogAge,
+  retiredModelHint,
+  type CatalogEntry,
+} from '@/lib/modelCatalog';
 import type { AiConfig, AiProfile } from '@/lib/ai';
 
 interface AiSettingsCardProps {
@@ -42,7 +47,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const [form, setForm] = useState<AiProfile>(() => readAiProfiles()[getActiveProfile()] ?? emptyForm());
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [models, setModels] = useState<string[]>([]);
+  const [catalog, setCatalog] = useState<CatalogEntry>({ models: [], source: 'builtin', fetchedAt: 0 });
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
   const [manualModel, setManualModel] = useState(false);
@@ -51,23 +56,46 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
     setSaved(false);
   }, [form]);
 
-  /** 拉取该 Key 可用的模型列表；silent 模式下失败不弹提示 */
-  const loadModels = async (baseUrl: string, apiKey: string, silent = false) => {
+  /**
+   * 拉取模型目录（随服务商自动更新）。
+   * 走 modelCatalog：缓存新鲜直接用，过期后台刷新，失败回退内置目录。
+   * silent 模式下失败不打扰用户。
+   */
+  const loadModels = async (baseUrl: string, apiKey: string, opts: { force?: boolean; silent?: boolean } = {}) => {
+    const { force = false, silent = false } = opts;
     if (!baseUrl.trim() || !apiKey.trim()) return;
     setLoadingModels(true);
     setModelError(null);
     try {
-      const list = await fetchModels(baseUrl, apiKey);
-      setModels(list);
-      setManualModel(false);
+      const entry = await getCatalog(baseUrl, apiKey, { force });
+      setCatalog(entry);
+      // 只有「完全没有可用列表」时才需要手动输入
+      setManualModel(entry.models.length === 0);
     } catch (err) {
-      setModels([]);
-      setManualModel(true);
       if (!silent) setModelError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoadingModels(false);
     }
   };
+
+  // 挂载即自动拉取一次（缓存新鲜则秒回，过期则后台静默刷新）
+  useEffect(() => {
+    if (form.baseUrl.trim() && form.apiKey.trim()) {
+      void loadModels(form.baseUrl, form.apiKey, { silent: true });
+    }
+    // 仅在挂载时执行一次
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Key / 接口地址填写变化后，防抖 800ms 自动拉取该服务商的最新模型目录
+  useEffect(() => {
+    if (!form.baseUrl.trim() || !form.apiKey.trim()) return;
+    const timer = setTimeout(() => {
+      void loadModels(form.baseUrl, form.apiKey, { silent: true });
+    }, 800);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.baseUrl, form.apiKey]);
 
   /** 切换正在编辑的存档 */
   const switchSlot = (i: number) => {
@@ -75,16 +103,18 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
     const p = profiles[i];
     setForm(p ?? emptyForm());
     setSaved(false);
-    setModels([]);
+    setCatalog({ models: [], source: 'builtin', fetchedAt: 0 });
     setModelError(null);
     setManualModel(false);
     // 已配置过的存档静默尝试拉取模型列表
-    if (p?.apiKey && p?.baseUrl) void loadModels(p.baseUrl, p.apiKey, true);
+    if (p?.apiKey && p?.baseUrl) void loadModels(p.baseUrl, p.apiKey, { silent: true });
   };
 
   const applyPreset = (idx: number) => {
     const p = AI_PRESETS[idx];
     setForm((f) => ({ ...f, baseUrl: p.baseUrl, model: p.model }));
+    // 已填 Key 时，应用预设后自动拉取该服务商的最新模型目录
+    if (form.apiKey.trim()) void loadModels(p.baseUrl, form.apiKey);
   };
 
   const handleSave = () => {
@@ -219,16 +249,16 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           <Label htmlFor="ai-model">模型名称</Label>
           <button
             type="button"
-            onClick={() => void loadModels(form.baseUrl, form.apiKey)}
+            onClick={() => void loadModels(form.baseUrl, form.apiKey, { force: true })}
             disabled={!form.apiKey.trim() || !form.baseUrl.trim() || loadingModels}
             className="flex items-center gap-1 text-xs text-info hover:underline disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loadingModels ? 'animate-spin' : ''}`} />
-            {loadingModels ? '正在获取…' : '获取该 Key 可用模型'}
+            {loadingModels ? '正在获取…' : '刷新模型列表'}
           </button>
         </div>
 
-        {models.length > 0 && !manualModel ? (
+        {catalog.models.length > 0 && !manualModel ? (
           <select
             id="ai-model"
             value={form.model}
@@ -236,10 +266,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
             className="h-9 w-full border border-input bg-background px-2 text-sm font-mono"
           >
             {/* 列表不含当前值时兜底保留，避免已保存配置被清空 */}
-            {form.model && !models.includes(form.model) && (
+            {form.model && !catalog.models.includes(form.model) && (
               <option value={form.model}>{form.model}（当前）</option>
             )}
-            {models.map((m) => (
+            {catalog.models.map((m) => (
               <option key={m} value={m}>
                 {m}
               </option>
@@ -250,36 +280,63 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
             id="ai-model"
             value={form.model}
             onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
-            placeholder="deepseek-chat（点击上方按钮可自动列出可用模型）"
+            placeholder="deepseek-flash（点击上方按钮可自动列出可用模型）"
             className="font-mono text-sm"
           />
         )}
 
-        <div className="flex items-center justify-between gap-2 text-xs">
+        {/* 目录来源与更新时间 */}
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
           {modelError ? (
             <span className="text-destructive flex items-center gap-1">
               <AlertCircle className="h-3.5 w-3.5 shrink-0" />
               {modelError}
             </span>
+          ) : catalog.models.length > 0 ? (
+            <span className="flex items-center gap-1 text-muted-foreground">
+              {catalog.source === 'remote' ? (
+                <>
+                  <CloudDownload className="h-3.5 w-3.5 shrink-0 text-success" />
+                  服务商实时列表 · {catalog.models.length} 个模型 · 更新于 {describeCatalogAge(catalog.fetchedAt)}
+                  {catalog.stale && '（已过期，建议刷新）'}
+                </>
+              ) : (
+                <>
+                  <Database className="h-3.5 w-3.5 shrink-0 text-warning" />
+                  内置参考列表 · {catalog.models.length} 个模型（实时拉取失败，可手动输入）
+                </>
+              )}
+            </span>
           ) : (
             <span className="text-muted-foreground flex items-center gap-1">
               <ListTree className="h-3.5 w-3.5 shrink-0" />
-              {models.length > 0
-                ? `已获取 ${models.length} 个可用模型`
-                : '填入 Key 后点击右侧按钮，即可列出该账号可用的全部模型'}
+              {loadingModels
+                ? '正在从服务商获取最新模型列表…'
+                : '填入 Key 后自动列出该服务商的最新模型（随服务商更新）'}
             </span>
           )}
-          {models.length > 0 && !manualModel && (
+          {catalog.models.length > 0 && !manualModel && (
             <button type="button" onClick={() => setManualModel(true)} className="text-muted-foreground hover:text-foreground underline">
               手动输入
             </button>
           )}
-          {models.length > 0 && manualModel && (
+          {catalog.models.length > 0 && manualModel && (
             <button type="button" onClick={() => setManualModel(false)} className="text-muted-foreground hover:text-foreground underline">
               返回列表选择
             </button>
           )}
         </div>
+
+        {/* 已保存/正在填写的模型若已退役，给出迁移提示 */}
+        {retiredModelHint(form.model) && (
+          <p className="flex items-start gap-1.5 text-xs text-warning leading-relaxed">
+            <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+            <span>
+              模型 <span className="font-mono">{form.model}</span> 已被服务商退役或更名，建议更换为{' '}
+              <span className="font-mono">{retiredModelHint(form.model)}</span>。
+            </span>
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">

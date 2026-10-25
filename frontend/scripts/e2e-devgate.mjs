@@ -29,6 +29,16 @@ const logout = async (page, username) => {
   await page.waitForTimeout(400);
 };
 
+/** 用手机号 + 密码登录（种子账号/已注册账号通用） */
+const loginAccount = async (page, identifier, password) => {
+  await page.goto(`${BASE}/login`, { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: /已有账号登录/ }).click();
+  await page.getByPlaceholder('注册时的手机号或用户名').fill(identifier);
+  await page.getByPlaceholder('注册时设置的密码').fill(password);
+  await page.getByRole('button', { name: '登录', exact: true }).click();
+  await page.waitForURL(`${BASE}/`, { timeout: 10000 });
+};
+
 const main = async () => {
   const browser = await chromium.launch();
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -53,8 +63,8 @@ const main = async () => {
   results.push(footerLink === 0 ? '✓ 普通账号页脚无开发者入口' : '✗ 普通账号页脚出现开发者入口');
   await logout(page, '普通用户甲');
 
-  // ── 3. 开发者账号 → 放行，页脚有入口 ──
-  await registerAccount(page, DEV_PHONE, '开发者本人');
+  // ── 3. 开发者账号（内置种子账号）→ 放行，页脚有入口 ──
+  await loginAccount(page, DEV_PHONE, 'Tao20090406');
   await page.goto(`${BASE}/dev`, { waitUntil: 'networkidle' });
   body = (await page.textContent('body')) ?? '';
   results.push(body.includes('站点管理台') ? '✓ 开发者账号进入管理台' : '✗ 开发者账号被拒绝');

@@ -15,11 +15,12 @@ const main = async () => {
   });
 
   await page.goto(`${BASE}/tutor`, { waitUntil: 'networkidle' });
-  const input = page.locator('input[type=file]');
+  // 文档知识库的上传控件（accept 含 .txt）；聊天框的图片上传控件是 image/*
+  const input = page.locator('input[type=file][accept*=".txt"]');
   const count = await input.count();
-  console.log(`文件输入控件数量: ${count}`);
+  console.log(`文档上传控件数量: ${count}`);
   if (count === 0) {
-    console.log('✗ 未找到上传控件（可能文档面板未展开）');
+    console.log('✗ 未找到文档上传控件（可能文档面板未展开）');
     await browser.close();
     process.exit(1);
   }

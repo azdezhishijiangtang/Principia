@@ -10,7 +10,7 @@ export interface AiConfig {
   /** 接口基础地址，如 https://api.deepseek.com/v1 */
   baseUrl: string;
   apiKey: string;
-  /** 模型名，如 deepseek-chat */
+  /** 模型名，如 deepseek-flash / kimi-k3 / glm-5.3 */
   model: string;
 }
 
@@ -18,46 +18,73 @@ export interface AiConfig {
 export interface AiPreset {
   name: string;
   baseUrl: string;
+  /** 默认模型（该服务商当前主力型号） */
   model: string;
   hint: string;
+  /**
+   * 内置参考模型目录：实时拉取 GET /models 失败时使用。
+   * 随站点版本更新；用户 Key 可用时始终以服务商实时列表为准。
+   */
+  fallbackModels?: string[];
 }
 
+/**
+ * 服务商预设（模型名单更新于 2026-10，以各官网站点为准）。
+ * 说明：模型目录由 modelCatalog 实时拉取 + 内置参考双保险，
+ * 预设里的默认模型只作为「未拉取到列表时」的兜底。
+ */
 export const AI_PRESETS: AiPreset[] = [
   {
     name: 'DeepSeek',
-    baseUrl: 'https://api.deepseek.com/v1',
-    model: 'deepseek-chat',
-    hint: '国产高性价比，数学推理强',
+    // 官方文档当前 base_url 为 https://api.deepseek.com（/v1 亦可兼容）
+    baseUrl: 'https://api.deepseek.com',
+    model: 'deepseek-flash',
+    hint: 'V4.1-Flash 极速低价；V4-Pro 旗舰推理',
+    fallbackModels: ['deepseek-flash', 'deepseek-v4-pro', 'deepseek-v4-flash', 'deepseek-chat（已退役）', 'deepseek-reasoner（已退役）'],
   },
   {
     name: 'Moonshot Kimi',
     baseUrl: 'https://api.moonshot.cn/v1',
-    model: 'moonshot-v1-8k',
-    hint: '长上下文，中文流畅',
+    model: 'kimi-k3',
+    hint: 'K3 旗舰；moonshot-v1 系列已全部下线',
+    fallbackModels: ['kimi-k3', 'kimi-k2.6', 'kimi-k2.5', 'moonshot-v1-8k（已下线）'],
   },
   {
     name: '通义千问',
     baseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-    model: 'qwen-plus',
-    hint: '阿里云百炼，稳定易用',
+    model: 'qwen3-max',
+    hint: '阿里云百炼，qwen3-max 旗舰',
+    fallbackModels: ['qwen3-max', 'qwen-plus', 'qwen-flash', 'qwen-turbo', 'qwen3-coder-plus'],
   },
   {
     name: '智谱 AI',
     baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    model: 'glm-4-flash',
-    hint: '有免费额度，响应快',
+    model: 'glm-5.3',
+    hint: 'GLM-5.3 旗舰；glm-4.5-flash 免费',
+    fallbackModels: ['glm-5.3', 'glm-5.3-flash', 'glm-5.2', 'glm-5.1', 'glm-4.7', 'glm-4.6', 'glm-4.5-flash'],
   },
   {
     name: 'OpenAI',
     baseUrl: 'https://api.openai.com/v1',
-    model: 'gpt-4o-mini',
-    hint: '需可访问 OpenAI 的网络',
+    model: 'gpt-5.6-luna',
+    hint: 'GPT-5.6 Luna 低成本；Astra 旗舰',
+    fallbackModels: ['gpt-6-astra', 'gpt-6.1-sol', 'gpt-6-luna', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.4-mini', 'gpt-5-mini'],
   },
   {
     name: 'SiliconFlow',
     baseUrl: 'https://api.siliconflow.cn/v1',
-    model: 'Qwen/Qwen2.5-7B-Instruct',
-    hint: '聚合平台，模型丰富',
+    model: 'deepseek-ai/DeepSeek-V4-Flash',
+    hint: '聚合平台百款模型，按 厂商/模型 命名',
+    fallbackModels: [
+      'deepseek-ai/DeepSeek-V4-Pro',
+      'deepseek-ai/DeepSeek-V4-Flash',
+      'deepseek-ai/DeepSeek-V3.2',
+      'Qwen/Qwen3-8B',
+      'Qwen/Qwen3-Coder-Plus',
+      'THUDM/GLM-5.3',
+      'moonshotai/Kimi-K2.6',
+      'Pro/deepseek-ai/DeepSeek-R1',
+    ],
   },
 ];
 
@@ -169,8 +196,13 @@ export const clearAiConfig = (): void => {
 /**
  * 用当前 API Key 拉取该服务商可用的模型列表（OpenAI 兼容的 GET /models）。
  * 返回模型 id 数组（已排序）；失败时抛出可读的中文错误。
+ * signal 可由调用方传入，用于超时控制。
  */
-export const fetchModels = async (baseUrl: string, apiKey: string): Promise<string[]> => {
+export const fetchModels = async (
+  baseUrl: string,
+  apiKey: string,
+  signal?: AbortSignal,
+): Promise<string[]> => {
   const url = `${baseUrl.replace(/\/+$/, '')}/models`;
   const res = await fetch(url, {
     method: 'GET',
@@ -178,6 +210,7 @@ export const fetchModels = async (baseUrl: string, apiKey: string): Promise<stri
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
+    signal,
   });
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
