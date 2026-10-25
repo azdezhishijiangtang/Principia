@@ -13,6 +13,8 @@ import {
   readMultiPath,
   readMultiPathCount,
   readCrossCheck,
+  readLink,
+  readRagBoost,
   pickAutoProfile,
   streamChat,
   chatOnce,
@@ -27,6 +29,9 @@ import {
   MULTI_PATH_SYNTH_PROMPT,
   CROSS_CHECK_SOLVE_PROMPT,
   CROSS_CHECK_VERIFY_PROMPT,
+  LINK_SYNTH_PROMPT,
+  RAG_BOOST_PROMPT,
+  RAG_BOOST_TOPK,
   type ChatMessage,
   type AiConfig,
   type AiProfile,
@@ -60,6 +65,10 @@ export interface TutorMessage {
   crossCheck?: string;
   /** 极致模式·双模型交叉验证：第二模型的名称 */
   crossModel?: string;
+  /** 多路径+交叉验证联动：本次是否由独立第二模型仲裁多路径（而非主模型合成） */
+  link?: boolean;
+  /** 多路径+交叉验证联动：执行仲裁的第二模型名称 */
+  linkModel?: string;
   /** token 用量（assistant 消息） */
   usage?: { prompt: number; completion: number; total: number };
   /** 用户消息附带的图片（data URL） */
@@ -190,7 +199,11 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       if (useDocs) {
         setStatus('searching');
         try {
-          const hits = await retrieveChunks(userId, trimmed, 4);
+          // RAG 难题专精：深度思考/难题时召回更多段落，把权威资料用足（topK 4 → 8）
+          const ragBoostOn = readRagBoost();
+          const hardQ = effMode === 'deep' || classifyDifficulty(trimmed) === 'hard';
+          const topK = ragBoostOn && hardQ ? RAG_BOOST_TOPK : 4;
+          const hits = await retrieveChunks(userId, trimmed, topK);
           if (hits.length > 0) {
             sources = hits.map((h) => ({
               docId: h.chunk.docId,
@@ -203,9 +216,13 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
                   `【资料 ${i + 1}】摘自学生上传的《${h.chunk.docName}》：\n${h.chunk.text}`,
               )
               .join('\n\n');
+            const baseReq = `学生上传了学习资料。以下是与问题最相关的段落：\n\n${docContext}\n\n回答要求：优先依据上述资料作答并注明出处（如"根据《XX》…"）；资料未覆盖的内容用你的知识补充，并明确区分哪些来自资料、哪些是你的补充。若资料与问题无关，忽略资料直接回答。`;
+            const boostReq = ragBoostOn && hardQ
+              ? `\n\n${RAG_BOOST_PROMPT}`
+              : '';
             history.push({
               role: 'system',
-              content: `学生上传了学习资料。以下是与问题最相关的段落：\n\n${docContext}\n\n回答要求：优先依据上述资料作答并注明出处（如"根据《XX》…"）；资料未覆盖的内容用你的知识补充，并明确区分哪些来自资料、哪些是你的补充。若资料与问题无关，忽略资料直接回答。`,
+              content: baseReq + boostReq,
             });
           }
         } catch {
@@ -314,8 +331,12 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       // ══ 第一步：主回答 ══
       // 多路径自洽（仅深度思考 / 难题时）：并发 K 路独立求解 → 仲裁合成
       const multiPathOn = readMultiPath();
+      const linkOn = readLink();
       const doMulti = multiPathOn && (effMode === 'deep' || classifyDifficulty(trimmed) === 'hard');
       let didMulti = false;
+      /** 多路径+交叉验证联动：本次是否由独立第二模型仲裁（兼得多路多样性与第三方公正性） */
+      let linkUsed = false;
+      let linkModelName: string | undefined;
       if (doMulti) {
         const K = readMultiPathCount();
         try {
@@ -335,8 +356,17 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
           if (got.length >= 2) {
             paths = got;
             multiCount = got.length;
+            // 联动：用第二个已配置模型对多份解答做独立仲裁；否则主模型合成
+            let synthCfg = effectiveCfg;
+            const second = allValid.find((p) => p.baseUrl !== effectiveCfg.baseUrl || p.model !== effectiveCfg.model);
+            if (linkOn && second) {
+              synthCfg = { baseUrl: second.baseUrl, apiKey: second.apiKey, model: second.model };
+              linkUsed = true;
+              linkModelName = second.model;
+            }
+            const synthPrompt = linkUsed ? LINK_SYNTH_PROMPT : MULTI_PATH_SYNTH_PROMPT;
             const synthHistory: ChatMessage[] = [
-              { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${MULTI_PATH_SYNTH_PROMPT}` },
+              { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${synthPrompt}` },
               {
                 role: 'user',
                 content: `原始问题：\n${trimmed}\n\n以下是 ${got.length} 份独立解答：\n\n${got
@@ -346,12 +376,16 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
             ];
             acc = '';
             reasoningAcc = '';
-            await streamInto(effectiveCfg, synthHistory);
+            await streamInto(synthCfg, synthHistory);
             if (acc.trim()) {
-              usedCfg = effectiveCfg;
+              usedCfg = synthCfg;
               didMulti = true;
-              modelName = modelName ?? effectiveCfg.model;
-              paint({ multiPath: multiCount, paths });
+              modelName = modelName ?? linkModelName ?? effectiveCfg.model;
+              paint({
+                multiPath: multiCount,
+                paths,
+                ...(linkUsed ? { link: true, linkModel: linkModelName } : {}),
+              });
             }
           }
         } catch (e) {

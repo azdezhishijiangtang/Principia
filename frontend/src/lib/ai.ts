@@ -376,6 +376,32 @@ export const writeCrossCheck = (on: boolean): void => {
   localStorage.setItem(CROSS_CHECK_KEY, on ? '1' : '0');
 };
 
+/**
+ * 全局「多路径 + 交叉验证联动」开关（默认关闭）：在多路径自洽之上，
+ * 让【第二个已配置模型】对多份独立解答做仲裁（而非主模型自己合成），
+ * 兼得「多路采样的多样性」与「独立第三方的公正性」——把算力用在最该较真的地方。
+ * 需同时开启「多路径自洽」且至少 2 个已配置存档；否则自动等同于普通多路径合成。
+ */
+const LINK_KEY = 'mathlens-ai-link';
+export const readLink = (): boolean => localStorage.getItem(LINK_KEY) === '1';
+export const writeLink = (on: boolean): void => {
+  localStorage.setItem(LINK_KEY, on ? '1' : '0');
+};
+
+/**
+ * 全局「RAG 检索增强 · 难题专精」开关（默认关闭）：开启后，对深度思考 / 难题
+ * 额外加强文档检索（召回更多相关段落，topK 4 → 8）并强制模型依据资料作答、逐条注明出处，
+ * 把检索到的权威资料用足，进一步降低幻觉与误答。仅深度思考 / 难题时生效；快速回答 / 简单题自动跳过，不额外费 token。
+ */
+const RAG_BOOST_KEY = 'mathlens-ai-rag-boost';
+export const readRagBoost = (): boolean => localStorage.getItem(RAG_BOOST_KEY) === '1';
+export const writeRagBoost = (on: boolean): void => {
+  localStorage.setItem(RAG_BOOST_KEY, on ? '1' : '0');
+};
+
+/** RAG 难题专精模式下加强检索召回的段落数（默认 4） */
+export const RAG_BOOST_TOPK = 8;
+
 /** 多路径：单路求解的系统提示词附加要求（鼓励独立、完整地给出解法） */
 export const MULTI_PATH_SOLVE_PROMPT = `请独立、完整地解答下面的问题，给出关键步骤与最终结论。从你自己的思路出发认真推导，不必参考任何他人解法，也不要省略关键步骤。`;
 
@@ -402,6 +428,19 @@ export const SELF_CHECK_PROMPT = `你是严谨的答卷复核员。请基于学�
 2) 是否存在逻辑漏洞、未被验证的隐含假设、或结论范围被错误扩大/缩小；
 3) 是否有明显更快或更稳妥的解法。
 若发现错误，直接给出修正后的完整正确解答（含关键步骤）；若整体无误，只用 2-3 句话简要确认并指出最易出错的地方。不要重复原题与已有且正确的部分。`;
+
+/** 联动模式：由独立第二模型对多路径解答做仲裁的系统提示词附加要求 */
+export const LINK_SYNTH_PROMPT = `你是独立、严谨的第三方仲裁者（不同于生成这些解答的模型）。下面给出同一道题的多份独立解答。请：
+1) 逐份核对推导与最终结果，识别共性结论与分歧点；
+2) 基于数学/物理正确性独立判断，选出（或综合出）最可靠的答案，不要盲从多数；
+3) 若存在分歧，明确指出哪一份（或哪种思路）正确、其余错在哪里；
+4) 最终只输出一份完整的权威解答（含关键步骤），并在开头用一两句话说明你以哪份（或哪种思路）为准、是否与多数一致。不要罗列全部原始解答，也不要复述原题。`;
+
+/** RAG 难题专精：加强检索后的强约束作答要求（追加到资料上下文之后） */
+export const RAG_BOOST_PROMPT = `注意：这是一道较难的题，请【充分利用】上面检索到的资料作答：
+- 对关键推导与结论务必给出资料依据，并逐条注明出处（如"根据《XX》第 N 段…"）；
+- 若多份资料之间有冲突或表述不一致，明确指出并择优采用，必要时结合你的知识说明原因；
+- 资料未覆盖的步骤可用你的知识补充，但必须清晰区分"来自资料"与"你的补充"。`;
 
 /** 粗略评估模型「强度」：强模型得分高，快/廉价模型得分低。用于自动路由排序。 */
 const STRONG_MODEL = /pro|max|ultra|astra|旗舰|plus|premium|5\.3|v4-pro|v4\.1-pro|gpt-6|gpt-5\.6-sol|gpt-5\.6-terra/i;

@@ -192,6 +192,11 @@ const AskAiWidget = () => {
                             交叉验证·{m.crossModel}
                           </span>
                         )}
+                        {m.link && (
+                          <span className="text-[10px] bg-success/15 text-success px-1.5 py-0.5">
+                            联动·{m.linkModel}
+                          </span>
+                        )}
                         {status === 'searching' && i === messages.length - 1 && (
                           <span className="flex items-center gap-1 text-xs text-info">
                             <FileSearch className="h-3 w-3 animate-pulse" />
@@ -234,7 +239,7 @@ const AskAiWidget = () => {
                         <details className="mb-2 border border-info/30 bg-info/5 px-3 py-2 text-xs">
                           <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-info">
                             <Sparkles className="h-3 w-3" />
-                            多路径推理 · {m.paths.length} 路独立思路
+                            多路径推理 · {m.paths.length} 路独立思路{m.link ? `（经 ${m.linkModel} 仲裁）` : ''}
                           </summary>
                           <div className="mt-1.5 space-y-2">
                             {m.paths.map((p, j) => (

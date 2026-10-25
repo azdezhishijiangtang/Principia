@@ -25,6 +25,10 @@ import {
   writeMultiPathCount,
   readCrossCheck,
   writeCrossCheck,
+  readLink,
+  writeLink,
+  readRagBoost,
+  writeRagBoost,
 } from '@/lib/ai';
 import {
   getCatalog,
@@ -76,6 +80,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const [multiPathCount, setMultiPathCount] = useState<number>(() => readMultiPathCount());
   /** 极致模式·双模型交叉验证开关（全局，默认关闭）：用第二个模型独立重做并比对 */
   const [crossCheck, setCrossCheck] = useState<boolean>(() => readCrossCheck());
+  /** 多路径+交叉验证联动开关（全局，默认关闭）：多路径生成后由第二模型仲裁 */
+  const [link, setLink] = useState<boolean>(() => readLink());
+  /** RAG 检索增强·难题专精开关（全局，默认关闭）：难题时加强检索并强制引用资料 */
+  const [ragBoost, setRagBoost] = useState<boolean>(() => readRagBoost());
   /** 当前生效的思考偏好（兼容旧存档里只存了 reasoningEffort 的情况） */
   const mode = thinkingModePref(form);
 
@@ -603,6 +611,76 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
         {crossCheck && (
           <p className="text-[11px] text-muted-foreground">
             需至少配置 2 个模型存档才会真正启用；否则自动跳过。开启后单题算力约 2–3 倍。
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={() => {
+            const next = !link;
+            setLink(next);
+            writeLink(next);
+          }}
+          aria-pressed={link}
+          className={`flex w-full items-start justify-between gap-3 border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+            link ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
+          }`}
+        >
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Sparkles className="h-3.5 w-3.5" />
+              多路径 + 交叉验证联动
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              多路径生成的多份解答，改由【第二个已配置模型】独立仲裁（而非主模型自己合成）：兼得多路采样的多样性与第三方公正性。
+            </span>
+          </span>
+          <span
+            className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
+              link ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
+            }`}
+          >
+            {link ? '已开启' : '已关闭'}
+          </span>
+        </button>
+        {link && (
+          <p className="text-[11px] text-muted-foreground">
+            需同时开启「多路径自洽」且至少 2 个已配置存档才会真正生效；否则自动回退为普通多路径合成。
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={() => {
+            const next = !ragBoost;
+            setRagBoost(next);
+            writeRagBoost(next);
+          }}
+          aria-pressed={ragBoost}
+          className={`flex w-full items-start justify-between gap-3 border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+            ragBoost ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
+          }`}
+        >
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Sparkles className="h-3.5 w-3.5" />
+              RAG 检索增强 · 难题专精
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              深度思考或难题时，额外加强文档检索（召回更多相关段落）并强制依据资料作答、逐条注明出处，把权威资料用足。
+            </span>
+          </span>
+          <span
+            className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
+              ragBoost ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
+            }`}
+          >
+            {ragBoost ? '已开启' : '已关闭'}
+          </span>
+        </button>
+        {ragBoost && (
+          <p className="text-[11px] text-muted-foreground">
+            仅在「深度思考」模式或识别为难题时生效（检索召回 4 → 8 段）；快速回答与简单概念题自动跳过，不额外消耗 token。
           </p>
         )}
       </div>
