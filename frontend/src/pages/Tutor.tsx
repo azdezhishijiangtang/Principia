@@ -268,6 +268,16 @@ const Tutor = () => {
                         {m.model && (
                           <span className="text-[10px] bg-secondary text-muted-foreground px-1.5 py-0.5 font-mono">{m.model}</span>
                         )}
+                        {m.mode && (
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 ${
+                              m.mode === 'deep' ? 'bg-warning/15 text-warning' : 'bg-info/10 text-info'
+                            }`}
+                          >
+                            {m.auto && '自动·'}
+                            {m.mode === 'deep' ? '深度思考' : '快速回答'}
+                          </span>
+                        )}
                         {m.usage && (
                           <span className="text-[10px] text-muted-foreground">↑{m.usage.prompt} ↓{m.usage.completion} tokens</span>
                         )}

@@ -11,6 +11,9 @@ npm-debug.log*
 .DS_Store
 *.local
 
+# 部署凭据（绝不入库！）
+.gh_token
+
 # 编辑器
 .vscode/*
 !.vscode/extensions.json

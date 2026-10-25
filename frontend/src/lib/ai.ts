@@ -5,8 +5,8 @@
 
 /** AI 服务配置 */
 export interface AiConfig {
-  /** 思考模式：quick 快速回答（直接给答案）；deep 深度思考（先思考再作答） */
-  thinkingMode?: 'quick' | 'deep';
+  /** 思考模式偏好：quick 快速回答；deep 深度思考；auto 由系统按难度自动选择 */
+  thinkingMode?: 'quick' | 'deep' | 'auto';
   /** @deprecated 旧版「推理强度」字段，仅用于读取历史存档后迁移到 thinkingMode */
   reasoningEffort?: 'off' | 'low' | 'medium' | 'high';
   /** 接口基础地址，如 https://api.deepseek.com/v1 */
@@ -16,21 +16,60 @@ export interface AiConfig {
   model: string;
 }
 
-/**
- * 思考模式：
- * - quick 快速回答：直接给出答案，不展示思考过程
- * - deep  深度思考：先展示思考过程，再给出解答
- */
+/** 运行时真正生效的思考模式（不含自动） */
 export type ThinkingMode = 'quick' | 'deep';
 
+/** 用户设置的思考偏好：quick / deep / auto（自动按难度选择） */
+export type ThinkingModePref = 'quick' | 'deep' | 'auto';
+
 /**
- * 解析生效的思考模式。
+ * 解析用户设置的思考偏好（用于设置卡片展示，可能含 auto）。
  * 兼容旧存档：历史存的是推理强度 reasoningEffort，
  * 这里把 medium/high 视为深度思考，其余视为快速回答。
  */
-export const resolveThinkingMode = (cfg: AiConfig): ThinkingMode =>
-  cfg.thinkingMode ??
-  (cfg.reasoningEffort === 'medium' || cfg.reasoningEffort === 'high' ? 'deep' : 'quick');
+export const thinkingModePref = (cfg: AiConfig): ThinkingModePref =>
+  (cfg.thinkingMode ??
+    (cfg.reasoningEffort === 'medium' || cfg.reasoningEffort === 'high' ? 'deep' : 'quick')) as ThinkingModePref;
+
+/**
+ * 按题目难度把「自动」偏好解析为具体模式——这是「在手动之上加智能」的核心：
+ * - 简单题（概念 / 定义 / 是什么）→ 快速回答，省 token，把算力留给真正难的题
+ * - 困难题（证明 / 计算 / 推导 / 为什么）→ 深度思考，给足推理空间
+ * 纯本地启发式，不消耗任何 API 调用，毫秒级完成。
+ */
+export const classifyDifficulty = (query: string): 'easy' | 'hard' => {
+  const q = query.toLowerCase();
+  const hardKw = [
+    '证明', '推导', '计算', '求值', '求解', '积分', '微分', '解方程', '解方程组',
+    '为什么', '如何证明', '怎么证', '推导过程', '论证', '什么时候成立', '比较',
+    '区别', '证明题', '综合题', '算一下', '详细', '一步步', '如何求', '怎么算',
+    'prove', 'derive', 'calculate', 'compute', 'integral', 'differentiate', 'solve',
+  ];
+  const easyKw = [
+    '是什么', '定义', '概念', '意思', '含义', '什么是', '名词解释', '理解',
+    '通俗', '简单说', '一句话', '区别是什么', '什么叫', '怎么理解',
+    'what is', 'define', 'meaning', 'concept',
+  ];
+  let score = 0;
+  for (const k of hardKw) if (q.includes(k)) score += 1;
+  for (const k of easyKw) if (q.includes(k)) score -= 1;
+  // 含数学符号 / 公式，通常意味着需要计算或推导
+  if (/[∫∑√∂△≈≠≤≥∈∀∃×÷]/.test(query)) score += 1;
+  // 长问题通常更具体、更复合
+  if (query.trim().length > 80) score += 1;
+  return score > 0 ? 'hard' : 'easy';
+};
+
+/**
+ * 解析真正生效的思考模式：auto 偏好会按题目难度解析为 quick/deep。
+ * 无 query 时（如设置卡片预览）auto 默认返回 deep 以保质量。
+ */
+export const resolveThinkingMode = (cfg: AiConfig, query?: string): ThinkingMode => {
+  const pref = thinkingModePref(cfg);
+  if (pref !== 'auto') return pref;
+  if (query) return classifyDifficulty(query) === 'hard' ? 'deep' : 'quick';
+  return 'deep';
+};
 
 /** 各模式的输出预算与采样温度：快速回答更短更聚焦，深度思考给足推理空间 */
 const MODE_PLAN = {
@@ -271,6 +310,49 @@ export const saveAiConfig = (config: AiConfig): void => {
 
 export const clearAiConfig = (): void => {
   clearAiProfile(getActiveProfile());
+};
+
+/**
+ * 全局「智能选模型」开关：开启后，发送时按题目难度在已配置存档中自动路由
+ * ——简单题用便宜快的模型，困难题用旗舰推理模型。关闭则沿用当前手动激活存档。
+ * 这是对「手动选模型」的增强，而非替换：手动永远可用。
+ */
+const AUTO_MODEL_KEY = 'mathlens-ai-auto-model';
+
+export const readAutoModel = (): boolean => localStorage.getItem(AUTO_MODEL_KEY) === '1';
+
+export const writeAutoModel = (on: boolean): void => {
+  localStorage.setItem(AUTO_MODEL_KEY, on ? '1' : '0');
+};
+
+/** 粗略评估模型「强度」：强模型得分高，快/廉价模型得分低。用于自动路由排序。 */
+const STRONG_MODEL = /pro|max|ultra|astra|旗舰|plus|premium|5\.3|v4-pro|v4\.1-pro|gpt-6|gpt-5\.6-sol|gpt-5\.6-terra/i;
+const FAST_MODEL = /flash|mini|turbo|lite|fast|air|free|glm-4\.5-flash|moonshot-v1/i;
+
+export const rankModelStrength = (model: string): number => {
+  const m = model.toLowerCase();
+  let s = 0;
+  if (STRONG_MODEL.test(m)) s += 2;
+  if (FAST_MODEL.test(m)) s -= 2;
+  return s;
+};
+
+/**
+ * 按难度在已配置存档中选模型：困难题选最强，简单题选最快。
+ * 返回选中的存档序号；无可用存档返回 -1。
+ */
+export const pickAutoProfile = (
+  query: string,
+  profiles: (AiProfile | null)[],
+): number => {
+  const valid = profiles
+    .map((p, i) => ({ p, i }))
+    .filter((x) => isValid(x.p));
+  if (valid.length === 0) return -1;
+  if (valid.length === 1) return valid[0].i;
+  const hard = classifyDifficulty(query) === 'hard';
+  valid.sort((a, b) => rankModelStrength(b.p!.model) - rankModelStrength(a.p!.model));
+  return hard ? valid[0].i : valid[valid.length - 1].i;
 };
 
 /**

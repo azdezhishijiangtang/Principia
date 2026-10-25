@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { KeyRound, Check, Eye, EyeOff, AlertCircle, Save, Trash2, Zap, Brain, RefreshCw, ListTree, CloudDownload, Database } from 'lucide-react';
+import { KeyRound, Check, Eye, EyeOff, AlertCircle, Save, Trash2, Zap, Brain, Sparkles, RefreshCw, ListTree, CloudDownload, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -12,7 +12,9 @@ import {
   clearAiProfile,
   getActiveProfile,
   setActiveProfile,
-  resolveThinkingMode,
+  thinkingModePref,
+  readAutoModel,
+  writeAutoModel,
 } from '@/lib/ai';
 import {
   getCatalog,
@@ -52,8 +54,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
   const [manualModel, setManualModel] = useState(false);
-  /** 当前生效的思考模式（兼容旧存档里只存了 reasoningEffort 的情况） */
-  const mode = resolveThinkingMode(form);
+  /** 智能选模型开关（全局，不随存档保存） */
+  const [autoModel, setAutoModel] = useState<boolean>(() => readAutoModel());
+  /** 当前生效的思考偏好（兼容旧存档里只存了 reasoningEffort 的情况） */
+  const mode = thinkingModePref(form);
 
   useEffect(() => {
     setSaved(false);
@@ -128,7 +132,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
       apiKey: form.apiKey.trim(),
       model: form.model.trim(),
       // 统一按新字段保存：旧存档的 reasoningEffort 会被解析成 thinkingMode
-      thinkingMode: form.thinkingMode ?? resolveThinkingMode(form),
+      thinkingMode: form.thinkingMode ?? thinkingModePref(form),
     };
     saveAiProfile(slot, next);
     setProfiles(readAiProfiles());
@@ -345,40 +349,99 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
 
       <div className="space-y-2">
         <Label>思考模式</Label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
             onClick={() => setForm((f) => ({ ...f, thinkingMode: 'quick' }))}
             aria-pressed={mode === 'quick'}
-            className={`border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+            className={`border px-2 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
               mode === 'quick' ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
             }`}
           >
-            <span className="flex items-center gap-1.5 text-sm font-medium">
+            <span className="flex items-center gap-1 text-sm font-medium">
               <Zap className="h-3.5 w-3.5" />
-              快速回答
+              快速
             </span>
-            <span className="mt-0.5 block text-xs text-muted-foreground">
-              直接给出答案，不展示思考过程
+            <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">
+              直接给答案，不展示思考过程
             </span>
           </button>
           <button
             type="button"
             onClick={() => setForm((f) => ({ ...f, thinkingMode: 'deep' }))}
             aria-pressed={mode === 'deep'}
-            className={`border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+            className={`border px-2 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
               mode === 'deep' ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
             }`}
           >
-            <span className="flex items-center gap-1.5 text-sm font-medium">
+            <span className="flex items-center gap-1 text-sm font-medium">
               <Brain className="h-3.5 w-3.5" />
-              深度思考
+              深度
             </span>
-            <span className="mt-0.5 block text-xs text-muted-foreground">
-              先展示思考过程，再给出解答
+            <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">
+              先思考再作答，展示过程
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setForm((f) => ({ ...f, thinkingMode: 'auto' }))}
+            aria-pressed={mode === 'auto'}
+            className={`border px-2 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+              mode === 'auto' ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
+            }`}
+          >
+            <span className="flex items-center gap-1 text-sm font-medium">
+              <Sparkles className="h-3.5 w-3.5" />
+              智能
+            </span>
+            <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">
+              系统按难度自动选快速/深度
             </span>
           </button>
         </div>
+        {mode === 'auto' && (
+          <p className="text-[11px] text-muted-foreground">
+            自动模式为增强项：简单题（概念/定义）自动快速回答省算力，证明/计算/推导等难题自动深度思考。
+          </p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label>模型选择</Label>
+        <button
+          type="button"
+          onClick={() => {
+            const next = !autoModel;
+            setAutoModel(next);
+            writeAutoModel(next);
+          }}
+          aria-pressed={autoModel}
+          className={`flex w-full items-start justify-between gap-3 border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+            autoModel ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
+          }`}
+        >
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Sparkles className="h-3.5 w-3.5" />
+              智能选模型（自动）
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              按题目难度在已配置存档中自动路由：简单题用便宜快的模型，难题用旗舰推理模型。
+            </span>
+          </span>
+          <span
+            className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
+              autoModel ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
+            }`}
+          >
+            {autoModel ? '已开启' : '手动'}
+          </span>
+        </button>
+        {autoModel && (
+          <p className="text-[11px] text-muted-foreground">
+            需至少配置 2 个模型存档才会真正路由；当前仅 1 个或 0 个时仍使用当前激活存档。手动选择存档依然可用。
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">

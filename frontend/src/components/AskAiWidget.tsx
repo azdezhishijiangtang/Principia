@@ -167,6 +167,19 @@ const AskAiWidget = () => {
                     <div className="max-w-full">
                       <div className="flex items-center gap-2 mb-1.5">
                         <span className="text-xs font-medium text-muted-foreground">Principia 助教</span>
+                        {m.model && (
+                          <span className="text-[10px] bg-secondary text-muted-foreground px-1.5 py-0.5 font-mono">{m.model}</span>
+                        )}
+                        {m.mode && (
+                          <span
+                            className={`text-[10px] px-1.5 py-0.5 ${
+                              m.mode === 'deep' ? 'bg-warning/15 text-warning' : 'bg-info/10 text-info'
+                            }`}
+                          >
+                            {m.auto && '自动·'}
+                            {m.mode === 'deep' ? '深度思考' : '快速回答'}
+                          </span>
+                        )}
                         {status === 'searching' && i === messages.length - 1 && (
                           <span className="flex items-center gap-1 text-xs text-info">
                             <FileSearch className="h-3 w-3 animate-pulse" />

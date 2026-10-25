@@ -5,12 +5,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   readAiConfig,
+  readAiProfiles,
+  readProfileConfig,
+  readAutoModel,
+  pickAutoProfile,
   streamChat,
   type ChatMeta,
   describeAiError,
   MATH_TUTOR_SYSTEM_PROMPT,
   getModeGuidance,
   resolveThinkingMode,
+  thinkingModePref,
   type ChatMessage,
 } from '@/lib/ai';
 import { addQaEntry, type QaSource } from '@/lib/qaHistory';
@@ -28,6 +33,10 @@ export interface TutorMessage {
   sources?: QaSource[];
   /** 接入的模型名（assistant 消息） */
   model?: string;
+  /** 本次回答实际采用的思考模式（quick/deep），自动模式下由系统决定 */
+  mode?: 'quick' | 'deep';
+  /** 本次是否由「智能(自动)」决定（思考模式或模型任一为自动） */
+  auto?: boolean;
   /** token 用量（assistant 消息） */
   usage?: { prompt: number; completion: number; total: number };
   /** 用户消息附带的图片（data URL） */
@@ -119,11 +128,24 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
 
       options.onBeforeSend?.();
 
-      // ── 组装系统上下文 ──
-      // 思考模式：把「快速回答 / 深度思考」的作答要求写进系统提示词。
+      // ── 智能选模型（在手动之上加智能，不替换手动）──
+      // 开启「智能选模型」时，按题目难度在已配置存档中自动路由：
+      // 简单题用便宜快的模型，困难题用旗舰推理模型，把算力用在刀刃上。
+      const autoModelOn = readAutoModel();
+      let effectiveCfg = cfg;
+      if (autoModelOn) {
+        const idx = pickAutoProfile(trimmed, readAiProfiles());
+        const picked = idx >= 0 ? readProfileConfig(idx) : null;
+        if (picked) effectiveCfg = picked;
+      }
+
+      // ── 思考模式：把「快速回答 / 深度思考」的作答要求写进系统提示词 ──
+      // 自动模式会按题目难度解析为 quick/deep：简单题快速答，困难题深度思考。
       // 这样即便接入的服务商不支持思考参数，两种模式的差异也一定可感知。
-      // 深度思考时模型会先输出思考过程（reasoning_content），再给出正式解答。
-      const modeGuidance = getModeGuidance(resolveThinkingMode(cfg));
+      const modePref = thinkingModePref(effectiveCfg);
+      const effMode = resolveThinkingMode(effectiveCfg, trimmed);
+      const autoUsed = autoModelOn || modePref === 'auto';
+      const modeGuidance = getModeGuidance(effMode);
       const systemPrompt = `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}`;
       const history: ChatMessage[] = [
         { role: 'system', content: systemPrompt },
@@ -185,7 +207,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       setMessages((prev) => [
         ...prev,
         { role: 'user', content: trimmed, images: images.length > 0 ? images.map((im) => im.dataUrl) : undefined },
-        { role: 'assistant', content: '' },
+        { role: 'assistant', content: '', mode: effMode, auto: autoUsed },
       ]);
       setImages([]);
       setInput('');
@@ -200,7 +222,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       let modelName: string | undefined;
       try {
         for await (const chunk of streamChat(
-          cfg,
+          effectiveCfg,
           history,
           controller.signal,
           (meta: ChatMeta) => {
@@ -236,7 +258,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
           const capturedReasoning = reasoningAcc;
           setMessages((prev) => [
             ...prev.slice(0, -1),
-            { role: 'assistant', content: captured, reasoning: capturedReasoning, sources },
+            { role: 'assistant', content: captured, reasoning: capturedReasoning, sources, mode: effMode, auto: autoUsed },
           ]);
         }
         // 收尾：确保思考过程与正文完整保留，且不覆盖已有的 usage / 模型信息
@@ -251,6 +273,8 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
               sources,
               model: last?.model ?? modelName,
               usage: last?.usage,
+              mode: effMode,
+              auto: autoUsed,
             },
           ];
         });
@@ -271,7 +295,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
           // 已有部分输出：保留内容（含思考过程）并附错误说明
           setMessages((prev) => [
             ...prev.slice(0, -1),
-            { role: 'assistant', content: acc, reasoning: reasoningAcc },
+            { role: 'assistant', content: acc, reasoning: reasoningAcc, mode: effMode, auto: autoUsed },
           ]);
           setError(`${describeAiError(err)}（已保留已生成的部分回答）`);
         }
