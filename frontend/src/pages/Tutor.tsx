@@ -483,42 +483,45 @@ const Tutor = () => {
           )}
 
           <DocLibraryPanel userId={userId} />
-
-          <div className="border border-border bg-card p-5">
-            <h3 className="font-serif text-base font-semibold mb-3">使用说明</h3>
-            <ul className="space-y-2.5 text-sm text-muted-foreground leading-relaxed">
-              <li className="flex gap-2">
-                <span className="font-mono text-info shrink-0">01</span>
-                填写任一 OpenAI 兼容服务商的密钥（见上方预设），保存后即可提问。
-              </li>
-              <li className="flex gap-2">
-                <span className="font-mono text-info shrink-0">02</span>
-                在任意知识点页点击"问 AI"，会自动带上该知识点的上下文。
-              </li>
-              <li className="flex gap-2">
-                <span className="font-mono text-info shrink-0">03</span>
-                上传教材 / 讲义 / 笔记，提问时自动检索相关段落，AI 会参考你的资料并注明出处。
-              </li>
-              <li className="flex gap-2">
-                <span className="font-mono text-info shrink-0">04</span>
-                每轮问答自动存入学习档案，可回顾、AI 总结、生成专项练习。
-              </li>
-            </ul>
-          </div>
-
-          <div className="border border-border bg-card p-5">
-            <h3 className="font-serif text-base font-semibold mb-3">学习档案</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-              答疑历史按账户沉淀，AI 可帮你总结薄弱点并生成个性化练习题。
-            </p>
-            <Button asChild variant="outline" size="sm" className="w-full gap-1.5">
-              <Link to="/study">
-                打开学习档案
-                <ChevronRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
         </aside>
+      </div>
+
+      {/* ── 对话框下方：使用说明 / 学习档案 ── */}
+      <div className="mt-5 grid gap-5 md:grid-cols-5">
+        <div className="border border-border bg-card p-5 md:col-span-3">
+          <h3 className="font-serif text-base font-semibold mb-3">使用说明</h3>
+          <ul className="space-y-2.5 text-sm text-muted-foreground leading-relaxed">
+            <li className="flex gap-2">
+              <span className="font-mono text-info shrink-0">01</span>
+              填写任一 OpenAI 兼容服务商的密钥（见上方预设），保存后即可提问。
+            </li>
+            <li className="flex gap-2">
+              <span className="font-mono text-info shrink-0">02</span>
+              在任意知识点页点击"问 AI"，会自动带上该知识点的上下文。
+            </li>
+            <li className="flex gap-2">
+              <span className="font-mono text-info shrink-0">03</span>
+              上传教材 / 讲义 / 笔记，提问时自动检索相关段落，AI 会参考你的资料并注明出处。
+            </li>
+            <li className="flex gap-2">
+              <span className="font-mono text-info shrink-0">04</span>
+              每轮问答自动存入学习档案，可回顾、AI 总结、生成专项练习。
+            </li>
+          </ul>
+        </div>
+
+        <div className="border border-border bg-card p-5 md:col-span-2">
+          <h3 className="font-serif text-base font-semibold mb-3">学习档案</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+            答疑历史按账户沉淀，AI 可帮你总结薄弱点并生成个性化练习题。
+          </p>
+          <Button asChild variant="outline" size="sm" className="w-full gap-1.5">
+            <Link to="/study">
+              打开学习档案
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
