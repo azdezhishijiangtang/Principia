@@ -659,3 +659,27 @@
   line-height: 1.7;
   color: var(--foreground);
 }
+.pdf-doc-lead {
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0 0 8px;
+  color: var(--foreground);
+}
+.pdf-doc-section-title {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.4;
+  margin: 16px 0 6px;
+  color: var(--foreground);
+}
+.pdf-doc-subhead {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 22px 0 8px;
+  color: var(--foreground);
+}
+.pdf-doc-kp {
+  margin: 0 0 6px;
+  line-height: 1.7;
+  color: var(--foreground);
+}

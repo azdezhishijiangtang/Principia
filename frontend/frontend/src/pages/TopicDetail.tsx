@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -9,6 +9,8 @@ import {
   Sparkles,
   List,
   X,
+  FileDown,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FadeIn, Stagger } from '@/components/MotionPrimitives';
@@ -17,6 +19,9 @@ import ProblemCard from '@/components/ProblemCard';
 import { courses } from '@/data/courses';
 import { topics } from '@/data/topics';
 import { problems } from '@/data/problems';
+import { elementToPdfBlob } from '@/lib/pdfExport';
+import { downloadBlob } from '@/lib/textImage';
+import { toast } from 'sonner';
 import NotFound from './NotFound';
 
 interface Section {
@@ -104,6 +109,28 @@ const TopicDetail = () => {
     setSearchParams(searchParams);
   };
 
+  // PDF 导出：渲染离屏浅色文档节点后栅格化（避开屏幕上的入场动画导致空白）
+  const [exporting, setExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
+
+  const handleExportPdf = async () => {
+    if (!exportRef.current) return;
+    setExporting(true);
+    try {
+      // 等待离屏节点渲染与 KaTeX/字体就绪
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      await new Promise((r) => setTimeout(r, 200));
+      const blob = await elementToPdfBlob(exportRef.current);
+      const safe = topic.title.replace(/[\\/:*?"<>|]/g, '_').slice(0, 60);
+      downloadBlob(blob, `Principia-知识讲解-${safe}.pdf`);
+      toast.success('已导出 PDF');
+    } catch (err) {
+      toast.error('导出失败，请重试');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="container py-10 lg:py-14">
       {/* 面包屑 */}
@@ -142,6 +169,20 @@ const TopicDetail = () => {
                   <Sparkles className="h-4 w-4" />
                   问 AI 讲解这个知识点
                 </Link>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => void handleExportPdf()}
+                disabled={exporting}
+              >
+                {exporting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <FileDown className="h-4 w-4" />
+                )}
+                {exporting ? '导出中…' : '导出 PDF'}
               </Button>
               <span className="text-xs text-muted-foreground">
                 带着本页上下文提问，问答自动记入学习档案
@@ -400,6 +441,33 @@ const TopicDetail = () => {
           </div>
         </aside>
       </div>
+
+      {/* 离屏导出文档：仅导出时渲染，供栅格化为 PDF（避开屏幕入场动画导致的空白） */}
+      {exporting && (
+        <div id="pdf-export-root" aria-hidden="true">
+          <div ref={exportRef} className="pdf-doc">
+            <p className="pdf-doc-brand">{course.name} · {topic.chapter}</p>
+            <h1 className="pdf-doc-title"><InlineMathText text={topic.title} /></h1>
+            <p className="pdf-doc-lead"><InlineMathText text={topic.summary} /></p>
+            <div className="pdf-doc-body">
+              {sections.map((s) => (
+                <section key={s.id}>
+                  {s.title && (
+                    <h2 className="pdf-doc-section-title"><InlineMathText text={s.title} /></h2>
+                  )}
+                  <MathText content={s.body} />
+                </section>
+              ))}
+              <h2 className="pdf-doc-subhead">核心要点</h2>
+              <ol>
+                {topic.keyPoints.map((kp, i) => (
+                  <li key={i} className="pdf-doc-kp"><InlineMathText text={kp} /></li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
