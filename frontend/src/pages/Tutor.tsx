@@ -306,6 +306,21 @@ const Tutor = () => {
                           </div>
                         </details>
                       )}
+                      {/* 智能自检：自动复核结果（榨干算力的纠错环节） */}
+                      {m.selfCheck && (
+                        <details
+                          className="mb-2.5 border border-success/30 bg-success/5 px-3.5 py-2.5 text-xs"
+                          open={streaming && i === messages.length - 1}
+                        >
+                          <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-success">
+                            <Check className="h-3 w-3" />
+                            智能自检
+                          </summary>
+                          <div className="mt-2 whitespace-pre-wrap leading-relaxed text-muted-foreground">
+                            {m.selfCheck}
+                          </div>
+                        </details>
+                      )}
                       {m.content ? (
                         <>
                           <MathText content={m.content} className="text-sm" />

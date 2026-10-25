@@ -5,8 +5,8 @@
 
 /** AI 服务配置 */
 export interface AiConfig {
-  /** 思考模式偏好：quick 快速回答；deep 深度思考；auto 由系统按难度自动选择 */
-  thinkingMode?: 'quick' | 'deep' | 'auto';
+  /** 思考模式：quick 快速回答；deep 深度思考。始终由用户手动选择，系统不自动切换 */
+  thinkingMode?: 'quick' | 'deep';
   /** @deprecated 旧版「推理强度」字段，仅用于读取历史存档后迁移到 thinkingMode */
   reasoningEffort?: 'off' | 'low' | 'medium' | 'high';
   /** 接口基础地址，如 https://api.deepseek.com/v1 */
@@ -19,8 +19,8 @@ export interface AiConfig {
 /** 运行时真正生效的思考模式（不含自动） */
 export type ThinkingMode = 'quick' | 'deep';
 
-/** 用户设置的思考偏好：quick / deep / auto（自动按难度选择） */
-export type ThinkingModePref = 'quick' | 'deep' | 'auto';
+/** 思考模式：quick 快速回答；deep 深度思考（手动选择，无自动档） */
+export type ThinkingModePref = 'quick' | 'deep';
 
 /**
  * 解析用户设置的思考偏好（用于设置卡片展示，可能含 auto）。
@@ -61,15 +61,10 @@ export const classifyDifficulty = (query: string): 'easy' | 'hard' => {
 };
 
 /**
- * 解析真正生效的思考模式：auto 偏好会按题目难度解析为 quick/deep。
- * 无 query 时（如设置卡片预览）auto 默认返回 deep 以保质量。
+ * 解析真正生效的思考模式。思考模式由用户手动选择（quick/deep），不存在自动档；
+ * 自动只用于「模型选择」（见 readAutoModel / pickAutoProfile）。
  */
-export const resolveThinkingMode = (cfg: AiConfig, query?: string): ThinkingMode => {
-  const pref = thinkingModePref(cfg);
-  if (pref !== 'auto') return pref;
-  if (query) return classifyDifficulty(query) === 'hard' ? 'deep' : 'quick';
-  return 'deep';
-};
+export const resolveThinkingMode = (cfg: AiConfig): ThinkingMode => thinkingModePref(cfg);
 
 /** 各模式的输出预算与采样温度：快速回答更短更聚焦，深度思考给足推理空间 */
 const MODE_PLAN = {
@@ -324,6 +319,38 @@ export const readAutoModel = (): boolean => localStorage.getItem(AUTO_MODEL_KEY)
 export const writeAutoModel = (on: boolean): void => {
   localStorage.setItem(AUTO_MODEL_KEY, on ? '1' : '0');
 };
+
+/**
+ * 全局「智能自检」开关（默认开启）：每次回答生成完毕后，自动再发起一次复核，
+ * 让模型审查自己的解答有无计算/逻辑错误、跳步或更优解法——把额外算力花在「纠错题」上，
+ * 是「榨干算力」提升正确率的关键一招。手动可关。
+ */
+const SELF_CHECK_KEY = 'mathlens-ai-self-check';
+
+export const readSelfCheck = (): boolean => localStorage.getItem(SELF_CHECK_KEY) !== '0';
+
+export const writeSelfCheck = (on: boolean): void => {
+  localStorage.setItem(SELF_CHECK_KEY, on ? '1' : '0');
+};
+
+/**
+ * 全局「智能容错（失败自动切换模型）」开关（默认开启）：发送彻底失败（未产出任何内容，
+ * 如网络/服务端错误）时，自动用下一个已配置存档的模型重试，最大化「一定能拿到答案」的概率。
+ */
+const FALLBACK_KEY = 'mathlens-ai-fallback';
+
+export const readFallback = (): boolean => localStorage.getItem(FALLBACK_KEY) !== '0';
+
+export const writeFallback = (on: boolean): void => {
+  localStorage.setItem(FALLBACK_KEY, on ? '1' : '0');
+};
+
+/** 智能自检的复核指令：追加在「问题 + 原回答」之后，要求模型批判性复核 */
+export const SELF_CHECK_PROMPT = `你是严谨的答卷复核员。请基于学生的原始问题，批判性审查上面助教的回答：
+1) 计算或推导是否有误、符号/常数是否抄错、跳步是否导致结论不成立；
+2) 是否存在逻辑漏洞、未被验证的隐含假设、或结论范围被错误扩大/缩小；
+3) 是否有明显更快或更稳妥的解法。
+若发现错误，直接给出修正后的完整正确解答（含关键步骤）；若整体无误，只用 2-3 句话简要确认并指出最易出错的地方。不要重复原题与已有且正确的部分。`;
 
 /** 粗略评估模型「强度」：强模型得分高，快/廉价模型得分低。用于自动路由排序。 */
 const STRONG_MODEL = /pro|max|ultra|astra|旗舰|plus|premium|5\.3|v4-pro|v4\.1-pro|gpt-6|gpt-5\.6-sol|gpt-5\.6-terra/i;

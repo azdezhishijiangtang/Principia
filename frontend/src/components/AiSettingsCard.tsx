@@ -15,6 +15,10 @@ import {
   thinkingModePref,
   readAutoModel,
   writeAutoModel,
+  readSelfCheck,
+  writeSelfCheck,
+  readFallback,
+  writeFallback,
 } from '@/lib/ai';
 import {
   getCatalog,
@@ -40,7 +44,7 @@ const emptyForm = (): AiProfile => ({
 });
 
 /**
- * AI 服务配置卡片：三套独立存档（接口地址 / 模型 / 思考强度 / 密钥），
+ * AI 服务配置卡片：三套独立存档（接口地址 / 模型 / 思考模式 / 密钥），
  * 可随时切换当前生效的存档。API Key 只写入浏览器 localStorage。
  */
 const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
@@ -56,6 +60,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const [manualModel, setManualModel] = useState(false);
   /** 智能选模型开关（全局，不随存档保存） */
   const [autoModel, setAutoModel] = useState<boolean>(() => readAutoModel());
+  /** 智能自检开关（全局，默认开启）：回答后自动复核纠错 */
+  const [selfCheck, setSelfCheck] = useState<boolean>(() => readSelfCheck());
+  /** 智能容错开关（全局，默认开启）：失败时自动切换其他模型重试 */
+  const [fallback, setFallback] = useState<boolean>(() => readFallback());
   /** 当前生效的思考偏好（兼容旧存档里只存了 reasoningEffort 的情况） */
   const mode = thinkingModePref(form);
 
@@ -348,8 +356,8 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label>思考模式</Label>
-        <div className="grid grid-cols-3 gap-2">
+        <Label>思考模式（手动选择）</Label>
+        <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={() => setForm((f) => ({ ...f, thinkingMode: 'quick' }))}
@@ -360,7 +368,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           >
             <span className="flex items-center gap-1 text-sm font-medium">
               <Zap className="h-3.5 w-3.5" />
-              快速
+              快速回答
             </span>
             <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">
               直接给答案，不展示思考过程
@@ -376,34 +384,16 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           >
             <span className="flex items-center gap-1 text-sm font-medium">
               <Brain className="h-3.5 w-3.5" />
-              深度
+              深度思考
             </span>
             <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">
               先思考再作答，展示过程
             </span>
           </button>
-          <button
-            type="button"
-            onClick={() => setForm((f) => ({ ...f, thinkingMode: 'auto' }))}
-            aria-pressed={mode === 'auto'}
-            className={`border px-2 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
-              mode === 'auto' ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
-            }`}
-          >
-            <span className="flex items-center gap-1 text-sm font-medium">
-              <Sparkles className="h-3.5 w-3.5" />
-              智能
-            </span>
-            <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">
-              系统按难度自动选快速/深度
-            </span>
-          </button>
         </div>
-        {mode === 'auto' && (
-          <p className="text-[11px] text-muted-foreground">
-            自动模式为增强项：简单题（概念/定义）自动快速回答省算力，证明/计算/推导等难题自动深度思考。
-          </p>
-        )}
+        <p className="text-[11px] text-muted-foreground">
+          思考模式始终由你手动选择，系统不会自动切换；「智能」只用于下面的模型选择。
+        </p>
       </div>
 
       <div className="space-y-2">
@@ -444,6 +434,70 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
         )}
       </div>
 
+      <div className="space-y-3 border-t border-border pt-4">
+        <Label className="text-xs text-muted-foreground">智能增强（榨干算力）</Label>
+
+        <button
+          type="button"
+          onClick={() => {
+            const next = !selfCheck;
+            setSelfCheck(next);
+            writeSelfCheck(next);
+          }}
+          aria-pressed={selfCheck}
+          className={`flex w-full items-start justify-between gap-3 border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+            selfCheck ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
+          }`}
+        >
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Sparkles className="h-3.5 w-3.5" />
+              智能自检（自动复核）
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              回答生成后自动再让模型复核一遍：揪出计算/逻辑错误、跳步或更优解，把额外算力花在「纠错题」上。
+            </span>
+          </span>
+          <span
+            className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
+              selfCheck ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
+            }`}
+          >
+            {selfCheck ? '已开启' : '已关闭'}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            const next = !fallback;
+            setFallback(next);
+            writeFallback(next);
+          }}
+          aria-pressed={fallback}
+          className={`flex w-full items-start justify-between gap-3 border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+            fallback ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
+          }`}
+        >
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Sparkles className="h-3.5 w-3.5" />
+              智能容错（失败自动切换）
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              当前模型彻底失败时，自动用下一个已配置存档的模型重试，最大化「一定能拿到答案」的概率。
+            </span>
+          </span>
+          <span
+            className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
+              fallback ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
+            }`}
+          >
+            {fallback ? '已开启' : '已关闭'}
+          </span>
+        </button>
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="ai-key">API Key</Label>
         <div className="relative">
@@ -469,7 +523,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
       <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/60 px-3 py-2.5 leading-relaxed">
         <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-warning" />
         <span>
-          三个存档各自独立保存（含接口地址、模型、思考强度与密钥），只存在你自己的浏览器
+          三个存档各自独立保存（含接口地址、模型、思考模式与密钥），只存在你自己的浏览器
           localStorage，不会上传到服务器；请求由浏览器直连你所选服务商。
         </span>
       </div>

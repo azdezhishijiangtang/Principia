@@ -8,6 +8,8 @@ import {
   readAiProfiles,
   readProfileConfig,
   readAutoModel,
+  readSelfCheck,
+  readFallback,
   pickAutoProfile,
   streamChat,
   type ChatMeta,
@@ -15,8 +17,10 @@ import {
   MATH_TUTOR_SYSTEM_PROMPT,
   getModeGuidance,
   resolveThinkingMode,
-  thinkingModePref,
+  SELF_CHECK_PROMPT,
   type ChatMessage,
+  type AiConfig,
+  type AiProfile,
 } from '@/lib/ai';
 import { addQaEntry, type QaSource } from '@/lib/qaHistory';
 import { retrieveChunks } from '@/lib/docLibrary';
@@ -33,10 +37,12 @@ export interface TutorMessage {
   sources?: QaSource[];
   /** 接入的模型名（assistant 消息） */
   model?: string;
-  /** 本次回答实际采用的思考模式（quick/deep），自动模式下由系统决定 */
+  /** 本次回答实际采用的思考模式（quick/deep），由用户手动选择 */
   mode?: 'quick' | 'deep';
-  /** 本次是否由「智能(自动)」决定（思考模式或模型任一为自动） */
+  /** 本次是否由「智能选模型」自动挑了模型（仅模型层面，思考模式始终手动） */
   auto?: boolean;
+  /** 智能自检的复核结果（assistant 消息） */
+  selfCheck?: string;
   /** token 用量（assistant 消息） */
   usage?: { prompt: number; completion: number; total: number };
   /** 用户消息附带的图片（data URL） */
@@ -140,11 +146,10 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       }
 
       // ── 思考模式：把「快速回答 / 深度思考」的作答要求写进系统提示词 ──
-      // 自动模式会按题目难度解析为 quick/deep：简单题快速答，困难题深度思考。
+      // 思考模式由用户手动选择（quick/deep），不自动切换；自动只用于「智能选模型」。
       // 这样即便接入的服务商不支持思考参数，两种模式的差异也一定可感知。
-      const modePref = thinkingModePref(effectiveCfg);
-      const effMode = resolveThinkingMode(effectiveCfg, trimmed);
-      const autoUsed = autoModelOn || modePref === 'auto';
+      const effMode = resolveThinkingMode(effectiveCfg);
+      const autoUsed = autoModelOn; // auto 仅表示本次由「智能选模型」自动挑了模型
       const modeGuidance = getModeGuidance(effMode);
       const systemPrompt = `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}`;
       const history: ChatMessage[] = [
@@ -220,9 +225,26 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       let acc = '';
       let reasoningAcc = '';
       let modelName: string | undefined;
-      try {
+      let usedCfg = effectiveCfg;
+
+      // ── 智能容错：候选模型列表（当前/自动选定的模型优先，其余已配置模型按序兜底）──
+      const allValid = readAiProfiles().filter(
+        (p): p is AiProfile => Boolean(p && p.baseUrl && p.apiKey && p.model),
+      );
+      const candidates: AiConfig[] = [effectiveCfg];
+      for (const p of allValid) {
+        const c = { baseUrl: p.baseUrl, apiKey: p.apiKey, model: p.model } as AiConfig;
+        if (c.baseUrl !== effectiveCfg.baseUrl || c.model !== effectiveCfg.model) candidates.push(c);
+      }
+
+      let lastErr: unknown = null;
+      let succeeded = false;
+
+      const runStream = async (cfg: AiConfig) => {
+        acc = '';
+        reasoningAcc = '';
         for await (const chunk of streamChat(
-          effectiveCfg,
+          cfg,
           history,
           controller.signal,
           (meta: ChatMeta) => {
@@ -254,57 +276,103 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
           },
         )) {
           acc += chunk;
-          const captured = acc;
-          const capturedReasoning = reasoningAcc;
           setMessages((prev) => [
             ...prev.slice(0, -1),
-            { role: 'assistant', content: captured, reasoning: capturedReasoning, sources, mode: effMode, auto: autoUsed },
+            { role: 'assistant', content: acc, reasoning: reasoningAcc, sources, mode: effMode, auto: autoUsed },
           ]);
         }
-        // 收尾：确保思考过程与正文完整保留，且不覆盖已有的 usage / 模型信息
-        setMessages((prev) => {
-          const last = prev[prev.length - 1];
-          return [
-            ...prev.slice(0, -1),
-            {
-              role: 'assistant',
-              content: acc,
-              reasoning: reasoningAcc,
-              sources,
-              model: last?.model ?? modelName,
-              usage: last?.usage,
-              mode: effMode,
-              auto: autoUsed,
-            },
-          ];
-        });
-        addQaEntry({
-          userId,
-          question: trimmed,
-          answer: acc,
-          courseId: topic?.courseId,
-          topicId: topic?.id,
-          topicTitle: topic?.title,
-          sources: sources.length > 0 ? sources : undefined,
-          model: modelName ?? lastModel,
-        });
-      } catch (err) {
-        if (!acc && !reasoningAcc) {
-          setMessages((prev) => prev.slice(0, -1));
-        } else {
-          // 已有部分输出：保留内容（含思考过程）并附错误说明
-          setMessages((prev) => [
-            ...prev.slice(0, -1),
-            { role: 'assistant', content: acc, reasoning: reasoningAcc, mode: effMode, auto: autoUsed },
-          ]);
-          setError(`${describeAiError(err)}（已保留已生成的部分回答）`);
+      };
+
+      for (let ci = 0; ci < candidates.length; ci++) {
+        const cfg = candidates[ci];
+        try {
+          await runStream(cfg);
+          usedCfg = cfg;
+          succeeded = true;
+          break;
+        } catch (err) {
+          lastErr = err;
+          const aborted = err instanceof DOMException && err.name === 'AbortError';
+          // 已产出部分内容、或用户主动停止：保留现状，不再切换重试
+          if (acc || reasoningAcc || aborted) break;
+          // 彻底失败且未产出任何内容：若还有候选模型且开启容错，则切换重试
+          if (ci < candidates.length - 1 && readFallback()) {
+            setMessages((prev) => [
+              ...prev.slice(0, -1),
+              { role: 'assistant', content: '', mode: effMode, auto: autoUsed },
+            ]);
+            continue;
+          }
+          break;
         }
-        if (!acc && !reasoningAcc) setError(describeAiError(err));
-      } finally {
+      }
+
+      if (!succeeded) {
+        if (!acc && !reasoningAcc) setMessages((prev) => prev.slice(0, -1));
+        setError(describeAiError(lastErr));
         setStreaming(false);
         setStatus('idle');
         abortRef.current = null;
+        return;
       }
+
+      // 收尾：确保思考过程与正文完整保留，且不覆盖已有的 usage / 模型信息
+      setMessages((prev) => {
+        const last = prev[prev.length - 1];
+        return [
+          ...prev.slice(0, -1),
+          {
+            role: 'assistant',
+            content: acc,
+            reasoning: reasoningAcc,
+            sources,
+            model: last?.model ?? modelName,
+            usage: last?.usage,
+            mode: effMode,
+            auto: autoUsed,
+          },
+        ];
+      });
+
+      // ── 智能自检：回答生成后自动复核（榨干算力的纠错关键）──
+      if (readSelfCheck() && acc.trim()) {
+        try {
+          const checkHistory: ChatMessage[] = [
+            { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}` },
+            { role: 'user', content: trimmed },
+            { role: 'assistant', content: acc },
+            { role: 'user', content: SELF_CHECK_PROMPT },
+          ];
+          let checkAcc = '';
+          for await (const c of streamChat(usedCfg, checkHistory, controller.signal)) {
+            checkAcc += c;
+            setMessages((prev) => {
+              const last = prev[prev.length - 1];
+              return [...prev.slice(0, -1), { ...last, selfCheck: checkAcc }];
+            });
+          }
+          setMessages((prev) => {
+            const last = prev[prev.length - 1];
+            return [...prev.slice(0, -1), { ...last, selfCheck: checkAcc }];
+          });
+        } catch {
+          /* 自检失败不影响主回答 */
+        }
+      }
+
+      addQaEntry({
+        userId,
+        question: trimmed,
+        answer: acc,
+        courseId: topic?.courseId,
+        topicId: topic?.id,
+        topicTitle: topic?.title,
+        sources: sources.length > 0 ? sources : undefined,
+        model: modelName ?? lastModel,
+      });
+      setStreaming(false);
+      setStatus('idle');
+      abortRef.current = null;
     },
     [streaming, messages, topic, course, userId, useDocs, options],
   );
