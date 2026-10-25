@@ -60,6 +60,7 @@ import {
   loadSummaries,
   saveSummary,
   deleteSummary,
+  clearSummaries,
   subscribeSummaries,
   type StudySummary,
 } from '@/lib/summaryArchive';
@@ -199,13 +200,20 @@ const Study = () => {
   const exportChosen = archive.filter((s) => exportSel.has(s.id));
 
   // 练习题生成
-  const [practiceCourse, setPracticeCourse] = useState('calculus');
+  const [practiceCourse, setPracticeCourse] = useState(
+    () => subjectCourseList[0]?.id ?? 'calculus',
+  );
   const [practiceCount, setPracticeCount] = useState('3');
   const [practiceLevel, setPracticeLevel] = useState('中等');
   const [practiceRaw, setPracticeRaw] = useState('');
   const [practiceLoading, setPracticeLoading] = useState(false);
   const [practiceError, setPracticeError] = useState<string | null>(null);
   const [revealed, setRevealed] = useState<Record<number, boolean>>({});
+
+  // 学科切换时，练习课程重置为该学科课程列表的第一项，避免沿用旧学科课程
+  useEffect(() => {
+    setPracticeCourse(subjectCourseList[0]?.id ?? 'calculus');
+  }, [subject]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const practiceProblems = useMemo(
     () => parseGeneratedProblems(practiceRaw),
@@ -390,17 +398,17 @@ const Study = () => {
           {practiceProblems.map((p, i) => (
             <section key={i} className="print-section">
               <h3 className="font-serif text-base font-semibold">
-                题目 {i + 1}　<InlineMathText text={p.title} />
+                题目 {i + 1}　<InlineMathText escape text={p.title} />
               </h3>
-              <MathText content={p.question} className="text-sm" />
+              <MathText escape content={p.question} className="text-sm" />
               {p.hint && (
                 <div className="print-hint">
-                  <MathText content={p.hint} className="text-sm" />
+                  <MathText escape content={p.hint} className="text-sm" />
                 </div>
               )}
               {p.solution && (
                 <div className="print-sol">
-                  <MathText content={p.solution} className="text-sm" />
+                  <MathText escape content={p.solution} className="text-sm" />
                 </div>
               )}
             </section>
@@ -562,14 +570,14 @@ const Study = () => {
                         </button>
                       </div>
                       <div className="p-5 space-y-4">
-                        <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap"><InlineMathText text={e.question} escape /></p>
+                        <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap"><InlineMathText escape text={e.question} /></p>
                         <details className="group">
                           <summary className="flex items-center gap-1.5 text-xs text-info cursor-pointer select-none">
                             <Eye className="h-3.5 w-3.5" />
                             查看助教回答
                           </summary>
                           <div className="mt-3 border-t border-border pt-3">
-                            <MathText content={e.answer} className="text-sm" />
+                            <MathText escape content={e.answer} className="text-sm" />
                           </div>
                         </details>
                       </div>
@@ -649,7 +657,7 @@ const Study = () => {
 
               {summary && (
                 <div className="mt-6 border-t border-border pt-6">
-                  <MathText content={summary} className="text-sm" />
+                  <MathText escape content={summary} className="text-sm" />
                   {summaryLoading && (
                     <span className="mt-2 inline-block text-xs text-info animate-pulse">正在输入…</span>
                   )}
@@ -681,8 +689,10 @@ const Study = () => {
                     <button
                       onClick={() => {
                         if (window.confirm('确定清空全部历史总结吗？此操作不可恢复。')) {
-                          archive.forEach((s) => deleteSummary(s.id));
+                          clearSummaries(userId);
                           setArchive(loadSummaries(userId));
+                          // 同步重置导出勾选，避免残留已删除总结的 id 导致计数不符
+                          setExportSel(new Set());
                         }
                       }}
                       className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors duration-[var(--duration-fast)]"
@@ -722,7 +732,7 @@ const Study = () => {
                         </button>
                       </div>
                       <div className="p-5">
-                        <MathText content={s.content} className="text-sm" />
+                        <MathText escape content={s.content} className="text-sm" />
                       </div>
                     </div>
                   ))}
@@ -822,7 +832,7 @@ const Study = () => {
                         <span className="flex h-6 w-6 items-center justify-center bg-info/10 text-info font-mono text-xs font-semibold">
                           {i + 1}
                         </span>
-                        <h3 className="font-serif text-base font-semibold"><InlineMathText text={p.title} /></h3>
+                        <h3 className="font-serif text-base font-semibold"><InlineMathText escape text={p.title} /></h3>
                         <Button
                           size="sm"
                           variant="outline"
@@ -847,14 +857,14 @@ const Study = () => {
                         </Button>
                       </div>
                       <div className="p-5 space-y-4">
-                        <MathText content={p.question} className="text-sm" />
+                        <MathText escape content={p.question} className="text-sm" />
                         {p.hint && (
                           <div className="border border-warning/30 bg-warning/5 px-4 py-3">
                             <p className="flex items-center gap-1.5 text-xs font-medium text-warning mb-1.5">
                               <Lightbulb className="h-3.5 w-3.5" />
                               提示
                             </p>
-                            <MathText content={p.hint} className="text-sm" />
+                            <MathText escape content={p.hint} className="text-sm" />
                           </div>
                         )}
                         {p.solution && (
@@ -876,7 +886,7 @@ const Study = () => {
                             </Button>
                             {revealed[i] && (
                               <div className="mt-3 border-t border-border pt-3">
-                                <MathText content={p.solution} className="text-sm" />
+                                <MathText escape content={p.solution} className="text-sm" />
                               </div>
                             )}
                           </div>
@@ -890,7 +900,7 @@ const Study = () => {
               {practiceRaw && practiceProblems.length === 0 && !practiceLoading && (
                 <div className="mt-8 border border-border bg-background p-5">
                   <p className="text-xs text-muted-foreground mb-3">AI 输出（未按标准格式解析，原文展示）：</p>
-                  <MathText content={practiceRaw} className="text-sm" />
+                  <MathText escape content={practiceRaw} className="text-sm" />
                 </div>
               )}
             </div>
@@ -940,19 +950,19 @@ const Study = () => {
 
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
-              共 {archive.length} 份 · 已选 {exportSel.size} 份
+              共 {archive.length} 份 · 已选 {exportChosen.length} 份
             </span>
             <button
               onClick={() =>
                 setExportSel(
-                  exportSel.size === archive.length
+                  exportChosen.length === archive.length
                     ? new Set()
                     : new Set(archive.map((s) => s.id)),
                 )
               }
               className="text-xs text-info hover:underline"
             >
-              {exportSel.size === archive.length ? '取消全选' : '全选'}
+              {exportChosen.length === archive.length ? '取消全选' : '全选'}
             </button>
           </div>
 
@@ -1002,7 +1012,7 @@ const Study = () => {
             >
               <span className="text-sm font-medium">分开导出</span>
               <span className="mt-0.5 block text-xs text-muted-foreground">
-                每份各 1 个 PDF，共 {exportSel.size || 0} 个文件
+                每份各 1 个 PDF，共 {exportChosen.length} 个文件
               </span>
             </button>
           </div>
@@ -1017,7 +1027,7 @@ const Study = () => {
             </Button>
             <Button
               onClick={() => void doExport()}
-              disabled={exporting || exportSel.size === 0}
+              disabled={exporting || exportChosen.length === 0}
               className="bg-info text-info-foreground hover:bg-info/90 gap-1.5"
             >
               {exporting ? (
@@ -1027,7 +1037,7 @@ const Study = () => {
               )}
               {exporting
                 ? '导出中…'
-                : `确认导出${exportSel.size ? `（${exportSel.size} 份）` : ''}`}
+                : `确认导出${exportChosen.length ? `（${exportChosen.length} 份）` : ''}`}
             </Button>
           </div>
         </DialogContent>
@@ -1052,7 +1062,7 @@ const Study = () => {
                 {s.questionCount} 个问题
               </p>
               <div className="pdf-doc-body">
-                <MathText content={s.content} className="text-sm" />
+                <MathText escape content={s.content} className="text-sm" />
               </div>
             </div>
           ))}

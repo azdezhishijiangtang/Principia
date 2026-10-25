@@ -35,7 +35,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
         <Badge variant="outline" className={`${diff.className} font-medium`}>
           {diff.text}
         </Badge>
-        <h3 className="font-serif text-base font-semibold flex-1 min-w-0"><InlineMathText text={problem.title} /></h3>
+        <h3 className="font-serif text-base font-semibold flex-1 min-w-0"><InlineMathText escape text={problem.title} /></h3>
         {showTopicLink && (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Tag className="h-3 w-3" />
@@ -47,7 +47,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
       {/* 题目 */}
       <div className="px-5 py-5 sm:px-6">
         <p className="text-xs font-semibold text-muted-foreground mb-2 tracking-wide">题目</p>
-        <MathText content={problem.question} className="text-[0.95rem]" />
+        <MathText escape content={problem.question} className="text-[0.95rem]" />
 
         {/* 操作区 */}
         <div className="mt-5 flex flex-wrap items-center gap-2">
@@ -56,13 +56,18 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
             size="sm"
             onClick={() => setHintsShown((n) => (n >= problem.hints.length ? 0 : n + 1))}
             className="gap-1.5"
+            disabled={problem.hints.length === 0}
+            aria-expanded={hintsShown > 0}
+            aria-controls={`hints-${problem.id}`}
           >
             <Lightbulb className="h-3.5 w-3.5" />
-            {hintsShown >= problem.hints.length
-              ? '收起提示'
-              : hintsShown === 0
-                ? '查看提示'
-                : `再看下一条（${hintsShown}/${problem.hints.length}）`}
+            {problem.hints.length === 0
+              ? '暂无提示'
+              : hintsShown >= problem.hints.length
+                ? '收起提示'
+                : hintsShown === 0
+                  ? '查看提示'
+                  : `再看下一条（${hintsShown}/${problem.hints.length}）`}
           </Button>
           <Button
             size="sm"
@@ -71,6 +76,8 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
               if (!solutionOpen) setHintsShown(problem.hints.length);
             }}
             className="gap-1.5 bg-info text-info-foreground hover:bg-info/90"
+            aria-expanded={solutionOpen}
+            aria-controls={`solution-${problem.id}`}
           >
             <ListOrdered className="h-3.5 w-3.5" />
             {solutionOpen ? '收起完整解答' : '查看完整解答'}
@@ -80,13 +87,13 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
 
         {/* 分步提示（渐进揭示） */}
         {hintsShown > 0 && (
-          <Stagger className="mt-4 border-l-2 border-warning/60 bg-warning/8 py-3 pl-4 pr-4" stagger={0.08}>
+          <Stagger id={`hints-${problem.id}`} className="mt-4 border-l-2 border-warning/60 bg-warning/8 py-3 pl-4 pr-4" stagger={0.08}>
             <p className="text-xs font-semibold text-warning mb-2">思路提示</p>
             <ol className="space-y-2">
               {problem.hints.slice(0, hintsShown).map((hint, idx) => (
                 <FadeIn key={idx} className="text-sm text-foreground/90 leading-relaxed flex gap-2">
                   <span className="font-mono text-xs text-warning shrink-0 mt-0.5">提示 {idx + 1}</span>
-                  <MathText content={hint} className="flex-1 [&_p]:my-0" />
+                  <MathText escape content={hint} className="flex-1 [&_p]:my-0" />
                 </FadeIn>
               ))}
             </ol>
@@ -100,7 +107,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
 
         {/* 完整解答 */}
         {solutionOpen && (
-          <div className="mt-5 border-t border-border pt-5">
+          <div id={`solution-${problem.id}`} className="mt-5 border-t border-border pt-5">
             <p className="text-xs font-semibold text-info mb-4 tracking-wide">完整解答</p>
             <Stagger className="space-y-5" stagger={0.1}>
               {problem.solution.map((step, idx) => (
@@ -108,8 +115,8 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
                   <span className="absolute left-0 top-0.5 flex h-6 w-6 items-center justify-center bg-info/10 text-info font-mono text-xs font-semibold">
                     {idx + 1}
                   </span>
-                  <p className="font-medium text-sm mb-1.5"><InlineMathText text={step.title} /></p>
-                  <MathText content={step.detail} className="text-sm text-foreground/90" />
+                  <p className="font-medium text-sm mb-1.5"><InlineMathText escape text={step.title} /></p>
+                  <MathText escape content={step.detail} className="text-sm text-foreground/90" />
                 </FadeIn>
               ))}
             </Stagger>
@@ -121,7 +128,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
                   <Check className="h-5 w-5 text-success shrink-0 mt-0.5" />
                   <div>
                     <p className="text-xs font-semibold text-success mb-1">最终答案</p>
-                    <MathText content={problem.answer} className="text-sm font-medium [&_p]:my-0" />
+                    <MathText escape content={problem.answer} className="text-sm font-medium [&_p]:my-0" />
                   </div>
                 </FadeIn>
               ) : (

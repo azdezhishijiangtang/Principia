@@ -58,7 +58,7 @@ export const odeProblems: Problem[] = [
       {
         title: '定系数',
         detail:
-          '代入方程：$y^*\' = a(1+2x)e^{2x}$，$y^*\'\' = a(4+4x)e^{2x}$。左边 $= e^{2x}\\big[a(4+4x) - 3a(1+2x) + 2ax\\big] = a e^{2x}$。故 $a = 1$，$y^* = x e^{2x}$。',
+          '代入方程：$(y^*)\' = a(1+2x)e^{2x}$，$(y^*)\'\' = a(4+4x)e^{2x}$。左边 $= e^{2x}\\big[a(4+4x) - 3a(1+2x) + 2ax\\big] = a e^{2x}$。故 $a = 1$，$y^* = x e^{2x}$。',
       },
     ],
     answer: '通解 $y = C_1 e^{x} + C_2 e^{2x} + x e^{2x}$。',

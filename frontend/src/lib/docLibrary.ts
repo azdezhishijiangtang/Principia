@@ -350,10 +350,13 @@ export const listDocuments = async (userId: string): Promise<DocMeta[]> => {
 };
 
 /** 删除文档及其全部分块 */
-export const deleteDocument = async (userId: string, docId: string): Promise<void> => {
+export const deleteDocument = async (
+  userId: string,
+  docId: string,
+): Promise<{ ok: boolean; error?: string }> => {
   const db = await openDb();
-  if (!db) return;
-  await new Promise<void>((resolve) => {
+  if (!db) return { ok: false, error: '当前浏览器不支持 IndexedDB，无法删除文档' };
+  const ok = await new Promise<boolean>((resolve) => {
     const tx = db.transaction(['docs', 'chunks'], 'readwrite');
     tx.objectStore('docs').delete(docId);
     const chunkStore = tx.objectStore('chunks');
@@ -362,11 +365,13 @@ export const deleteDocument = async (userId: string, docId: string): Promise<voi
     idxReq.onsuccess = () => {
       for (const key of idxReq.result) chunkStore.delete(key);
     };
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => resolve();
-    tx.onabort = () => resolve();
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => resolve(false);
+    tx.onabort = () => resolve(false);
   });
+  // 无论成败都刷新缓存，保证列表与存储实际状态一致
   await refreshDocsCache(userId);
+  return ok ? { ok: true } : { ok: false, error: '删除失败，请重试' };
 };
 
 /** 启用/停用某文档（停用后不参与检索） */

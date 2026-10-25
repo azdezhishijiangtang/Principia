@@ -1,5 +1,5 @@
 import { motion, type Variants, type HTMLMotionProps } from 'framer-motion';
-import { forwardRef, type ReactNode } from 'react';
+import { forwardRef, useMemo, type ReactNode } from 'react';
 
 // ── Shared easing & duration tokens ──
 const ease = [0.25, 0.46, 0.45, 0.94] as const;
@@ -63,21 +63,48 @@ interface FadeInProps extends HTMLMotionProps<'div'> {
   amount?: number;
 }
 
+/**
+ * 把 delay/duration 合并进 variant 的 visible.transition。
+ * 背景：framer-motion 中 variant 内定义的 transition 会【整体替换】组件级
+ * transition prop（inherit 默认 false），所以旧的
+ * `transition={delay ? { delay } : undefined}` 写法会让 delay 静默失效——
+ * 组件 prop 被 variant 内的 { duration, ease } 整个覆盖。
+ */
+const withTiming = (variants: Variants, delay?: number, duration?: number): Variants => {
+  if (!delay && !duration) return variants;
+  const visible = variants.visible;
+  if (!visible || typeof visible !== 'object' || Array.isArray(visible)) return variants;
+  const base = (visible as { transition?: object }).transition;
+  return {
+    ...variants,
+    visible: {
+      ...(visible as object),
+      transition: {
+        ...base,
+        ...(delay ? { delay } : {}),
+        ...(duration ? { duration } : {}),
+      },
+    },
+  } as Variants;
+};
+
 export const FadeIn = forwardRef<HTMLDivElement, FadeInProps>(
-  ({ children, variants = fadeUp, delay = 0, duration, className, once = true, amount = 0.2, ...props }, ref) => (
-    <motion.div
-      ref={ref}
-      variants={variants}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once, amount }}
-      transition={delay || duration ? { delay, ...(duration ? { duration } : {}) } : undefined}
-      className={className}
-      {...props}
-    >
-      {children}
-    </motion.div>
-  ),
+  ({ children, variants = fadeUp, delay = 0, duration, className, once = true, amount = 0.2, ...props }, ref) => {
+    const resolved = useMemo(() => withTiming(variants, delay, duration), [variants, delay, duration]);
+    return (
+      <motion.div
+        ref={ref}
+        variants={resolved}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once, amount }}
+        className={className}
+        {...props}
+      >
+        {children}
+      </motion.div>
+    );
+  },
 );
 FadeIn.displayName = 'FadeIn';
 

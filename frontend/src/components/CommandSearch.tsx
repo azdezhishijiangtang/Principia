@@ -103,7 +103,7 @@ const CommandSearch = ({ open, onOpenChange }: CommandSearchProps) => {
                   >
                     <BookOpen className="h-4 w-4 text-info shrink-0 mt-0.5" />
                     <span className="min-w-0">
-                      <span className="font-medium text-sm block"><InlineMathText text={t.title} /></span>
+                      <span className="font-medium text-sm block"><InlineMathText escape text={t.title} /></span>
                       <span className="text-xs text-muted-foreground line-clamp-1">
                         {t.chapter}
                       </span>
@@ -124,7 +124,7 @@ const CommandSearch = ({ open, onOpenChange }: CommandSearchProps) => {
                   >
                     <FileQuestion className="h-4 w-4 text-theme-gold shrink-0 mt-0.5" />
                     <span className="min-w-0">
-                      <span className="font-medium text-sm block"><InlineMathText text={p.title} /></span>
+                      <span className="font-medium text-sm block"><InlineMathText escape text={p.title} /></span>
                       <span className="text-xs text-muted-foreground line-clamp-1">
                         {p.tags.join(' · ')}
                       </span>

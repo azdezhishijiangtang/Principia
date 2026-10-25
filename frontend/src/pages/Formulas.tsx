@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookMarked, Copy, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FadeIn, Stagger } from '@/components/MotionPrimitives';
@@ -116,14 +117,14 @@ const FormulaCard = ({ name, latex, note }: { name: string; latex: string; note?
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      /* 剪贴板不可用时静默失败 */
+      toast.error('复制失败，请手动选择公式文本');
     }
   };
 
   return (
     <div className="group border border-border bg-card p-5 transition-colors duration-[var(--duration-normal)] hover:border-info/50">
       <div className="flex items-start justify-between gap-3 mb-3">
-        <h3 className="text-sm font-semibold"><InlineMathText text={name} /></h3>
+        <h3 className="text-sm font-semibold"><InlineMathText escape text={name} /></h3>
         <Button
           variant="ghost"
           size="icon"
@@ -138,7 +139,7 @@ const FormulaCard = ({ name, latex, note }: { name: string; latex: string; note?
         className="overflow-x-auto text-sm"
         dangerouslySetInnerHTML={{ __html: renderMath(latex, true) }}
       />
-      {note && <p className="mt-3 text-xs text-muted-foreground leading-relaxed"><InlineMathText text={note} /></p>}
+      {note && <p className="mt-3 text-xs text-muted-foreground leading-relaxed"><InlineMathText escape text={note} /></p>}
     </div>
   );
 };

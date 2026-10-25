@@ -43,7 +43,7 @@ export const computational_physicsProblems: Problem[] = [
   {
     id: 'computational-physics-p2',
     courseId: 'computational-physics',
-    topicId: 'root-finding',
+    topicId: 'cp-root-finding',
     title: '牛顿法两步求三次方程的根',
     difficulty: 2,
     question:
@@ -213,7 +213,7 @@ export const computational_physicsProblems: Problem[] = [
       {
         title: '建立估计量',
         detail:
-          '设第 $i$ 个点的指示变量 $X_i=1$（落在圆内）或 $0$（落在圆外），则 $X_i$ 服从参数为 $p=\\dfrac{\\pi}{4}$ 的伯努利分布，$\\mathbb{E}[X_i]=p$，$\\mathrm{Var}(X_i)=p(1-p)$。估计量取 $$\hat\\pi_N=4\\cdot\\frac{1}{N}\\sum_{i=1}^{N}X_i=4\\hat p$$',
+          '设第 $i$ 个点的指示变量 $X_i=1$（落在圆内）或 $0$（落在圆外），则 $X_i$ 服从参数为 $p=\\dfrac{\\pi}{4}$ 的伯努利分布，$\\mathbb{E}[X_i]=p$，$\\mathrm{Var}(X_i)=p(1-p)$。估计量取 $$\\hat\\pi_N=4\\cdot\\frac{1}{N}\\sum_{i=1}^{N}X_i=4\\hat p$$',
       },
       {
         title: '无偏性',

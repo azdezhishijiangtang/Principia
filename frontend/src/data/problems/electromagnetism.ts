@@ -207,7 +207,7 @@ export const electromagnetismProblems: Problem[] = [
     solution: [
       {
         title: '磁通变化率与感应电动势',
-        detail: '设 $\\Delta t$ 内导体棒向右移动 $\\Delta x=v\\Delta t$，回路面积增加 $\\Delta S=L\\cdot v\\Delta t$，穿过回路的磁通增量 $\\Delta\\Phi=B\\Delta S=BLv\\Delta t$。由法拉第定律\n\n$$\\mathscr E=\\left|\\frac{d\\Phi}{dt}\\right|=BLv=0.50\\times0.40\\times2.5=0.50\\ \\text{V}$$\n\n等价地，也可直接用动生电动势公式 $\\mathscr E=\\int(\\vec v\\times\\vec B)\\cdot d\\vec l = BLv$，两者结果相同。回路电流\n\n$$I=\\frac{\\mathscr E}{R}=\\frac{0.50}{2.5}=0.20\\ \\text{A}$$',
+        detail: '设 $\\Delta t$ 内导体棒向右移动 $\\Delta x=v\\Delta t$，回路面积增加 $\\Delta S=L\\cdot v\\Delta t$，穿过回路的磁通增量 $\\Delta\\Phi=B\\Delta S=BLv\\Delta t$。由法拉第定律\\n\\n$$\\mathscr E=\\left|\\frac{d\\Phi}{dt}\\right|=BLv=0.50\\times0.40\\times2.5=0.50\\ \\text{V}$$\\n\\n等价地，也可直接用动生电动势公式 $\\mathscr E=\\int(\\vec v\\times\\vec B)\\cdot d\\vec l = BLv$，两者结果相同。回路电流\\n\\n$$I=\\frac{\\mathscr E}{R}=\\frac{0.50}{2.5}=0.20\\ \\text{A}$$',
       },
       {
         title: '电流方向（楞次定律）',
@@ -215,11 +215,11 @@ export const electromagnetismProblems: Problem[] = [
       },
       {
         title: '维持匀速所需的外力与功率',
-        detail: '通有电流的导体棒在磁场中受安培力，因棒与磁场垂直，大小为\n\n$$F_B=BIL=0.50\\times0.20\\times0.40=0.040\\ \\text{N}$$\n\n由左手定则（或由楞次定律"阻碍相对运动"），该力方向水平向左，与运动方向相反。要维持匀速，外力须与之等大反向：\n\n$$F_{\\text{外}}=0.040\\ \\text{N}\\ (\\text{方向向右})$$\n\n外力做功的功率\n\n$$P_{\\text{外}}=F_{\\text{外}}v=0.040\\times2.5=0.10\\ \\text{W}$$',
+        detail: '通有电流的导体棒在磁场中受安培力，因棒与磁场垂直，大小为\\n\\n$$F_B=BIL=0.50\\times0.20\\times0.40=0.040\\ \\text{N}$$\\n\\n由左手定则（或由楞次定律"阻碍相对运动"），该力方向水平向左，与运动方向相反。要维持匀速，外力须与之等大反向：\\n\\n$$F_{\\text{外}}=0.040\\ \\text{N}\\ (\\text{方向向右})$$\\n\\n外力做功的功率\\n\\n$$P_{\\text{外}}=F_{\\text{外}}v=0.040\\times2.5=0.10\\ \\text{W}$$',
       },
       {
         title: '焦耳热与能量守恒校验',
-        detail: '回路的焦耳热功率\n\n$$P_R=I^2R=(0.20)^2\\times2.5=0.10\\ \\text{W}$$\n\n亦可用 $P_R=\\mathscr E^2/R=(0.50)^2/2.5=0.10\\ \\text{W}$ 核对。可见 $P_{\\text{外}}=P_R=0.10\\ \\text{W}$，外力做的机械功全部转化为焦耳热，能量守恒成立。在 $t=4.0\\ \\text{s}$ 内\n\n$$Q=P_R\\,t=0.10\\times4.0=0.40\\ \\text{J}$$\n\n同时该时段内棒扫过的距离 $x=vt=10\\ \\text{m}$，外力做功 $F_{\\text{外}}x=0.040\\times10=0.40\\ \\text{J}$，与焦耳热相等，再次印证结果正确。',
+        detail: '回路的焦耳热功率\\n\\n$$P_R=I^2R=(0.20)^2\\times2.5=0.10\\ \\text{W}$$\\n\\n亦可用 $P_R=\\mathscr E^2/R=(0.50)^2/2.5=0.10\\ \\text{W}$ 核对。可见 $P_{\\text{外}}=P_R=0.10\\ \\text{W}$，外力做的机械功全部转化为焦耳热，能量守恒成立。在 $t=4.0\\ \\text{s}$ 内\\n\\n$$Q=P_R\\,t=0.10\\times4.0=0.40\\ \\text{J}$$\\n\\n同时该时段内棒扫过的距离 $x=vt=10\\ \\text{m}$，外力做功 $F_{\\text{外}}x=0.040\\times10=0.40\\ \\text{J}$，与焦耳热相等，再次印证结果正确。',
       },
     ],
     answer: '(1) $\\mathscr E=0.50\\ \\text{V}$，$I=0.20\\ \\text{A}$，导体棒中电流自上而下（回路为顺时针方向）；(2) 水平外力 $F_{\\text{外}}=4.0\\times10^{-2}\\ \\text{N}$（向右），功率 $P_{\\text{外}}=0.10\\ \\text{W}$；(3) $4.0\\ \\text{s}$ 内焦耳热 $Q=0.40\\ \\text{J}$，且 $P_{\\text{外}}=P_R=0.10\\ \\text{W}$，机械能全部转化为焦耳热。',

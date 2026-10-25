@@ -152,7 +152,7 @@ export const statistical_physicsProblems: Problem[] = [
     topicId: 'photon-bec',
     title: '由普朗克公式推导斯特藩-玻尔兹曼定律并估算太阳表面温度',
     difficulty: 3,
-    question: '黑体辐射的能量谱密度（单位体积、单位角频率）为普朗克公式 $u(\\omega, T)\\,d\\omega = \\dfrac{\\hbar\\omega^3}{\\pi^2 c^3} \\cdot \\dfrac{d\\omega}{e^{\\hbar\\omega/kT} - 1}$。已知积分 $\\displaystyle\\int_0^{\\infty} \\dfrac{x^3\\,dx}{e^x - 1} = \\dfrac{\\pi^4}{15}$，基本常数 $k = 1.381\\times10^{-23}\\ \\text{J/K}$，$h = 6.626\\times10^{-34}\\ \\text{J\\cdot s}$，$c = 3.00\\times10^8\\ \\text{m/s}$。(1) 积分证明总能量密度 $u(T) = aT^4$，并给出 $a = \\pi^2 k^4/(15\\hbar^3 c^3)$；(2) 利用黑体表面辐射出射度与能量密度的关系 $M = \\dfrac{1}{4}cu$，推导斯特藩-玻尔兹曼定律 $M = \\sigma T^4$ 并证明 $\\sigma = \\dfrac{2\\pi^5 k^4}{15 h^3 c^2}$；(3) 代入数值计算 $\\sigma$ 并与实测值 $5.67\\times10^{-8}\\ \\text{W/(m}^2\\text{K}^4)$ 比较；(4) 已知太阳表面辐射出射度约 $6.3\\times10^7\\ \\text{W/m}^2$，估算太阳表面温度。',
+    question: '黑体辐射的能量谱密度（单位体积、单位角频率）为普朗克公式 $u(\\omega, T)\\,d\\omega = \\dfrac{\\hbar\\omega^3}{\\pi^2 c^3} \\cdot \\dfrac{d\\omega}{e^{\\hbar\\omega/kT} - 1}$。已知积分 $\\displaystyle\\int_0^{\\infty} \\dfrac{x^3\\,dx}{e^x - 1} = \\dfrac{\\pi^4}{15}$，基本常数 $k = 1.381\\times10^{-23}\\ \\text{J/K}$，$h = 6.626\\times10^{-34}\\ \\text{J}\\cdot\\text{ s}$，$c = 3.00\\times10^8\\ \\text{m/s}$。(1) 积分证明总能量密度 $u(T) = aT^4$，并给出 $a = \\pi^2 k^4/(15\\hbar^3 c^3)$；(2) 利用黑体表面辐射出射度与能量密度的关系 $M = \\dfrac{1}{4}cu$，推导斯特藩-玻尔兹曼定律 $M = \\sigma T^4$ 并证明 $\\sigma = \\dfrac{2\\pi^5 k^4}{15 h^3 c^2}$；(3) 代入数值计算 $\\sigma$ 并与实测值 $5.67\\times10^{-8}\\ \\text{W/(m}^2\\text{K}^4)$ 比较；(4) 已知太阳表面辐射出射度约 $6.3\\times10^7\\ \\text{W/m}^2$，估算太阳表面温度。',
     hints: [
       '换元 $x = \\hbar\\omega/kT$，则 $\\omega^3 d\\omega = (kT)^4 x^3 dx/\\hbar^4$，温度因子整体提出积分号外。',
       '$M = cu/4$ 中因子 $c/4$ 的来源：各向同性辐射以光速流出，乘以立体角投影的余弦因子（对半空间平均为 $1/4$）；把 $\\hbar = h/2\\pi$ 代入 $\\sigma = ca/4$ 即化成 $2\\pi^5 k^4/(15h^3c^2)$。',
@@ -187,9 +187,9 @@ export const statistical_physicsProblems: Problem[] = [
     topicId: 'fermi-gas',
     title: '铜的费米能、费米温度与电子热容',
     difficulty: 3,
-    question: '铜是一价金属，密度 $\\rho = 8.96\\times10^3\\ \\text{kg/m}^3$，摩尔质量 $M = 63.5\\times10^{-3}\\ \\text{kg/mol}$，每个原子贡献一个传导电子。基本常数：$N_A = 6.02\\times10^{23}\\ \\text{mol}^{-1}$，$m_e = 9.11\\times10^{-31}\\ \\text{kg}$，$\\hbar = 1.055\\times10^{-34}\\ \\text{J\\cdot s}$，$k = 1.381\\times10^{-23}\\ \\text{J/K}$，$1\\ \\text{eV} = 1.602\\times10^{-19}\\ \\text{J}$。(1) 求传导电子数密度 $n$；(2) 求 $T = 0$ 时的费米能 $E_F = \\dfrac{\\hbar^2}{2m_e}(3\\pi^2 n)^{2/3}$（分别用 J 与 eV 表示）与费米温度 $T_F$；(3) 求费米面电子速率 $v_F = \\hbar(3\\pi^2 n)^{1/3}/m_e$；(4) 室温 $T = 300\\ \\text{K}$ 下，由电子热容公式 $C_V^{(e)} = \\dfrac{\\pi^2}{2}Nk\\,\\dfrac{T}{T_F}$ 估算电子热容与晶格热容 $3Nk$（杜隆-珀蒂定律）之比，并解释为什么常温下电子对热容的贡献几乎可以忽略。',
+    question: '铜是一价金属，密度 $\\rho = 8.96\\times10^3\\ \\text{kg/m}^3$，摩尔质量 $M = 63.5\\times10^{-3}\\ \\text{kg/mol}$，每个原子贡献一个传导电子。基本常数：$N_A = 6.02\\times10^{23}\\ \\text{mol}^{-1}$，$m_e = 9.11\\times10^{-31}\\ \\text{kg}$，$\\hbar = 1.055\\times10^{-34}\\ \\text{J}\\cdot\\text{ s}$，$k = 1.381\\times10^{-23}\\ \\text{J/K}$，$1\\ \\text{eV} = 1.602\\times10^{-19}\\ \\text{J}$。(1) 求传导电子数密度 $n$；(2) 求 $T = 0$ 时的费米能 $E_F = \\dfrac{\\hbar^2}{2m_e}(3\\pi^2 n)^{2/3}$（分别用 J 与 eV 表示）与费米温度 $T_F$；(3) 求费米面电子速率 $v_F = \\hbar(3\\pi^2 n)^{1/3}/m_e$；(4) 室温 $T = 300\\ \\text{K}$ 下，由电子热容公式 $C_V^{(e)} = \\dfrac{\\pi^2}{2}Nk\\,\\dfrac{T}{T_F}$ 估算电子热容与晶格热容 $3Nk$（杜隆-珀蒂定律）之比，并解释为什么常温下电子对热容的贡献几乎可以忽略。',
     hints: [
-      '数密度 $n = \\rho N_A / M$（一价金属每个原子一个电子）；先算 $3\\pi^2 n$ 再取 $2/3$ 次方，$\\hbar^2/2m_e \\approx 6.11\\times10^{-39}\\ \\text{J\\cdot m}^2$。',
+      '数密度 $n = \\rho N_A / M$（一价金属每个原子一个电子）；先算 $3\\pi^2 n$ 再取 $2/3$ 次方，$\\hbar^2/2m_e \\approx 6.11\\times10^{-39}\\ \\text{J}\\cdot\\text{ m}^2$。',
       '费米温度 $T_F = E_F/k$；费米速度也可用 $v_F = \\sqrt{2E_F/m_e}$ 验证，与 $\\hbar(3\\pi^2 n)^{1/3}/m_e$ 结果一致。',
       '比值 $\\dfrac{C_V^{(e)}}{3Nk} = \\dfrac{\\pi^2}{6}\\cdot\\dfrac{T}{T_F}$（一价，$N$ 为电子数）。',
     ],

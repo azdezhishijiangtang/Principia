@@ -17,7 +17,7 @@ export const astrophysicsTopics: Topic[] = [
       '椭圆轨道总能量只由半长轴决定：$E = -GM\\mu/(2a)$；逃逸速度 $v_{\\text{esc}} = \\sqrt{2GM/R} = \\sqrt{2}\\,v_c$',
     ],
     relatedProblemIds: ['astrophysics-p1'],
-    content: String.raw`## 一、直觉引入：苹果与月球其实是同一个问题
+    content: String.raw`
 
 在牛顿之前，人们普遍相信天上与地上遵循两套不同的规律：地上的物体会坠落，天上的行星却沿着完美的圆永恒运转。牛顿的突破并不在于"发现引力"——引力现象人人皆知——而在于他敢于把这两种现象放在同一个公式里检验。他的推理极其朴素：如果使苹果落地的力来自地球，并且这个力随距离减弱，那么它是否也延伸到月球？月球之所以没有掉到地面上，也许只是因为它有足够的横向速度，在"不断下落"中恰好绕开了地球。这就是著名的"牛顿大炮"思想实验：从高山顶水平发射炮弹，速度越大落点越远；当速度足够大时，炮弹下落的曲率恰好与地球表面的弯曲曲率一致，它就永远落不到地面，成为一颗卫星。于是"下落"与"绕转"不再是两件事，而是同一运动在不同初始条件下的表现。
 
@@ -142,7 +142,7 @@ $$v_{\text{esc}} = \sqrt{\frac{2GM}{R}} = \sqrt2\,v_c$$
       '主序质光关系 $L/L_\\odot \\approx (M/M_\\odot)^{3.5}$，结合 $L = 4\\pi R^2\\sigma T_{\\text{eff}}^4$ 可定半径',
     ],
     relatedProblemIds: ['astrophysics-p2'],
-    content: String.raw`## 一、从肉眼分级到对数标尺
+    content: String.raw`
 
 公元前二世纪，喜帕恰斯把肉眼可见的星按"看起来有多亮"分成六等：最亮的二十来颗为一等星，勉强可见的为六等星。这套分级纯粹是主观的，却意外地贴合人眼的生理特性——人眼对亮度的响应近似对数。十九世纪，普森用光度计定量标定了这套系统，发现一等星的平均亮度约为六等星的 100 倍。既然相差 5 个星等亮度相差 100 倍，那么每差一个星等，亮度就相差 $100^{1/5} \approx 2.512$ 倍。这个数字被称为普森比，是现代星等系统的基石。
 
@@ -266,7 +266,7 @@ $$L = 4\pi R^2\sigma T_{\text{eff}}^4\quad\Longrightarrow\quad \frac{R}{R_\odot}
       '主序寿命 $t_{MS} \\approx 10^{10}\\,\\text{yr}\\,(M/M_\\odot)/(L/L_\\odot)$，配合 $L\\propto M^{3.5}$ 得 $t\\propto M^{-2.5}$',
     ],
     relatedProblemIds: ['astrophysics-p3'],
-    content: String.raw`## 一、恒星既不塌缩也不爆炸
+    content: String.raw`
 
 恒星是一个质量巨大的自引力气体球。它内部的每一层气体都受到外层全部物质的向内引力拉扯，如果失去支撑，整颗星会在几分钟内自由落体式塌缩；反之若内部压强过大，又会被自身的压力炸开。观测告诉我们，绝大多数恒星在极其漫长的时间里稳定地发光，光度变化极小——太阳在过去几十亿年里的光度变化不超过百分之几十。这说明恒星内部处于一种精妙的平衡：向内的引力与向外的压强梯度在每一处、每一时刻都几乎完全抵消，这种状态称为**流体静力学平衡**。
 
@@ -409,7 +409,7 @@ $$t_{MS} \approx 10^{10}\ \text{yr}\left(\frac{M}{M_\odot}\right)^{-2.5}$$
       '坍缩先等温后绝热，出现分级碎裂；最终由林轨迹收缩到零龄主序，恒星形成效率仅百分之几',
     ],
     relatedProblemIds: ['astrophysics-p4'],
-    content: String.raw`## 一、星际介质：恒星诞生的原料
+    content: String.raw`
 
 在恒星与恒星之间，并不是空无一物的真空。银河系的盘内充满了稀薄的**星际介质**（ISM），总量约占银河系重子质量的百分之十几。它的平均数密度只有约每立方厘米一个氢原子——比地球上最好的真空还要稀薄得多——但由于空间极其广大，总质量可达数十亿太阳质量。
 
@@ -520,7 +520,7 @@ $$\lambda_J \approx 2.1\times 10^{16}\ \text{m} \approx 0.67\ \text{pc},\qquad M
       '霍金温度 $T_H = \\hbar c^3/(8\\pi GM k_B) \\approx 6\\times 10^{-8}\\,\\text{K}\\,(M_\\odot/M)$，蒸发时标远超宇宙年龄',
     ],
     relatedProblemIds: ['astrophysics-p5'],
-    content: String.raw`## 一、恒星死亡之后留下什么
+    content: String.raw`
 
 第三章告诉我们，恒星靠核燃烧释放的能量维持向外的压强，抵抗自引力。但核燃料终究有限：氢烧完烧氦，氦烧完烧碳、氖、氧、硅，一直到铁。铁原子核的比结合能最大，无论聚变还是裂变都不再放能，于是核心失去了能量来源，支撑也随之消失。此时恒星只剩两条路：要么找到一种**不依赖温度的压强**来顶住引力，要么一路塌缩到底。前者产生白矮星与中子星，后者产生黑洞。
 
@@ -647,7 +647,7 @@ $$T_H = \frac{\hbar c^3}{8\pi G M k_B} \approx 6.2\times 10^{-8}\ \text{K}\left(
       '宇宙组分 $\\Omega_b \\approx 0.049$、$\\Omega_c \\approx 0.265$、$\\Omega_\\Lambda \\approx 0.686$，重子远不足以解释总物质密度',
     ],
     relatedProblemIds: ['astrophysics-p6', 'astrophysics-p1'],
-    content: String.raw`## 一、宇宙岛：星系与哈勃序列
+    content: String.raw`
 
 二十世纪初，"旋涡星云"究竟是银河系内的气体云还是独立的恒星系统，曾是天文学最大的争议之一。1925 年哈勃利用造父变星的周光关系定出仙女座星云的距离约为 2.5 百万光年，远超银河系尺度，争议就此终结：宇宙由无数个"宇宙岛"——**星系**——构成。
 
@@ -762,7 +762,7 @@ $$\Omega_b \approx 0.049,\qquad \Omega_c \approx 0.265,\qquad \Omega_\Lambda \ap
       'CMB 温度 $T_0 = 2.725\\ \\text{K}$，最后散射面 $z_* \\approx 1090$、$t \\approx 38$ 万年，涨落幅度约 $10^{-5}$',
     ],
     relatedProblemIds: ['astrophysics-p6'],
-    content: String.raw`## 一、哈勃定律：宇宙正在膨胀
+    content: String.raw`
 
 1929 年，哈勃把斯里弗测得的星系红移与自己测定的距离放在一起，发现了一个极其简单的规律：星系的退行速度与其距离成正比
 

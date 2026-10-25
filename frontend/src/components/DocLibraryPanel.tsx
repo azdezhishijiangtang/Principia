@@ -3,6 +3,7 @@
  * 答疑时由 useTutorChat 自动检索启用中的文档段落，注入系统上下文（RAG）。
  */
 import { useCallback, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import {
   Upload,
   FileText,
@@ -122,6 +123,16 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
 
       {/* ── 上传区 ── */}
       <div
+        role="button"
+        tabIndex={0}
+        aria-label="上传文档：拖入文件，或按回车键选择文件"
+        onKeyDown={(e) => {
+          // 键盘用户按 Enter / 空格触发文件选择
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
         onDragOver={(e) => {
           e.preventDefault();
           setDragging(true);
@@ -129,7 +140,7 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
         onDragLeave={() => setDragging(false)}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`cursor-pointer border-2 border-dashed px-4 py-6 text-center transition-colors duration-[var(--duration-fast)] ${
+        className={`cursor-pointer border-2 border-dashed px-4 py-6 text-center transition-colors duration-[var(--duration-fast)] outline-none focus-visible:ring-2 focus-visible:ring-ring ${
           dragging
             ? 'border-info bg-info/5'
             : 'border-border hover:border-info/50 hover:bg-secondary/30'
@@ -206,7 +217,11 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
               onConfirmDelete={() => setConfirmDeleteId(doc.id)}
               onCancelDelete={() => setConfirmDeleteId(null)}
               onDelete={async () => {
-                await deleteDocument(userId, doc.id);
+                const res = await deleteDocument(userId, doc.id);
+                if (!res.ok) {
+                  toast.error(res.error ?? '删除失败');
+                  return;
+                }
                 setConfirmDeleteId(null);
               }}
               onToggle={(enabled) => toggleDocument(userId, doc.id, enabled)}

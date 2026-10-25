@@ -87,15 +87,18 @@ export const countMistakesByCourse = (userId: string): Record<string, number> =>
   return map;
 };
 
-const subscribe = (l: () => void) => {
+/** 订阅错题数据变更：本地写操作或跨标签页 storage 事件时通知 */
+export const subscribeMistakes = (l: () => void): (() => void) => {
   listeners.add(l);
-  return () => listeners.delete(l);
+  return () => {
+    listeners.delete(l);
+  };
 };
 
 /** 订阅某用户（可选按课程）的错题列表 */
 export const useMistakes = (userId: string, courseId?: string): MistakeEntry[] => {
   const snapshot = useSyncExternalStore(
-    subscribe,
+    subscribeMistakes,
     () => JSON.stringify(listMistakes(userId, courseId)),
     () => '[]',
   );

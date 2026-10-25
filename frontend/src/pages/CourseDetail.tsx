@@ -88,10 +88,10 @@ const CourseDetail = () => {
                             <div className="flex items-start justify-between gap-4">
                               <div className="min-w-0">
                                 <h3 className="font-serif text-lg font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
-                                  <InlineMathText text={topic.title} />
+                                  <InlineMathText escape text={topic.title} />
                                 </h3>
                                 <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                                  <InlineMathText text={topic.summary} />
+                                  <InlineMathText escape text={topic.summary} />
                                 </p>
                               </div>
                               <ArrowRight className="h-4 w-4 shrink-0 mt-1.5 text-muted-foreground transition-transform duration-[var(--duration-fast)] group-hover:translate-x-1 group-hover:text-info" />
@@ -137,7 +137,7 @@ const CourseDetail = () => {
                       to={`/topics/${topic.id}`}
                       className="block px-2 py-2 text-sm text-foreground/85 hover:text-info hover:bg-info/8 transition-colors duration-[var(--duration-fast)] border-l-2 border-transparent hover:border-info"
                     >
-                      <InlineMathText text={topic.title} />
+                      <InlineMathText escape text={topic.title} />
                     </Link>
                   ))}
                 </div>

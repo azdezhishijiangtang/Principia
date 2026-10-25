@@ -17,7 +17,7 @@ export const analytical_mechanicsProblems: Problem[] = [
     solution: [
       {
         title: '约束方程与类型判定',
-        detail: '约束为 $x^2+y^2+z^2=l^2$。它只含坐标、不含时间（稳定约束），也不含速度，且是几何方程，故为完整约束。约束力由球铰与刚性杆提供，方向沿杆；而杆所允许的虚位移均垂直于杆，故约束力虚功 $\vec{F}_N\\cdot\\delta\\vec{r} = 0$，属理想约束。',
+        detail: '约束为 $x^2+y^2+z^2=l^2$。它只含坐标、不含时间（稳定约束），也不含速度，且是几何方程，故为完整约束。约束力由球铰与刚性杆提供，方向沿杆；而杆所允许的虚位移均垂直于杆，故约束力虚功 $\\vec{F}_N\\cdot\\delta\\vec{r} = 0$，属理想约束。',
       },
       {
         title: '自由度计数',
@@ -52,11 +52,11 @@ export const analytical_mechanicsProblems: Problem[] = [
     solution: [
       {
         title: '写出动能（注意交叉项）',
-        detail: '滑块速度分量 $\\dot{x}_b = \\dot{x} + \\dot{s}\\cos\\alpha$，$\\dot{y}_b = -\\dot{s}\\sin\\alpha$，故 $v_b^2 = \\dot{x}^2 + 2\\dot{x}\\dot{s}\\cos\\alpha + \\dot{s}^2$。系统动能\n$T = \\tfrac12 M\\dot{x}^2 + \\tfrac12 m(\\dot{x}^2 + 2\\dot{x}\\dot{s}\\cos\\alpha + \\dot{s}^2) = \\tfrac12(M+m)\\dot{x}^2 + m\\cos\\alpha\\,\\dot{x}\\dot{s} + \\tfrac12 m\\dot{s}^2$。',
+        detail: '滑块速度分量 $\\dot{x}_b = \\dot{x} + \\dot{s}\\cos\\alpha$，$\\dot{y}_b = -\\dot{s}\\sin\\alpha$，故 $v_b^2 = \\dot{x}^2 + 2\\dot{x}\\dot{s}\\cos\\alpha + \\dot{s}^2$。系统动能\\n$T = \\tfrac12 M\\dot{x}^2 + \\tfrac12 m(\\dot{x}^2 + 2\\dot{x}\\dot{s}\\cos\\alpha + \\dot{s}^2) = \\tfrac12(M+m)\\dot{x}^2 + m\\cos\\alpha\\,\\dot{x}\\dot{s} + \\tfrac12 m\\dot{s}^2$。',
       },
       {
         title: '写出拉格朗日量',
-        detail: '$V = mgy_b = mgh - mg s\\sin\\alpha$，舍去常数 $mgh$ 得 $V = -mg s\\sin\\alpha$。于是\n$L = \\tfrac12(M+m)\\dot{x}^2 + m\\cos\\alpha\\,\\dot{x}\\dot{s} + \\tfrac12 m\\dot{s}^2 + mg s\\sin\\alpha$。',
+        detail: '$V = mgy_b = mgh - mg s\\sin\\alpha$，舍去常数 $mgh$ 得 $V = -mg s\\sin\\alpha$。于是\\n$L = \\tfrac12(M+m)\\dot{x}^2 + m\\cos\\alpha\\,\\dot{x}\\dot{s} + \\tfrac12 m\\dot{s}^2 + mg s\\sin\\alpha$。',
       },
       {
         title: '识别循环坐标与守恒量',
@@ -64,7 +64,7 @@ export const analytical_mechanicsProblems: Problem[] = [
       },
       {
         title: '运动方程及求解',
-        detail: '对 $x$：$(M+m)\\ddot{x} + m\\cos\\alpha\\,\\ddot{s} = 0$。对 $s$：$m\\cos\\alpha\\,\\ddot{x} + m\\ddot{s} - mg\\sin\\alpha = 0$，即 $\\ddot{s} + \\cos\\alpha\\,\\ddot{x} = g\\sin\\alpha$。两式联立消去 $\\ddot{x}$：$\\ddot{s}\\left(1 - \\dfrac{m\\cos^2\\alpha}{M+m}\\right) = g\\sin\\alpha$，故\n$\\ddot{s} = \\dfrac{(M+m)g\\sin\\alpha}{M + m\\sin^2\\alpha}$，$\\ddot{x} = -\\dfrac{mg\\sin\\alpha\\cos\\alpha}{M + m\\sin^2\\alpha}$（负号表示楔块向左后退）。',
+        detail: '对 $x$：$(M+m)\\ddot{x} + m\\cos\\alpha\\,\\ddot{s} = 0$。对 $s$：$m\\cos\\alpha\\,\\ddot{x} + m\\ddot{s} - mg\\sin\\alpha = 0$，即 $\\ddot{s} + \\cos\\alpha\\,\\ddot{x} = g\\sin\\alpha$。两式联立消去 $\\ddot{x}$：$\\ddot{s}\\left(1 - \\dfrac{m\\cos^2\\alpha}{M+m}\\right) = g\\sin\\alpha$，故\\n$\\ddot{s} = \\dfrac{(M+m)g\\sin\\alpha}{M + m\\sin^2\\alpha}$，$\\ddot{x} = -\\dfrac{mg\\sin\\alpha\\cos\\alpha}{M + m\\sin^2\\alpha}$（负号表示楔块向左后退）。',
       },
     ],
     answer: '$L = \\tfrac12(M+m)\\dot{x}^2 + m\\cos\\alpha\\,\\dot{x}\\dot{s} + \\tfrac12 m\\dot{s}^2 + mg s\\sin\\alpha$；$x$ 为循环坐标，守恒量 $(M+m)\\dot{x} + m\\dot{s}\\cos\\alpha = 0$ 即水平总动量；$\\ddot{s} = \\dfrac{(M+m)g\\sin\\alpha}{M+m\\sin^2\\alpha}$，$\\ddot{x} = -\\dfrac{mg\\sin\\alpha\\cos\\alpha}{M+m\\sin^2\\alpha}$。',
@@ -122,7 +122,7 @@ export const analytical_mechanicsProblems: Problem[] = [
     solution: [
       {
         title: '勒让德变换求哈密顿函数',
-        detail: '$p = \\dfrac{\\partial L}{\\partial\\dot{x}} = m\\dot{x}$，反解 $\\dot{x} = p/m$。于是\n$H = p\\dot{x} - L = \\dfrac{p^2}{m} - \\left(\\dfrac{p^2}{2m} - \\tfrac12 kx^2\\right) = \\dfrac{p^2}{2m} + \\tfrac12 kx^2$。',
+        detail: '$p = \\dfrac{\\partial L}{\\partial\\dot{x}} = m\\dot{x}$，反解 $\\dot{x} = p/m$。于是\\n$H = p\\dot{x} - L = \\dfrac{p^2}{m} - \\left(\\dfrac{p^2}{2m} - \\tfrac12 kx^2\\right) = \\dfrac{p^2}{2m} + \\tfrac12 kx^2$。',
       },
       {
         title: '正则方程与通解',
@@ -196,7 +196,7 @@ export const analytical_mechanicsProblems: Problem[] = [
       },
       {
         title: '稳态进动条件的推导',
-        detail: '$\\theta$ 方程：$\\dfrac{d}{dt}(I_1\\dot{\\theta}) - \\dfrac{\\partial L}{\\partial\\theta} = 0$，其中 $\\dfrac{\\partial L}{\\partial\\theta} = I_1\\dot{\\varphi}^2\\sin\\theta\\cos\\theta - I_3(\\dot{\\psi} + \\dot{\\varphi}\\cos\\theta)\\dot{\\varphi}\\sin\\theta + mgl\\sin\\theta$。稳态进动 $\\dot{\\theta} = \\ddot{\\theta} = 0$ 要求 $\\partial L/\\partial\\theta = 0$，除以 $\\sin\\theta$ 并令 $\\Omega = \\dot{\\varphi}$、$\\omega_3 = \\dot{\\psi} + \\Omega\\cos\\theta$：\n$mgl = I_3\\omega_3\\Omega - I_1\\Omega^2\\cos\\theta$，即 $I_1\\Omega^2\\cos\\theta - I_3\\omega_3\\Omega + mgl = 0$。',
+        detail: '$\\theta$ 方程：$\\dfrac{d}{dt}(I_1\\dot{\\theta}) - \\dfrac{\\partial L}{\\partial\\theta} = 0$，其中 $\\dfrac{\\partial L}{\\partial\\theta} = I_1\\dot{\\varphi}^2\\sin\\theta\\cos\\theta - I_3(\\dot{\\psi} + \\dot{\\varphi}\\cos\\theta)\\dot{\\varphi}\\sin\\theta + mgl\\sin\\theta$。稳态进动 $\\dot{\\theta} = \\ddot{\\theta} = 0$ 要求 $\\partial L/\\partial\\theta = 0$，除以 $\\sin\\theta$ 并令 $\\Omega = \\dot{\\varphi}$、$\\omega_3 = \\dot{\\psi} + \\Omega\\cos\\theta$：\\n$mgl = I_3\\omega_3\\Omega - I_1\\Omega^2\\cos\\theta$，即 $I_1\\Omega^2\\cos\\theta - I_3\\omega_3\\Omega + mgl = 0$。',
       },
       {
         title: '慢进动近似与数值',

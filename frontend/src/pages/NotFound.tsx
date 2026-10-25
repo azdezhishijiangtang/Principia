@@ -9,7 +9,10 @@ const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.error('404 Error: User attempted to access non-existent route:', location.pathname);
+    // 仅在开发环境输出 404 诊断，避免生产构建向控制台刷无关注释
+    if (import.meta.env.DEV) {
+      console.error('404 Error: User attempted to access non-existent route:', location.pathname);
+    }
   }, [location.pathname]);
 
   return (

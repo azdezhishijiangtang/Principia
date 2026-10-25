@@ -120,7 +120,11 @@ const FeedbackAdmin = () => {
       toast.error('回复内容不能为空');
       return;
     }
-    replyFeedback(id, draft.trim());
+    const res = replyFeedback(id, draft.trim());
+    if (!res.ok) {
+      toast.error(res.error ?? '回复保存失败');
+      return;
+    }
     setDraft('');
     setActiveId(null);
     toast.success('回复已发送');
@@ -231,10 +235,14 @@ const FeedbackAdmin = () => {
                       size="sm"
                       variant="outline"
                       className="gap-1.5"
-                      onClick={() => {
-                        setFeedbackStatus(item.id, 'closed');
-                        toast.success('已关闭');
-                      }}
+                    onClick={() => {
+                      const res = setFeedbackStatus(item.id, 'closed');
+                      if (!res.ok) {
+                        toast.error(res.error ?? '状态更新失败');
+                        return;
+                      }
+                      toast.success('已关闭');
+                    }}
                     >
                       <XCircle className="h-3.5 w-3.5" />
                       关闭
@@ -245,7 +253,11 @@ const FeedbackAdmin = () => {
                     variant="outline"
                     className="gap-1.5 text-destructive hover:text-destructive"
                     onClick={() => {
-                      deleteFeedback(item.id);
+                      const res = deleteFeedback(item.id);
+                      if (!res.ok) {
+                        toast.error(res.error ?? '删除失败');
+                        return;
+                      }
                       toast.success('已删除');
                     }}
                   >
@@ -294,9 +306,15 @@ const ContentAdmin = () => {
       toast.error('标题与正文不能为空');
       return;
     }
-    saveOverride(topic.id, draft);
+    const res = saveOverride(topic.id, draft);
+    if (!res.ok) {
+      toast.error(res.error ?? '覆盖保存失败');
+      return;
+    }
     applyTopicOverrides(topics);
-    toast.success('已保存，进入该专题即可看到更新');
+    toast.success('已保存，页面即将刷新');
+    // 保存后强制刷新页面，保证编辑页显示与 localStorage 覆盖层一致
+    window.location.reload();
   };
 
   const reset = () => {
@@ -305,8 +323,14 @@ const ContentAdmin = () => {
 
   const remove = () => {
     if (!topic) return;
-    removeOverride(topic.id);
-    toast.success('已撤销本地覆盖，刷新页面后恢复源码原文');
+    const res = removeOverride(topic.id);
+    if (!res.ok) {
+      toast.error(res.error ?? '撤销失败');
+      return;
+    }
+    toast.success('已撤销本地覆盖，页面即将刷新恢复源码原文');
+    // 撤销后强制刷新页面，让内存中的 topics 回到原始源码数据
+    window.location.reload();
   };
 
   const overrideCount = countOverrides();
@@ -316,9 +340,9 @@ const ContentAdmin = () => {
     <div>
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">课程</Label>
+          <Label htmlFor="dev-course-select" className="text-xs text-muted-foreground">课程</Label>
           <Select value={courseId} onValueChange={setCourseId}>
-            <SelectTrigger className="w-56">
+            <SelectTrigger id="dev-course-select" className="w-56">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -331,15 +355,15 @@ const ContentAdmin = () => {
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs text-muted-foreground">知识点（{courseTopics.length} 个）</Label>
+          <Label htmlFor="dev-topic-select" className="text-xs text-muted-foreground">知识点（{courseTopics.length} 个）</Label>
           <Select value={topicId} onValueChange={setTopicId}>
-            <SelectTrigger className="w-72">
+            <SelectTrigger id="dev-topic-select" className="w-72">
               <SelectValue placeholder="选择知识点" />
             </SelectTrigger>
             <SelectContent>
               {courseTopics.map((t) => (
                 <SelectItem key={t.id} value={t.id}>
-                  <InlineMathText text={t.title} />
+                  <InlineMathText escape text={t.title} />
                 </SelectItem>
               ))}
             </SelectContent>
@@ -354,15 +378,17 @@ const ContentAdmin = () => {
       {topic && (
         <div className="mt-5 space-y-4">
           <div className="space-y-1.5">
-            <Label>标题</Label>
+            <Label htmlFor="dev-title">标题</Label>
             <Input
+              id="dev-title"
               value={draft.title}
               onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
             />
           </div>
           <div className="space-y-1.5">
-            <Label>摘要</Label>
+            <Label htmlFor="dev-summary">摘要</Label>
             <Textarea
+              id="dev-summary"
               value={draft.summary}
               onChange={(e) => setDraft((d) => ({ ...d, summary: e.target.value }))}
               rows={2}
@@ -370,12 +396,13 @@ const ContentAdmin = () => {
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label>讲解正文（Markdown + LaTeX）</Label>
+              <Label htmlFor="dev-content">讲解正文（Markdown + LaTeX）</Label>
               <span className="text-xs text-muted-foreground">
                 {draft.content.length} 字符
               </span>
             </div>
             <Textarea
+              id="dev-content"
               value={draft.content}
               onChange={(e) => setDraft((d) => ({ ...d, content: e.target.value }))}
               rows={20}

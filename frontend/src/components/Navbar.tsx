@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, LogIn, LogOut, User, BookOpen, Sun, Moon } from 'lucide-react';
 import BrandMark from '@/components/BrandMark';
@@ -35,6 +35,8 @@ interface NavbarProps {
 
 const Navbar = ({ onOpenSearch }: NavbarProps) => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const drawerRef = useRef<HTMLElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -43,6 +45,21 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
 
   const isActive = (to: string) =>
     to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
+
+  // 移动端抽屉：Esc 关闭 + 焦点管理（打开时聚焦首个链接，关闭时焦点归还触发按钮）
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    const firstFocusable = drawerRef.current?.querySelector<HTMLElement>('a[href], button:not([disabled])');
+    firstFocusable?.focus();
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      toggleRef.current?.focus();
+    };
+  }, [mobileOpen]);
 
   const handleSignOut = () => {
     signOut();
@@ -201,6 +218,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
             size="icon"
             className="md:hidden"
             onClick={() => setMobileOpen((v) => !v)}
+            ref={toggleRef}
             aria-label={mobileOpen ? '关闭菜单' : '打开菜单'}
             aria-expanded={mobileOpen}
           >
@@ -211,7 +229,13 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
 
       {/* 移动端抽屉菜单 */}
       {mobileOpen && (
-        <nav className="md:hidden border-t border-border bg-background" aria-label="移动端导航">
+        <nav
+          ref={drawerRef}
+          className="md:hidden border-t border-border bg-background"
+          aria-label="移动端导航"
+          role="dialog"
+          aria-modal="true"
+        >
           <div className="container py-3 flex flex-col">
             {navLinks.map((link) => (
               <Link

@@ -57,13 +57,21 @@ const readAll = (): FeedbackEntry[] => {
   }
 };
 
-const writeAll = (entries: FeedbackEntry[]): void => {
+/** localStorage 写入结果：失败时 ok=false 并带中文原因，供调用方提示用户 */
+export interface WriteResult {
+  ok: boolean;
+  error?: string;
+}
+
+const writeAll = (entries: FeedbackEntry[]): WriteResult => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+    emitChange();
+    return { ok: true };
   } catch {
-    /* 存储失败时静默降级 */
+    emitChange();
+    return { ok: false, error: '存储空间不足，请清理旧数据' };
   }
-  emitChange();
 };
 
 const listeners = new Set<() => void>();
@@ -86,7 +94,7 @@ const newId = (prefix: string) =>
 /** 提交一条反馈 */
 export const addFeedback = (
   input: Omit<FeedbackEntry, 'id' | 'createdAt' | 'status' | 'replies'>,
-): FeedbackEntry => {
+): WriteResult & { entry?: FeedbackEntry } => {
   const entry: FeedbackEntry = {
     ...input,
     id: newId('fb'),
@@ -94,8 +102,8 @@ export const addFeedback = (
     status: 'pending',
     replies: [],
   };
-  writeAll([...readAll(), entry]);
-  return entry;
+  const res = writeAll([...readAll(), entry]);
+  return res.ok ? { ok: true, entry } : res;
 };
 
 /** 全部反馈（最新在前） */
@@ -109,7 +117,7 @@ export const loadFeedbackByUser = (userId: string): FeedbackEntry[] =>
     .sort((a, b) => b.createdAt - a.createdAt);
 
 /** 开发者回复 */
-export const replyFeedback = (id: string, content: string, by = '开发者'): void => {
+export const replyFeedback = (id: string, content: string, by = '开发者'): WriteResult => {
   const list = readAll().map((e) =>
     e.id === id
       ? {
@@ -119,15 +127,15 @@ export const replyFeedback = (id: string, content: string, by = '开发者'): vo
         }
       : e,
   );
-  writeAll(list);
+  return writeAll(list);
 };
 
-export const setFeedbackStatus = (id: string, status: FeedbackStatus): void => {
-  writeAll(readAll().map((e) => (e.id === id ? { ...e, status } : e)));
+export const setFeedbackStatus = (id: string, status: FeedbackStatus): WriteResult => {
+  return writeAll(readAll().map((e) => (e.id === id ? { ...e, status } : e)));
 };
 
-export const deleteFeedback = (id: string): void => {
-  writeAll(readAll().filter((e) => e.id !== id));
+export const deleteFeedback = (id: string): WriteResult => {
+  return writeAll(readAll().filter((e) => e.id !== id));
 };
 
 /** 订阅全部反馈 */

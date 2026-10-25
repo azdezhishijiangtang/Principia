@@ -359,10 +359,10 @@ const Index = () => {
                       <span>{topic.chapter}</span>
                     </div>
                     <h3 className="font-serif text-xl font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
-                      <InlineMathText text={topic.title} />
+                      <InlineMathText escape text={topic.title} />
                     </h3>
                     <p className="mt-2.5 text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                      <InlineMathText text={topic.summary} />
+                      <InlineMathText escape text={topic.summary} />
                     </p>
                     <div className="mt-4 flex flex-wrap gap-1.5">
                       {topic.keyPoints.slice(0, 2).map((kp, i) => (
@@ -370,7 +370,7 @@ const Index = () => {
                           key={i}
                           className="text-xs bg-secondary text-muted-foreground px-2 py-1 line-clamp-1"
                         >
-                          <InlineMathText text={kp} />
+                          <InlineMathText escape text={kp} />
                         </span>
                       ))}
                     </div>
@@ -422,9 +422,9 @@ const Index = () => {
                     </span>
                   </div>
                   <h3 className="font-serif text-lg font-semibold leading-snug group-hover:text-info transition-colors duration-[var(--duration-fast)]">
-                    <InlineMathText text={problem.title} />
+                    <InlineMathText escape text={problem.title} />
                   </h3>
-                  <MathText
+                  <MathText escape
                     content={problem.question}
                     className="mt-3 text-sm text-muted-foreground line-clamp-2 [&_.katex-display]:my-1 [&_p]:my-1"
                   />

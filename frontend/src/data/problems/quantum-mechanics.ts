@@ -8,10 +8,10 @@ export const quantum_mechanicsProblems: Problem[] = [
     topicId: '1d-potentials',
     title: '无限深势阱中电子的能级与跃迁',
     difficulty: 1,
-    question: '电子被束缚在宽度 $a = 1\\ \\text{nm}$ 的一维无限深势阱内（阱内势能为零，阱外势能无穷大）。已知电子质量 $m = 9.11\\times10^{-31}\\ \\text{kg}$，$\\hbar = 1.055\\times10^{-34}\\ \\text{J\\cdot s}$，$1\\ \\text{eV} = 1.602\\times10^{-19}\\ \\text{J}$。求：(1) 定态能量与波函数的一般表达式；(2) 基态能量 $E_1$（用 eV 表示）；(3) 电子从 $n = 2$ 跃迁到 $n = 1$ 发出光子的波长；(4) 基态下电子出现在 $0 < x < a/4$ 区域内的概率。',
+    question: '电子被束缚在宽度 $a = 1\\ \\text{nm}$ 的一维无限深势阱内（阱内势能为零，阱外势能无穷大）。已知电子质量 $m = 9.11\\times10^{-31}\\ \\text{kg}$，$\\hbar = 1.055\\times10^{-34}\\ \\text{J}\\cdot\\text{ s}$，$1\\ \\text{eV} = 1.602\\times10^{-19}\\ \\text{J}$。求：(1) 定态能量与波函数的一般表达式；(2) 基态能量 $E_1$（用 eV 表示）；(3) 电子从 $n = 2$ 跃迁到 $n = 1$ 发出光子的波长；(4) 基态下电子出现在 $0 < x < a/4$ 区域内的概率。',
     hints: [
       '阱内波函数满足自由粒子薛定谔方程，通解为 $\\psi = A\\sin kx + B\\cos kx$；边界条件 $\\psi(0) = \\psi(a) = 0$ 给出量子化条件 $k = n\\pi/a$。',
-      '能级 $E_n = n^2\\pi^2\\hbar^2/(2ma^2)$；光子波长由 $hc/\\lambda = E_2 - E_1$ 求出，可用 $hc = 1240\\ \\text{eV\\cdot nm}$。',
+      '能级 $E_n = n^2\\pi^2\\hbar^2/(2ma^2)$；光子波长由 $hc/\\lambda = E_2 - E_1$ 求出，可用 $hc = 1240\\ \\text{eV}\\cdot\\text{ nm}$。',
       '概率 = $\\int_0^{a/4} |\\psi_1|^2 dx$，利用 $\\sin^2 u = \\frac{1 - \\cos 2u}{2}$ 积分。',
     ],
     solution: [
@@ -75,7 +75,7 @@ export const quantum_mechanicsProblems: Problem[] = [
   {
     id: 'quantum-mechanics-p3',
     courseId: 'quantum-mechanics',
-    topicId: 'operators',
+    topicId: 'qm-operators',
     title: '用升降算符代数求解谐振子能级',
     difficulty: 3,
     question: '定义算符 $a = \\sqrt{\\dfrac{m\\omega}{2\\hbar}}\\,x + \\dfrac{i}{\\sqrt{2m\\hbar\\omega}}\\,p$ 及其厄米共轭 $a^{\\dagger}$。(1) 利用 $[x, p] = i\\hbar$ 证明 $[a, a^{\\dagger}] = 1$；(2) 证明哈密顿量可写成 $H = \\hbar\\omega\\left(a^{\\dagger}a + \\dfrac{1}{2}\\right)$；(3) 设 $N = a^{\\dagger}a$（粒子数算符），证明其本征值 $n$ 只能取非负整数，从而 $E_n = \\hbar\\omega\\left(n + \\dfrac{1}{2}\\right)$。',

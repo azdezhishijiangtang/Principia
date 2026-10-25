@@ -77,10 +77,10 @@ interface CourseIconProps {
   className?: string;
 }
 
-/** 课程图标：未注册的名称回退为默认书籍图标 */
+/** 课程图标：未注册的名称回退为默认书籍图标（纯装饰性图标，对辅助技术隐藏） */
 const CourseIcon = ({ name, className = 'h-5 w-5' }: CourseIconProps) => {
   const Icon = iconRegistry[name] ?? BookOpen;
-  return <Icon className={className} strokeWidth={2} />;
+  return <Icon className={className} strokeWidth={2} aria-hidden="true" />;
 };
 
 export default CourseIcon;

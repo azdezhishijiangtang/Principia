@@ -1,6 +1,10 @@
 import { useMemo } from 'react';
 import katex from 'katex';
 
+/** HTML 转义（用户输入防注入） */
+export const escapeHtml = (s: string): string =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 /** 渲染 LaTeX 字符串为 HTML */
 export const renderMath = (latex: string, displayMode = false): string => {
   try {
@@ -12,7 +16,7 @@ export const renderMath = (latex: string, displayMode = false): string => {
       output: 'html',
     });
   } catch {
-    return `<code>${latex}</code>`;
+    return `<code>${escapeHtml(latex)}</code>`;
   }
 };
 
@@ -38,29 +42,32 @@ const preprocessLines = (text: string): string[] => {
   return out;
 };
 
-/** 行内解析：**加粗** 与 $公式$ 组合解析（递归实现，任意嵌套均可） */
-const parseInline = (text: string): string => {
+/**
+ * 行内解析：**加粗** 与 $公式$ 组合解析（递归实现，任意嵌套均可）。
+ * escape=true 时对非公式文本做 HTML 转义（用于不可信输入）。
+ */
+const parseInline = (text: string, escape = false): string => {
+  const plain = (s: string) => (escape ? escapeHtml(s) : s);
   const combined = /\*\*([\s\S]+?)\*\*|\$\$([^$]+?)\$\$|\$([^$]+?)\$/g;
   const out: string[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = combined.exec(text)) !== null) {
-    if (m.index > last) out.push(text.slice(last, m.index));
+    if (m.index > last) out.push(plain(text.slice(last, m.index)));
     if (m[1] !== undefined) {
       // 加粗：内部递归解析（支持加粗内公式、公式内外的其他加粗）
-      out.push(`<strong>${parseInline(m[1])}</strong>`);
+      out.push(`<strong>${parseInline(m[1], escape)}</strong>`);
     } else {
       out.push(renderMath(m[2] ?? m[3], false));
     }
     last = m.index + m[0].length;
   }
-  if (last < text.length) out.push(text.slice(last));
+  if (last < text.length) out.push(plain(text.slice(last)));
   return out.join('');
 };
 
-/** HTML 转义（用户输入防注入） */
-const escapeHtml = (s: string): string =>
-  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+/** 行内渲染：**加粗** 与 $行内公式$（供标题等行内场景使用） */
+export const renderInline = (text: string): string => parseInline(text);
 
 /**
  * 用户输入的行内渲染：非公式文本做 HTML 转义，公式段正常渲染。
@@ -80,9 +87,6 @@ export const renderUserInline = (text: string): string => {
   return out.join('');
 };
 
-/** 行内渲染：**加粗** 与 $行内公式$（供标题等行内场景使用） */
-export const renderInline = (text: string): string => parseInline(text);
-
 interface InlineMathTextProps {
   /** 含 $...$ 行内公式的纯文本 */
   text: string;
@@ -98,7 +102,7 @@ export const InlineMathText = ({ text, className = '', escape = false }: InlineM
 };
 
 /** 块级解析：Markdown + LaTeX 混合 */
-const parseBlock = (text: string): string => {
+const parseBlock = (text: string, escape = false): string => {
   const lines = preprocessLines(text);
   const html: string[] = [];
   let i = 0;
@@ -114,28 +118,28 @@ const parseBlock = (text: string): string => {
 
     // 二级标题
     if (line.startsWith('## ')) {
-      html.push(`<h2>${parseInline(line.slice(3))}</h2>`);
+      html.push(`<h2>${parseInline(line.slice(3), escape)}</h2>`);
       i++;
       continue;
     }
 
     // 一级标题
     if (line.startsWith('# ')) {
-      html.push(`<h1>${parseInline(line.slice(2))}</h1>`);
+      html.push(`<h1>${parseInline(line.slice(2), escape)}</h1>`);
       i++;
       continue;
     }
 
     // 三级标题
     if (line.startsWith('### ')) {
-      html.push(`<h3>${parseInline(line.slice(4))}</h3>`);
+      html.push(`<h3>${parseInline(line.slice(4), escape)}</h3>`);
       i++;
       continue;
     }
 
     // 四级标题
     if (line.startsWith('#### ')) {
-      html.push(`<h4>${parseInline(line.slice(5))}</h4>`);
+      html.push(`<h4>${parseInline(line.slice(5), escape)}</h4>`);
       i++;
       continue;
     }
@@ -147,7 +151,7 @@ const parseBlock = (text: string): string => {
         quoteLines.push(lines[i].slice(2));
         i++;
       }
-      html.push(`<blockquote>${parseInline(quoteLines.join('<br/>'))}</blockquote>`);
+      html.push(`<blockquote>${parseInline(quoteLines.join('<br/>'), escape)}</blockquote>`);
       continue;
     }
 
@@ -162,11 +166,11 @@ const parseBlock = (text: string): string => {
         .filter((r) => !/^\|[\s:|-]+\|$/.test(r))
         .map((r) => r.slice(1, -1).split('|').map((c) => c.trim()));
       const thead = rows[0]
-        ? `<thead><tr>${rows[0].map((c) => `<th>${parseInline(c)}</th>`).join('')}</tr></thead>`
+        ? `<thead><tr>${rows[0].map((c) => `<th>${parseInline(c, escape)}</th>`).join('')}</tr></thead>`
         : '';
       const tbody = `<tbody>${rows
         .slice(1)
-        .map((r) => `<tr>${r.map((c) => `<td>${parseInline(c)}</td>`).join('')}</tr>`)
+        .map((r) => `<tr>${r.map((c) => `<td>${parseInline(c, escape)}</td>`).join('')}</tr>`)
         .join('')}</tbody>`;
       html.push(`<table>${thead}${tbody}</table>`);
       continue;
@@ -176,7 +180,7 @@ const parseBlock = (text: string): string => {
     if (line.startsWith('- ')) {
       const items: string[] = [];
       while (i < lines.length && lines[i].startsWith('- ')) {
-        items.push(`<li>${parseInline(lines[i].slice(2))}</li>`);
+        items.push(`<li>${parseInline(lines[i].slice(2), escape)}</li>`);
         i++;
       }
       html.push(`<ul>${items.join('')}</ul>`);
@@ -187,7 +191,7 @@ const parseBlock = (text: string): string => {
     if (/^\d+\. /.test(line)) {
       const items: string[] = [];
       while (i < lines.length && /^\d+\. /.test(lines[i])) {
-        items.push(`<li>${parseInline(lines[i].replace(/^\d+\. /, ''))}</li>`);
+        items.push(`<li>${parseInline(lines[i].replace(/^\d+\. /, ''), escape)}</li>`);
         i++;
       }
       html.push(`<ol>${items.join('')}</ol>`);
@@ -233,11 +237,11 @@ const parseBlock = (text: string): string => {
     }
     // 兜底：无法识别的行强制前进，避免死循环
     if (paraLines.length === 0) {
-      html.push(`<p>${parseInline(line)}</p>`);
+      html.push(`<p>${parseInline(line, escape)}</p>`);
       i++;
       continue;
     }
-    html.push(`<p>${parseInline(paraLines.join(' '))}</p>`);
+    html.push(`<p>${parseInline(paraLines.join(' '), escape)}</p>`);
   }
 
   return html.join('');
@@ -247,6 +251,12 @@ interface MathTextProps {
   /** Markdown + LaTeX 混合内容 */
   content: string;
   className?: string;
+  /**
+   * 对非公式文本做 HTML 转义。
+   * 默认 false（站内静态数据已审核）；渲染不可信输入
+   * （论坛帖子、错题内容、AI 回答、URL 参数等）必须开启。
+   */
+  escape?: boolean;
 }
 
 /**
@@ -255,8 +265,8 @@ interface MathTextProps {
  * - $$...$$ 独立公式块
  * - 支持 # / ## / ### / #### 标题、**加粗**、- 列表、1. 列表、> 引用、| 表格 |
  */
-const MathText = ({ content, className = '' }: MathTextProps) => {
-  const html = useMemo(() => parseBlock(content), [content]);
+const MathText = ({ content, className = '', escape = false }: MathTextProps) => {
+  const html = useMemo(() => parseBlock(content, escape), [content, escape]);
   return (
     <div
       className={`prose-math ${className}`}

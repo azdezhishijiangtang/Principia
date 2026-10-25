@@ -3,7 +3,7 @@ import type { Topic } from '@/types';
 export const mathematical_physicsTopics: Topic[] = [
   // ─────────────────────── 第一章 复变函数与解析函数 ───────────────────────
   {
-    id: 'analytic-functions',
+    id: 'mp-analytic-functions',
     courseId: 'mathematical-physics',
     chapter: '第一章 复变函数与解析函数',
     title: '解析与 C-R 条件',
@@ -17,7 +17,7 @@ export const mathematical_physicsTopics: Topic[] = [
       '由已知实部可用 C-R 条件积分构造虚部，重构解析函数',
     ],
     relatedProblemIds: ['mathematical-physics-p1'],
-    content: String.raw`## 一、从实到复：为什么要研究复变函数
+    content: String.raw`
 
 在大学物理和理论物理的课程里，我们会反复遇到这样的情形：一个看起来无从下手实积分，例如 $\int_{-\infty}^{+\infty} \frac{dx}{1+x^2}$ 的种种推广，换到复平面上"绕一圈"之后突然变得轻而易举；一个级数在实轴上处处收敛还是发散纠缠不清，而它的复形式一眼就能看出收敛半径由最近的奇点决定；二维静电场、理想流体的平面流动、稳态温度场的全部信息，竟然都装在某个复变函数里。这一切的根源，是复变函数中"解析"这一极强的结构性要求：解析函数的实部与虚部被一组方程死死地锁在一起，谁也不能独立变化。
 
@@ -112,7 +112,7 @@ $$\nabla^2 \varphi \equiv \varphi_{xx} + \varphi_{yy} = 0$$
       '三类典型实积分的围道方案：有理函数反常积分、三角积分、含 e^{imx} 的傅里叶型积分',
     ],
     relatedProblemIds: ['mathematical-physics-p2'],
-    content: String.raw`## 一、复积分的定义与基本性质
+    content: String.raw`
 
 复积分是沿复平面上曲线的积分。设 $C$ 是一条有向光滑曲线，$f(z)$ 在其上有定义。把 $C$ 任意分割，在每个小段上取点 $\zeta_k$，作和式 $\sum_k f(\zeta_k)\,\Delta z_k$（注意是**复增量** $\Delta z_k = z_k - z_{k-1}$），若分割无限加细时和式有极限，就称 $f$ 沿 $C$ 的积分为
 
@@ -219,7 +219,7 @@ $$\cos\theta = \frac{z + z^{-1}}{2}, \qquad \sin\theta = \frac{z - z^{-1}}{2i}, 
 
   // ─────────────────────── 第三章 幂级数展开 ───────────────────────
   {
-    id: 'power-series',
+    id: 'mp-power-series',
     courseId: 'mathematical-physics',
     chapter: '第三章 幂级数展开',
     title: '泰勒与洛朗展开',
@@ -233,7 +233,7 @@ $$\cos\theta = \frac{z + z^{-1}}{2}, \qquad \sin\theta = \frac{z - z^{-1}}{2i}, 
       '极点的阶 = 最高负幂的次数；洛朗展开是留数计算的代数基础',
     ],
     relatedProblemIds: ['mathematical-physics-p3'],
-    content: String.raw`## 一、复数项级数与收敛圆
+    content: String.raw`
 
 复数项级数 $\sum_{n=0}^\infty a_n$ 的收敛与实级数类似：部分和序列有极限则收敛，绝对收敛（$\sum |a_n|$ 收敛）更强且蕴含收敛。幂级数指形如
 
@@ -334,7 +334,7 @@ $$\frac{1}{1 - w} = \sum_{n=0}^\infty w^n \quad (|w| < 1), \qquad \frac{1}{w(1 -
       'δ 函数是变换方法的语法元件：筛选性质与 FT[δ] = 1 使任意信号可写成平面波叠加',
     ],
     relatedProblemIds: ['mathematical-physics-p4'],
-    content: String.raw`## 一、周期现象与分解思想
+    content: String.raw`
 
 从单摆到交流电，从琴弦的基音与泛音到晶体中的格波，周期运动是物理世界最普遍的运动形态之一。而所有周期现象中最简单的是简谐振动 $A\sin(\omega t + \varphi)$。傅里叶的基本洞见是：**任何（足够正则的）周期运动都可以写成若干简谐振动的叠加**；非周期信号则可以看成"周期趋于无穷"的极限，离散的谐波变成连续分布的频率成分。于是"分析一个信号"等价于"找出它的频谱"——即它包含哪些频率成分、各占多少权重。这种把函数按正交基展开的观点，与线性代数中"把向量按基向量展开"完全同构：函数空间是无穷维的矢量空间，$\sin nx$、$\cos nx$（或 $e^{in\omega x}$）是一组正交基，傅里叶系数就是坐标分量。带着这个线性代数的类比去学本章，几乎所有公式都不再突兀。
 
@@ -424,7 +424,7 @@ $$\delta(x - x_0) = 0 \ (x \neq x_0), \qquad \int_{-\infty}^{+\infty} \delta(x -
       '线性方程满足叠加原理，非齐次问题可用冲量原理化为齐次',
     ],
     relatedProblemIds: ['mathematical-physics-p4', 'mathematical-physics-p5'],
-    content: String.raw`## 一、三类方程从何而来
+    content: String.raw`
 
 数学物理方程不是从天上掉下来的公式，而是把物理守恒定律写成偏微分语言的结果。三个最基本的方程各有自己的"出身"。
 
@@ -524,7 +524,7 @@ $$u(x, t) = \frac{\varphi(x - at) + \varphi(x + at)}{2} + \frac{1}{2a} \int_{x -
       '极坐标范例：圆内拉普拉斯方程，角向本征函数 e^{inθ}，径向解 r^{±n}',
     ],
     relatedProblemIds: ['mathematical-physics-p5'],
-    content: String.raw`## 一、基本思想：把偏微分方程拆成常微分方程
+    content: String.raw`
 
 分离变量法是数学物理方程最重要、使用最广的解法，核心思想一句话：**寻找形如 $u(x, t) = X(x) T(t)$ 的"可分离"特解，把一个偏微分方程拆成两个常微分方程**。以一维热传导方程为例，代入 $u = X(x)T(t)$：
 
@@ -627,7 +627,7 @@ $$u(r, \theta) = \frac{1}{2\pi} \int_0^{2\pi} \frac{R_0^2 - r^2}{R_0^2 - 2 R_0 r
       '正交关系：∫P_l P_m dx = 2δ_{lm}/(2l+1)；∫ x J_n(λ_m x) J_n(λ_k x) dx 带权正交',
     ],
     relatedProblemIds: ['mathematical-physics-p6'],
-    content: String.raw`## 一、为什么需要特殊函数：从坐标分离说起
+    content: String.raw`
 
 第六章的分离变量法在直角坐标与平面极坐标下产生了三角本征函数，一切顺利。但物理世界充满球与柱：均匀静电场中的导体球、球形容器内的温度分布、圆柱波导中的电磁模、圆形膜的振动。把拉普拉斯方程或波动方程放进**球坐标**与**柱坐标**分离变量，冒出来的常微分方程不再是常系数的，而是变系数的——它们就是勒让德方程与贝塞尔方程，其解被称为特殊函数。特殊函数并不特殊，它们是"球问题与柱问题的三角函数"，地位与 $\sin nx$ 完全平行。
 

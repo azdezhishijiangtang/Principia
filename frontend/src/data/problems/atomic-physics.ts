@@ -17,11 +17,11 @@ export const atomic_physicsProblems: Problem[] = [
     solution: [
       {
         title: '对心入射的最近距离',
-        detail: '$b = 0$ 时粒子正对核射去，到最近距离 $r_{\\min}$ 处瞬时静止，动能全部转为电势能\n$$E_k = \\frac{1}{4\\pi\\varepsilon_0}\\frac{(2e)(Ze)}{r_{\\min}} \\quad\\Rightarrow\\quad r_{\\min} = \\frac{1}{4\\pi\\varepsilon_0}\\frac{2Ze^2}{E_k}$$\n代入数值：$r_{\\min} = \\dfrac{2 \\times 79 \\times 1.44\\ \\text{MeV}\\cdot\\text{fm}}{5.0\\ \\text{MeV}} = \\dfrac{227.5}{5.0}\\ \\text{fm} \\approx 45.5\\ \\text{fm} = 4.55\\times 10^{-14}\\ \\text{m}$。',
+        detail: '$b = 0$ 时粒子正对核射去，到最近距离 $r_{\\min}$ 处瞬时静止，动能全部转为电势能\\n$$E_k = \\frac{1}{4\\pi\\varepsilon_0}\\frac{(2e)(Ze)}{r_{\\min}} \\quad\\Rightarrow\\quad r_{\\min} = \\frac{1}{4\\pi\\varepsilon_0}\\frac{2Ze^2}{E_k}$$\\n代入数值：$r_{\\min} = \\dfrac{2 \\times 79 \\times 1.44\\ \\text{MeV}\\cdot\\text{fm}}{5.0\\ \\text{MeV}} = \\dfrac{227.5}{5.0}\\ \\text{fm} \\approx 45.5\\ \\text{fm} = 4.55\\times 10^{-14}\\ \\text{m}$。',
       },
       {
         title: '散射角 60° 对应的瞄准距离',
-        detail: '由散射公式，$\\theta = 60^\\circ$ 时 $\\cot(\\theta/2) = \\cot 30^\\circ = \\sqrt{3} \\approx 1.732$：\n$$b = \\frac{Ze^2}{4\\pi\\varepsilon_0 \\cdot 2E_k}\\cot\\frac{\\theta}{2} = \\frac{79 \\times 1.44}{2 \\times 5.0} \\times 1.732\\ \\text{fm} = 11.38 \\times 1.732\\ \\text{fm} \\approx 19.7\\ \\text{fm} = 1.97\\times 10^{-14}\\ \\text{m}$$',
+        detail: '由散射公式，$\\theta = 60^\\circ$ 时 $\\cot(\\theta/2) = \\cot 30^\\circ = \\sqrt{3} \\approx 1.732$：\\n$$b = \\frac{Ze^2}{4\\pi\\varepsilon_0 \\cdot 2E_k}\\cot\\frac{\\theta}{2} = \\frac{79 \\times 1.44}{2 \\times 5.0} \\times 1.732\\ \\text{fm} = 11.38 \\times 1.732\\ \\text{fm} \\approx 19.7\\ \\text{fm} = 1.97\\times 10^{-14}\\ \\text{m}$$',
       },
       {
         title: '核尺度量级讨论',
@@ -52,11 +52,11 @@ export const atomic_physicsProblems: Problem[] = [
       },
       {
         title: '跃迁光子能量与波长',
-        detail: '由玻尔频率条件，发射光子能量\n$$\\Delta E = E_3 - E_2 = -1.51 - (-3.40) = 1.89\\ \\text{eV}$$\n对应波长\n$$\\lambda = \\frac{hc}{\\Delta E} = \\frac{1240\\ \\text{eV}\\cdot\\text{nm}}{1.89\\ \\text{eV}} \\approx 656\\ \\text{nm}$$\n落在可见光红端，正是巴尔末系的 $H_\\alpha$ 线。',
+        detail: '由玻尔频率条件，发射光子能量\\n$$\\Delta E = E_3 - E_2 = -1.51 - (-3.40) = 1.89\\ \\text{eV}$$\\n对应波长\\n$$\\lambda = \\frac{hc}{\\Delta E} = \\frac{1240\\ \\text{eV}\\cdot\\text{nm}}{1.89\\ \\text{eV}} \\approx 656\\ \\text{nm}$$\\n落在可见光红端，正是巴尔末系的 $H_\\alpha$ 线。',
       },
       {
         title: '基态电离能',
-        detail: '电离是把电子从基态 $E_1 = -13.6\\ \\text{eV}$ 移到 $E_\\infty = 0$ 所需的最小能量：\n$$E_{\\text{电离}} = 0 - E_1 = 13.6\\ \\text{eV}$$\n与实验测得的氢电离能一致，是玻尔模型的重要验证。',
+        detail: '电离是把电子从基态 $E_1 = -13.6\\ \\text{eV}$ 移到 $E_\\infty = 0$ 所需的最小能量：\\n$$E_{\\text{电离}} = 0 - E_1 = 13.6\\ \\text{eV}$$\\n与实验测得的氢电离能一致，是玻尔模型的重要验证。',
       },
     ],
     answer: '$E_2 = -3.40\\ \\text{eV}$，$E_3 \\approx -1.51\\ \\text{eV}$；$H_\\alpha$ 光子能量 $\\Delta E \\approx 1.89\\ \\text{eV}$，波长 $\\lambda \\approx 656\\ \\text{nm}$；基态电离能 $13.6\\ \\text{eV}$。',
@@ -79,15 +79,15 @@ export const atomic_physicsProblems: Problem[] = [
     solution: [
       {
         title: 'Hβ 线波长',
-        detail: '$$\\frac{1}{\\lambda} = R_H\\left(\\frac{1}{2^2} - \\frac{1}{4^2}\\right) = R_H\\left(\\frac{1}{4} - \\frac{1}{16}\\right) = \\frac{3R_H}{16} = \\frac{3 \\times 1.097\\times 10^7}{16} \\approx 2.057\\times 10^6\\ \\text{m}^{-1}$$\n$$\\lambda = \\frac{1}{2.057\\times 10^6} \\approx 4.862\\times 10^{-7}\\ \\text{m} = 486.2\\ \\text{nm}$$\n为可见光区的青色谱线。',
+        detail: '$$\\frac{1}{\\lambda} = R_H\\left(\\frac{1}{2^2} - \\frac{1}{4^2}\\right) = R_H\\left(\\frac{1}{4} - \\frac{1}{16}\\right) = \\frac{3R_H}{16} = \\frac{3 \\times 1.097\\times 10^7}{16} \\approx 2.057\\times 10^6\\ \\text{m}^{-1}$$\\n$$\\lambda = \\frac{1}{2.057\\times 10^6} \\approx 4.862\\times 10^{-7}\\ \\text{m} = 486.2\\ \\text{nm}$$\\n为可见光区的青色谱线。',
       },
       {
         title: '巴尔末系线系极限',
-        detail: '令 $n_i \\to \\infty$：\n$$\\frac{1}{\\lambda_{\\lim}} = \\frac{R_H}{n_f^2} = \\frac{R_H}{4} \\quad\\Rightarrow\\quad \\lambda_{\\lim} = \\frac{4}{R_H} = \\frac{4}{1.097\\times 10^7} \\approx 3.646\\times 10^{-7}\\ \\text{m} = 364.6\\ \\text{nm}$$\n谱线随 $n_i$ 增大向此极限密集靠拢。',
+        detail: '令 $n_i \\to \\infty$：\\n$$\\frac{1}{\\lambda_{\\lim}} = \\frac{R_H}{n_f^2} = \\frac{R_H}{4} \\quad\\Rightarrow\\quad \\lambda_{\\lim} = \\frac{4}{R_H} = \\frac{4}{1.097\\times 10^7} \\approx 3.646\\times 10^{-7}\\ \\text{m} = 364.6\\ \\text{nm}$$\\n谱线随 $n_i$ 增大向此极限密集靠拢。',
       },
       {
         title: '极限光子能量的物理意义',
-        detail: '$$\\Delta E_{\\lim} = \\frac{hc}{\\lambda_{\\lim}} = \\frac{1240\\ \\text{eV}\\cdot\\text{nm}}{364.6\\ \\text{nm}} \\approx 3.40\\ \\text{eV}$$\n恰等于 $|E_2| = 13.6/4\\ \\text{eV}$。它对应电子从电离连续区（$E = 0$）直接落到 $n = 2$ 能级释放的能量，也就是处于 $n = 2$ 的氢原子的电离能；极限之外不再是分立谱线，而是连续谱。',
+        detail: '$$\\Delta E_{\\lim} = \\frac{hc}{\\lambda_{\\lim}} = \\frac{1240\\ \\text{eV}\\cdot\\text{nm}}{364.6\\ \\text{nm}} \\approx 3.40\\ \\text{eV}$$\\n恰等于 $|E_2| = 13.6/4\\ \\text{eV}$。它对应电子从电离连续区（$E = 0$）直接落到 $n = 2$ 能级释放的能量，也就是处于 $n = 2$ 的氢原子的电离能；极限之外不再是分立谱线，而是连续谱。',
       },
     ],
     answer: '$H_\\beta$ 波长 $\\lambda \\approx 486.2\\ \\text{nm}$；巴尔末系极限 $\\lambda_{\\lim} \\approx 364.6\\ \\text{nm}$；极限光子能量 $\\approx 3.40\\ \\text{eV}$，即 $n = 2$ 能级的电离能。',
@@ -110,15 +110,15 @@ export const atomic_physicsProblems: Problem[] = [
     solution: [
       {
         title: '连续谱短波极限（杜安–亨特定律）',
-        detail: '单个电子最多把全部动能 $eV$ 变成一个光子：\n$$eV = \\frac{hc}{\\lambda_{\\min}} \\quad\\Rightarrow\\quad \\lambda_{\\min} = \\frac{hc}{eV} = \\frac{1.24\\ \\text{nm}\\cdot\\text{kV}}{40\\ \\text{kV}} = 0.031\\ \\text{nm} = 3.1\\times 10^{-11}\\ \\text{m}$$\n$\\lambda_{\\min}$ 只由管电压决定，与靶无关。',
+        detail: '单个电子最多把全部动能 $eV$ 变成一个光子：\\n$$eV = \\frac{hc}{\\lambda_{\\min}} \\quad\\Rightarrow\\quad \\lambda_{\\min} = \\frac{hc}{eV} = \\frac{1.24\\ \\text{nm}\\cdot\\text{kV}}{40\\ \\text{kV}} = 0.031\\ \\text{nm} = 3.1\\times 10^{-11}\\ \\text{m}$$\\n$\\lambda_{\\min}$ 只由管电压决定，与靶无关。',
       },
       {
         title: '铜 Kα 线的能量与波长（莫塞莱定律）',
-        detail: '有效核电荷 $Z_{\\text{eff}} = Z - 1 = 28$：\n$$h\\nu_{K_\\alpha} \\approx \\frac{3}{4} \\times 13.6\\ \\text{eV} \\times 28^2 = \\frac{3}{4} \\times 13.6 \\times 784\\ \\text{eV} \\approx 8.0\\ \\text{keV}$$\n对应波长\n$$\\lambda = \\frac{hc}{h\\nu} = \\frac{1240\\ \\text{eV}\\cdot\\text{nm}}{8.0\\times 10^3\\ \\text{eV}} \\approx 0.155\\ \\text{nm}$$\n与铜 $K_\\alpha$ 线实测值 $0.154\\ \\text{nm}$ 高度吻合，体现了莫塞莱定律 $\\sqrt{\\nu} \\propto (Z-1)$ 的定量成功。',
+        detail: '有效核电荷 $Z_{\\text{eff}} = Z - 1 = 28$：\\n$$h\\nu_{K_\\alpha} \\approx \\frac{3}{4} \\times 13.6\\ \\text{eV} \\times 28^2 = \\frac{3}{4} \\times 13.6 \\times 784\\ \\text{eV} \\approx 8.0\\ \\text{keV}$$\\n对应波长\\n$$\\lambda = \\frac{hc}{h\\nu} = \\frac{1240\\ \\text{eV}\\cdot\\text{nm}}{8.0\\times 10^3\\ \\text{eV}} \\approx 0.155\\ \\text{nm}$$\\n与铜 $K_\\alpha$ 线实测值 $0.154\\ \\text{nm}$ 高度吻合，体现了莫塞莱定律 $\\sqrt{\\nu} \\propto (Z-1)$ 的定量成功。',
       },
       {
         title: 'K 层结合能与标识谱阈值',
-        detail: '把 K 层电子电离到连续区，类氢近似下\n$$E_K \\approx 13.6\\,(Z-1)^2\\ \\text{eV} = 13.6 \\times 784\\ \\text{eV} \\approx 10.7\\ \\text{keV}$$\n因此只有当 $eV \\ge E_K$，即 $V \\gtrsim 10.7\\ \\text{kV}$ 时，电子才能击出 K 层电子形成空位，标识谱才开始出现；本题 $40\\ \\text{kV}$ 远超阈值。比较可见 $E_K \\approx 10.7\\ \\text{keV} > h\\nu_{K_\\alpha} \\approx 8.0\\ \\text{keV}$，因为电离的终态是自由态（$E = 0$），而 $K_\\alpha$ 跃迁的终态是仍被束缚的 L 层（$n = 2$），两者能量之差正是 L 层结合能。',
+        detail: '把 K 层电子电离到连续区，类氢近似下\\n$$E_K \\approx 13.6\\,(Z-1)^2\\ \\text{eV} = 13.6 \\times 784\\ \\text{eV} \\approx 10.7\\ \\text{keV}$$\\n因此只有当 $eV \\ge E_K$，即 $V \\gtrsim 10.7\\ \\text{kV}$ 时，电子才能击出 K 层电子形成空位，标识谱才开始出现；本题 $40\\ \\text{kV}$ 远超阈值。比较可见 $E_K \\approx 10.7\\ \\text{keV} > h\\nu_{K_\\alpha} \\approx 8.0\\ \\text{keV}$，因为电离的终态是自由态（$E = 0$），而 $K_\\alpha$ 跃迁的终态是仍被束缚的 L 层（$n = 2$），两者能量之差正是 L 层结合能。',
       },
     ],
     answer: '$\\lambda_{\\min} = 0.031\\ \\text{nm}$；铜 $K_\\alpha$：$h\\nu \\approx 8.0\\ \\text{keV}$，$\\lambda \\approx 0.155\\ \\text{nm}$；$E_K \\approx 10.7\\ \\text{keV}$，阈值电压约 $10.7\\ \\text{kV}$，且 $E_K > h\\nu_{K_\\alpha}$（电离终态为连续区，跃迁终态为 L 层）。',
@@ -141,15 +141,15 @@ export const atomic_physicsProblems: Problem[] = [
     solution: [
       {
         title: '求衰变常数',
-        detail: '$$\\lambda = \\frac{\\ln 2}{T_{1/2}} = \\frac{0.693}{8.0\\ \\text{天}} \\approx 0.0866\\ \\text{天}^{-1}$$\n换算为秒：$T_{1/2} = 8.0 \\times 86400\\ \\text{s} = 6.912\\times 10^5\\ \\text{s}$，\n$$\\lambda = \\frac{0.693}{6.912\\times 10^5\\ \\text{s}} \\approx 1.0\\times 10^{-6}\\ \\text{s}^{-1}$$',
+        detail: '$$\\lambda = \\frac{\\ln 2}{T_{1/2}} = \\frac{0.693}{8.0\\ \\text{天}} \\approx 0.0866\\ \\text{天}^{-1}$$\\n换算为秒：$T_{1/2} = 8.0 \\times 86400\\ \\text{s} = 6.912\\times 10^5\\ \\text{s}$，\\n$$\\lambda = \\frac{0.693}{6.912\\times 10^5\\ \\text{s}} \\approx 1.0\\times 10^{-6}\\ \\text{s}^{-1}$$',
       },
       {
         title: '32 天后的活度与剩余比',
-        detail: '$t = 32$ 天 $= 4\\,T_{1/2}$，由指数衰减律\n$$\\frac{N}{N_0} = \\left(\\frac{1}{2}\\right)^4 = \\frac{1}{16} = 6.25\\%$$\n活度与核数成正比，按同一比例衰减：\n$$A = \\frac{A_0}{16} = \\frac{3.2\\times 10^8}{16}\\ \\text{Bq} = 2.0\\times 10^7\\ \\text{Bq}$$',
+        detail: '$t = 32$ 天 $= 4\\,T_{1/2}$，由指数衰减律\\n$$\\frac{N}{N_0} = \\left(\\frac{1}{2}\\right)^4 = \\frac{1}{16} = 6.25\\%$$\\n活度与核数成正比，按同一比例衰减：\\n$$A = \\frac{A_0}{16} = \\frac{3.2\\times 10^8}{16}\\ \\text{Bq} = 2.0\\times 10^7\\ \\text{Bq}$$',
       },
       {
         title: '平均寿命',
-        detail: '$$\\tau = \\frac{1}{\\lambda} = \\frac{T_{1/2}}{\\ln 2} = \\frac{8.0}{0.693}\\ \\text{天} \\approx 11.5\\ \\text{天}$$\n平均寿命大于半衰期，因为指数分布的长尾使平均值被少数长寿核拉高。',
+        detail: '$$\\tau = \\frac{1}{\\lambda} = \\frac{T_{1/2}}{\\ln 2} = \\frac{8.0}{0.693}\\ \\text{天} \\approx 11.5\\ \\text{天}$$\\n平均寿命大于半衰期，因为指数分布的长尾使平均值被少数长寿核拉高。',
       },
     ],
     answer: '$\\lambda \\approx 0.0866\\ \\text{天}^{-1} = 1.0\\times 10^{-6}\\ \\text{s}^{-1}$；32 天后 $N/N_0 = 1/16 = 6.25\\%$，$A = 2.0\\times 10^7\\ \\text{Bq}$；平均寿命 $\\tau \\approx 11.5$ 天。',
@@ -172,15 +172,15 @@ export const atomic_physicsProblems: Problem[] = [
     solution: [
       {
         title: '总角动量的可能取值',
-        detail: '对 $l = 1$、$s = 1/2$，$j = l \\pm 1/2 = 3/2$ 或 $1/2$：\n$$j = \\frac{3}{2}:\\quad |\\vec{J}| = \\sqrt{\\frac{3}{2}\\times\\frac{5}{2}}\\,\\hbar = \\frac{\\sqrt{15}}{2}\\,\\hbar \\approx 1.94\\,\\hbar$$\n$$j = \\frac{1}{2}:\\quad |\\vec{J}| = \\sqrt{\\frac{1}{2}\\times\\frac{3}{2}}\\,\\hbar = \\frac{\\sqrt{3}}{2}\\,\\hbar \\approx 0.87\\,\\hbar$$\n自旋–轨道耦合 $H_{so} \\propto \\vec{L}\\cdot\\vec{S}$ 使 $j = 3/2$ 与 $j = 1/2$ 两个能级劈裂，$3s$ 态（$l = 0$，$j = 1/2$）无分裂。',
+        detail: '对 $l = 1$、$s = 1/2$，$j = l \\pm 1/2 = 3/2$ 或 $1/2$：\\n$$j = \\frac{3}{2}:\\quad |\\vec{J}| = \\sqrt{\\frac{3}{2}\\times\\frac{5}{2}}\\,\\hbar = \\frac{\\sqrt{15}}{2}\\,\\hbar \\approx 1.94\\,\\hbar$$\\n$$j = \\frac{1}{2}:\\quad |\\vec{J}| = \\sqrt{\\frac{1}{2}\\times\\frac{3}{2}}\\,\\hbar = \\frac{\\sqrt{3}}{2}\\,\\hbar \\approx 0.87\\,\\hbar$$\\n自旋–轨道耦合 $H_{so} \\propto \\vec{L}\\cdot\\vec{S}$ 使 $j = 3/2$ 与 $j = 1/2$ 两个能级劈裂，$3s$ 态（$l = 0$，$j = 1/2$）无分裂。',
       },
       {
         title: 'D 双线能量差',
-        detail: '取 $\\lambda \\approx 589.3\\ \\text{nm}$，$\\Delta\\lambda = 589.6 - 589.0 = 0.6\\ \\text{nm}$：\n$$\\Delta E \\approx \\frac{hc\\,\\Delta\\lambda}{\\lambda^2} = \\frac{1240\\ \\text{eV}\\cdot\\text{nm} \\times 0.6\\ \\text{nm}}{(589.3\\ \\text{nm})^2} = \\frac{744}{3.47\\times 10^5}\\ \\text{eV} \\approx 2.1\\times 10^{-3}\\ \\text{eV} = 2.1\\ \\text{meV}$$\n即 D 双线由仅约 $2\\ \\text{meV}$ 的精细结构劈裂产生，波长差约 $0.6\\ \\text{nm}$。',
+        detail: '取 $\\lambda \\approx 589.3\\ \\text{nm}$，$\\Delta\\lambda = 589.6 - 589.0 = 0.6\\ \\text{nm}$：\\n$$\\Delta E \\approx \\frac{hc\\,\\Delta\\lambda}{\\lambda^2} = \\frac{1240\\ \\text{eV}\\cdot\\text{nm} \\times 0.6\\ \\text{nm}}{(589.3\\ \\text{nm})^2} = \\frac{744}{3.47\\times 10^5}\\ \\text{eV} \\approx 2.1\\times 10^{-3}\\ \\text{eV} = 2.1\\ \\text{meV}$$\\n即 D 双线由仅约 $2\\ \\text{meV}$ 的精细结构劈裂产生，波长差约 $0.6\\ \\text{nm}$。',
       },
       {
         title: '朗德 g 因子与塞曼分裂',
-        detail: '对 $3p_{3/2}$（$L = 1, S = 1/2, J = 3/2$）：\n$$g_J = 1 + \\frac{\\frac{15}{4} + \\frac{3}{4} - 2}{2 \\times \\frac{15}{4}} = 1 + \\frac{1}{3} = \\frac{4}{3}$$\n对 $3p_{1/2}$（$J = 1/2$）：\n$$g_J = 1 + \\frac{\\frac{3}{4} + \\frac{3}{4} - 2}{2 \\times \\frac{3}{4}} = 1 - \\frac{1}{3} = \\frac{2}{3}$$\n塞曼效应中能级附加能量为 $\\Delta E = g_J\\mu_B B m_J$（$m_J = -J, \\dots, J$）。两个能级 $g_J$ 不同，导致磁场中 D 双线的分裂图案各不相同，这正是"反常塞曼效应"的典型表现，也只有引入电子自旋后才能解释。',
+        detail: '对 $3p_{3/2}$（$L = 1, S = 1/2, J = 3/2$）：\\n$$g_J = 1 + \\frac{\\frac{15}{4} + \\frac{3}{4} - 2}{2 \\times \\frac{15}{4}} = 1 + \\frac{1}{3} = \\frac{4}{3}$$\\n对 $3p_{1/2}$（$J = 1/2$）：\\n$$g_J = 1 + \\frac{\\frac{3}{4} + \\frac{3}{4} - 2}{2 \\times \\frac{3}{4}} = 1 - \\frac{1}{3} = \\frac{2}{3}$$\\n塞曼效应中能级附加能量为 $\\Delta E = g_J\\mu_B B m_J$（$m_J = -J, \\dots, J$）。两个能级 $g_J$ 不同，导致磁场中 D 双线的分裂图案各不相同，这正是"反常塞曼效应"的典型表现，也只有引入电子自旋后才能解释。',
       },
     ],
     answer: '$j = 3/2$：$|\\vec{J}| = \\dfrac{\\sqrt{15}}{2}\\hbar$；$j = 1/2$：$|\\vec{J}| = \\dfrac{\\sqrt{3}}{2}\\hbar$；D 双线能量差 $\\Delta E \\approx 2.1\\ \\text{meV}$；$g(3p_{3/2}) = 4/3$，$g(3p_{1/2}) = 2/3$，塞曼分裂 $\\Delta E = g_J\\mu_B B m_J$。',

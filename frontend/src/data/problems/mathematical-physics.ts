@@ -5,7 +5,7 @@ export const mathematical_physicsProblems: Problem[] = [
   {
     id: 'mathematical-physics-p1',
     courseId: 'mathematical-physics',
-    topicId: 'analytic-functions',
+    topicId: 'mp-analytic-functions',
     title: '由 C-R 条件构造解析函数',
     difficulty: 1,
     question: '设 $u(x, y) = x^3 - 3xy^2$。(1) 证明 $u$ 是调和函数；(2) 求解析函数 $f(z) = u + iv$，使其虚部 $v$ 满足 $v(0, 0) = 0$；(3) 用复变量 $z$ 写出 $f$ 并验证导数公式 $f^{\\prime}(z) = u_x + i v_x$。',
@@ -71,7 +71,7 @@ export const mathematical_physicsProblems: Problem[] = [
   {
     id: 'mathematical-physics-p3',
     courseId: 'mathematical-physics',
-    topicId: 'power-series',
+    topicId: 'mp-power-series',
     title: '函数的洛朗展开与奇点分类',
     difficulty: 2,
     question: '设 $f(z) = \\frac{1}{(z - 1)(z - 2)}$。(1) 求 $f$ 在以 $z = 0$ 为中心的三个圆环 $|z| < 1$、$1 < |z| < 2$、$|z| > 2$ 内的洛朗展开；(2) 指出 $f$ 的全部孤立奇点及其类型，并求各点的留数。',

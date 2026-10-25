@@ -17,15 +17,15 @@ export const solid_state_physicsProblems: Problem[] = [
     solution: [
       {
         title: '晶胞内原子数与配位数',
-        detail: '顶角贡献 $8 \\times \\dfrac{1}{8} = 1$ 个，面心贡献 $6 \\times \\dfrac{1}{2} = 3$ 个，合计\n$$n = 1 + 3 = 4$$\n每个原子与 12 个最近邻相切（同面 4 个 + 邻面 8 个），配位数为 12，这正是立方密堆积的标志。',
+        detail: '顶角贡献 $8 \\times \\dfrac{1}{8} = 1$ 个，面心贡献 $6 \\times \\dfrac{1}{2} = 3$ 个，合计\\n$$n = 1 + 3 = 4$$\\n每个原子与 12 个最近邻相切（同面 4 个 + 邻面 8 个），配位数为 12，这正是立方密堆积的标志。',
       },
       {
         title: '原子半径',
-        detail: '最近邻沿面对角线：$\\sqrt{2}a = 4r$，故\n$$r = \\frac{\\sqrt{2}}{4}a = \\frac{1.414 \\times 0.361}{4}\\ \\text{nm} \\approx 0.128\\ \\text{nm}$$',
+        detail: '最近邻沿面对角线：$\\sqrt{2}a = 4r$，故\\n$$r = \\frac{\\sqrt{2}}{4}a = \\frac{1.414 \\times 0.361}{4}\\ \\text{nm} \\approx 0.128\\ \\text{nm}$$',
       },
       {
         title: '致密度计算',
-        detail: '$$\\eta = \\frac{n \\cdot \\frac{4}{3}\\pi r^3}{a^3} = \\frac{4 \\times \\frac{4}{3}\\pi \\left(\\frac{\\sqrt{2}}{4}a\\right)^3}{a^3} = \\frac{16\\pi}{3} \\cdot \\frac{2\\sqrt{2}}{64} = \\frac{\\sqrt{2}\\,\\pi}{6} \\approx 0.74$$\n即 74% 的空间被原子占据，是刚球堆积的理论极限（hcp 同为 0.74）。',
+        detail: '$$\\eta = \\frac{n \\cdot \\frac{4}{3}\\pi r^3}{a^3} = \\frac{4 \\times \\frac{4}{3}\\pi \\left(\\frac{\\sqrt{2}}{4}a\\right)^3}{a^3} = \\frac{16\\pi}{3} \\cdot \\frac{2\\sqrt{2}}{64} = \\frac{\\sqrt{2}\\,\\pi}{6} \\approx 0.74$$\\n即 74% 的空间被原子占据，是刚球堆积的理论极限（hcp 同为 0.74）。',
       },
     ],
     answer: '$n = 4$，配位数 12；$r = \\sqrt{2}a/4 \\approx 0.128\\ \\text{nm}$；致密度 $\\eta = \\sqrt{2}\\pi/6 \\approx 0.74$。',
@@ -52,7 +52,7 @@ export const solid_state_physicsProblems: Problem[] = [
       },
       {
         title: '一级与二级衍射角',
-        detail: '一级（$n = 1$）：\n$$\\sin\\theta_1 = \\frac{\\lambda}{2d} = \\frac{0.1542}{2 \\times 0.2553} \\approx 0.302 \\quad\\Rightarrow\\quad \\theta_1 \\approx 17.6^\\circ$$\n二级（$n = 2$）：\n$$\\sin\\theta_2 = \\frac{2\\lambda}{2d} = 0.604 \\quad\\Rightarrow\\quad \\theta_2 \\approx 37.2^\\circ$$',
+        detail: '一级（$n = 1$）：\\n$$\\sin\\theta_1 = \\frac{\\lambda}{2d} = \\frac{0.1542}{2 \\times 0.2553} \\approx 0.302 \\quad\\Rightarrow\\quad \\theta_1 \\approx 17.6^\\circ$$\\n二级（$n = 2$）：\\n$$\\sin\\theta_2 = \\frac{2\\lambda}{2d} = 0.604 \\quad\\Rightarrow\\quad \\theta_2 \\approx 37.2^\\circ$$',
       },
       {
         title: '由消光规律判别结构',
@@ -79,15 +79,15 @@ export const solid_state_physicsProblems: Problem[] = [
     solution: [
       {
         title: '建立运动方程并导出色散关系',
-        detail: '质量 $M$ 的原子受两侧 $m$ 原子作用：\n$$M\\ddot{\\mu}_n = \\beta(v_n + v_{n-1} - 2\\mu_n)$$\n质量 $m$ 的原子：\n$$m\\ddot{v}_n = \\beta(\\mu_n + \\mu_{n+1} - 2v_n)$$\n代入试解 $\\mu_n = Ae^{i(2nka - \\omega t)}$，$v_n = Be^{i(2nka - \\omega t)}$：\n$$(2\\beta - M\\omega^2)A - \\beta(1 + e^{-2ika})B = 0$$\n$$-\\beta(1 + e^{2ika})A + (2\\beta - m\\omega^2)B = 0$$\n非零解要求行列式为零：\n$$(2\\beta - M\\omega^2)(2\\beta - m\\omega^2) - \\beta^2|1 + e^{2ika}|^2 = 0$$\n利用 $|1 + e^{2ika}|^2 = 4\\cos^2 ka$，解得\n$$\\omega^2_\\pm = \\frac{\\beta(M+m)}{Mm} \\pm \\frac{\\beta}{Mm}\\sqrt{M^2 + m^2 + 2Mm\\cos(2ka)}$$',
+        detail: '质量 $M$ 的原子受两侧 $m$ 原子作用：\\n$$M\\ddot{\\mu}_n = \\beta(v_n + v_{n-1} - 2\\mu_n)$$\\n质量 $m$ 的原子：\\n$$m\\ddot{v}_n = \\beta(\\mu_n + \\mu_{n+1} - 2v_n)$$\\n代入试解 $\\mu_n = Ae^{i(2nka - \\omega t)}$，$v_n = Be^{i(2nka - \\omega t)}$：\\n$$(2\\beta - M\\omega^2)A - \\beta(1 + e^{-2ika})B = 0$$\\n$$-\\beta(1 + e^{2ika})A + (2\\beta - m\\omega^2)B = 0$$\\n非零解要求行列式为零：\\n$$(2\\beta - M\\omega^2)(2\\beta - m\\omega^2) - \\beta^2|1 + e^{2ika}|^2 = 0$$\\n利用 $|1 + e^{2ika}|^2 = 4\\cos^2 ka$，解得\\n$$\\omega^2_\\pm = \\frac{\\beta(M+m)}{Mm} \\pm \\frac{\\beta}{Mm}\\sqrt{M^2 + m^2 + 2Mm\\cos(2ka)}$$',
       },
       {
         title: '长波极限与两支的物理含义',
-        detail: '$k \\to 0$ 时 $\\cos(2ka) \\to 1$，根式趋于 $M + m$：\n$$\\omega^2_- \\to 0\\ (\\text{声学支}), \\qquad \\omega^2_+ \\to \\frac{2\\beta(M+m)}{Mm} = 2\\beta\\left(\\frac{1}{m} + \\frac{1}{M}\\right)\\ (\\text{光学支})$$\n声学支中 $A \\approx B$，同一原胞内两种原子同相振动、原胞质心整体运动，长波下就是弹性波；光学支中 $mA + MB = 0$，两种原子反相振动、质心不动，离子晶体中产生振荡电偶极矩而可与红外光耦合，故名光学支。',
+        detail: '$k \\to 0$ 时 $\\cos(2ka) \\to 1$，根式趋于 $M + m$：\\n$$\\omega^2_- \\to 0\\ (\\text{声学支}), \\qquad \\omega^2_+ \\to \\frac{2\\beta(M+m)}{Mm} = 2\\beta\\left(\\frac{1}{m} + \\frac{1}{M}\\right)\\ (\\text{光学支})$$\\n声学支中 $A \\approx B$，同一原胞内两种原子同相振动、原胞质心整体运动，长波下就是弹性波；光学支中 $mA + MB = 0$，两种原子反相振动、质心不动，离子晶体中产生振荡电偶极矩而可与红外光耦合，故名光学支。',
       },
       {
         title: '布里渊区边界与频率禁隙',
-        detail: '$k = \\pi/2a$ 时 $\\cos(2ka) = \\cos\\pi = -1$，根式趋于 $|M - m| = M - m$：\n$$\\omega^2_+ = \\frac{\\beta[(M+m) + (M-m)]}{Mm} = \\frac{2\\beta}{m}, \\qquad \\omega^2_- = \\frac{\\beta[(M+m) - (M-m)]}{Mm} = \\frac{2\\beta}{M}$$\n轻原子单独振动给出高频光学支、重原子单独振动给出低频声学支。两支之间夹着宽度为 $\\sqrt{2\\beta/m} - \\sqrt{2\\beta/M} > 0$ 的频率禁隙：在此频段内 $\\omega^2$ 无实数 $k$ 解，格波不能传播，入射波将被布拉格反射——这与电子能带中的禁带完全类似。',
+        detail: '$k = \\pi/2a$ 时 $\\cos(2ka) = \\cos\\pi = -1$，根式趋于 $|M - m| = M - m$：\\n$$\\omega^2_+ = \\frac{\\beta[(M+m) + (M-m)]}{Mm} = \\frac{2\\beta}{m}, \\qquad \\omega^2_- = \\frac{\\beta[(M+m) - (M-m)]}{Mm} = \\frac{2\\beta}{M}$$\\n轻原子单独振动给出高频光学支、重原子单独振动给出低频声学支。两支之间夹着宽度为 $\\sqrt{2\\beta/m} - \\sqrt{2\\beta/M} > 0$ 的频率禁隙：在此频段内 $\\omega^2$ 无实数 $k$ 解，格波不能传播，入射波将被布拉格反射——这与电子能带中的禁带完全类似。',
       },
     ],
     answer: '$\\omega^2_\\pm = \\dfrac{\\beta(M+m)}{Mm} \\pm \\dfrac{\\beta}{Mm}\\sqrt{M^2 + m^2 + 2Mm\\cos(2ka)}$；$k \\to 0$ 时声学支 $\\omega_- \\to 0$（原胞同相整体振动）、光学支 $\\omega_+ \\to \\sqrt{2\\beta(1/m + 1/M)}$（反相振动）；区边界 $\\omega_+ = \\sqrt{2\\beta/m}$、$\\omega_- = \\sqrt{2\\beta/M}$，两支之间存在频率禁隙。',
@@ -114,15 +114,15 @@ export const solid_state_physicsProblems: Problem[] = [
       },
       {
         title: '费米波矢、费米能与费米温度',
-        detail: '$$k_F = (3\\pi^2 n)^{1/3} = (3 \\times 9.87 \\times 8.5\\times10^{28})^{1/3} \\approx (2.52\\times10^{30})^{1/3} \\approx 1.36\\times10^{10}\\ \\text{m}^{-1}$$\n$$E_F = \\frac{\\hbar^2 k_F^2}{2m} = 3.81\\ \\text{eV}\\cdot\\text{Å}^2 \\times (1.36\\times10^{10}\\ \\text{m}^{-1})^2 = 3.81 \\times 1.85\\ \\text{eV} \\approx 7.0\\ \\text{eV}$$\n（$k_F^2 = 1.85\\times10^{20}\\ \\text{m}^{-2} = 1.85\\ \\text{Å}^{-2}$。）\n$$T_F = \\frac{E_F}{k_B} = \\frac{7.0}{8.617\\times10^{-5}} \\approx 8.1\\times10^4\\ \\text{K}$$',
+        detail: '$$k_F = (3\\pi^2 n)^{1/3} = (3 \\times 9.87 \\times 8.5\\times10^{28})^{1/3} \\approx (2.52\\times10^{30})^{1/3} \\approx 1.36\\times10^{10}\\ \\text{m}^{-1}$$\\n$$E_F = \\frac{\\hbar^2 k_F^2}{2m} = 3.81\\ \\text{eV}\\cdot\\text{Å}^2 \\times (1.36\\times10^{10}\\ \\text{m}^{-1})^2 = 3.81 \\times 1.85\\ \\text{eV} \\approx 7.0\\ \\text{eV}$$\\n（$k_F^2 = 1.85\\times10^{20}\\ \\text{m}^{-2} = 1.85\\ \\text{Å}^{-2}$。）\\n$$T_F = \\frac{E_F}{k_B} = \\frac{7.0}{8.617\\times10^{-5}} \\approx 8.1\\times10^4\\ \\text{K}$$',
       },
       {
         title: '费米速度',
-        detail: '$$v_F = \\frac{\\hbar k_F}{m} = \\frac{1.055\\times10^{-34} \\times 1.36\\times10^{10}}{9.11\\times10^{-31}} \\approx 1.57\\times10^6\\ \\text{m/s}$$\n约为声速的 4.5 倍，非相对论处理合理。',
+        detail: '$$v_F = \\frac{\\hbar k_F}{m} = \\frac{1.055\\times10^{-34} \\times 1.36\\times10^{10}}{9.11\\times10^{-31}} \\approx 1.57\\times10^6\\ \\text{m/s}$$\\n约为声速的 4.5 倍，非相对论处理合理。',
       },
       {
         title: '电子热容',
-        detail: '室温 $T \\approx 300\\ \\text{K}$ 时 $T/T_F \\approx 0.004$，费米海中绝大多数电子周围的态已被占满，泡利原理使其无法吸收 $k_BT$ 量级的能量；只有费米面附近薄壳（比例约 $T/T_F$）内的电子参与热激发。因此\n$$C_V = \\frac{\\pi^2}{2}Nk_B\\frac{T}{T_F} = \\frac{\\pi^2 N k_B^2}{2E_F}\\,T \\equiv \\gamma T$$\n室温下铜电子热容约 $0.2\\ \\text{J/(mol·K)}$，不足晶格热容 $3R \\approx 24.9\\ \\text{J/(mol·K)}$ 的百分之一。',
+        detail: '室温 $T \\approx 300\\ \\text{K}$ 时 $T/T_F \\approx 0.004$，费米海中绝大多数电子周围的态已被占满，泡利原理使其无法吸收 $k_BT$ 量级的能量；只有费米面附近薄壳（比例约 $T/T_F$）内的电子参与热激发。因此\\n$$C_V = \\frac{\\pi^2}{2}Nk_B\\frac{T}{T_F} = \\frac{\\pi^2 N k_B^2}{2E_F}\\,T \\equiv \\gamma T$$\\n室温下铜电子热容约 $0.2\\ \\text{J/(mol·K)}$，不足晶格热容 $3R \\approx 24.9\\ \\text{J/(mol·K)}$ 的百分之一。',
       },
     ],
     answer: '$n \\approx 8.5\\times10^{28}\\ \\text{m}^{-3}$；$k_F \\approx 1.36\\times10^{10}\\ \\text{m}^{-1}$，$E_F \\approx 7.0\\ \\text{eV}$，$T_F \\approx 8.1\\times10^4\\ \\text{K}$；$v_F \\approx 1.57\\times10^6\\ \\text{m/s}$；$C_V = \\gamma T$，$\\gamma = \\pi^2 Nk_B^2/2E_F$，室温下仅为经典值的约 $T/T_F \\approx 0.4\\%$。',
@@ -145,11 +145,11 @@ export const solid_state_physicsProblems: Problem[] = [
     solution: [
       {
         title: '霍尔系数',
-        detail: '室温下磷施主能级（约 $0.045\\ \\text{eV}$）全电离，$n \\approx N_d = 1.0\\times10^{21}\\ \\text{m}^{-3}$：\n$$R_H = -\\frac{1}{ne} = -\\frac{1}{1.0\\times10^{21} \\times 1.602\\times10^{-19}} \\approx -6.24\\times10^{-3}\\ \\text{m}^3/\\text{C}$$\n负号表示载流子为电子。',
+        detail: '室温下磷施主能级（约 $0.045\\ \\text{eV}$）全电离，$n \\approx N_d = 1.0\\times10^{21}\\ \\text{m}^{-3}$：\\n$$R_H = -\\frac{1}{ne} = -\\frac{1}{1.0\\times10^{21} \\times 1.602\\times10^{-19}} \\approx -6.24\\times10^{-3}\\ \\text{m}^3/\\text{C}$$\\n负号表示载流子为电子。',
       },
       {
         title: '霍尔电压',
-        detail: '$$U_H = \\frac{R_H I B}{d} = \\frac{6.24\\times10^{-3} \\times 10\\times10^{-3} \\times 0.5}{0.5\\times10^{-3}}\\ \\text{V} \\approx 6.2\\times10^{-2}\\ \\text{V} = 62\\ \\text{mV}$$\n（取绝对值；极性由载流子符号决定。）这样的毫伏级电压用普通电压表即可测量，实验上十分友好。',
+        detail: '$$U_H = \\frac{R_H I B}{d} = \\frac{6.24\\times10^{-3} \\times 10\\times10^{-3} \\times 0.5}{0.5\\times10^{-3}}\\ \\text{V} \\approx 6.2\\times10^{-2}\\ \\text{V} = 62\\ \\text{mV}$$\\n（取绝对值；极性由载流子符号决定。）这样的毫伏级电压用普通电压表即可测量，实验上十分友好。',
       },
       {
         title: 'p 型样品与载流子类型的判定',
@@ -176,15 +176,15 @@ export const solid_state_physicsProblems: Problem[] = [
     solution: [
       {
         title: '居里常数与室温磁化率',
-        detail: '$$C = \\frac{\\mu_0 N\\mu^2}{3k_B} = \\frac{4\\pi\\times10^{-7} \\times 1.0\\times10^{28} \\times (9.274\\times10^{-24})^2}{3 \\times 1.381\\times10^{-23}}$$\n分子 $= 1.2566\\times10^{-6} \\times 8.60\\times10^{-47} = 1.081\\times10^{-52}$，故\n$$C \\approx \\frac{1.081\\times10^{-52}}{4.143\\times10^{-23}} \\approx 2.6\\times10^{-2}\\ \\text{K}$$\n$$\\chi(300\\ \\text{K}) = \\frac{C}{T} = \\frac{0.026}{300} \\approx 8.7\\times10^{-5}$$\n顺磁磁化率微小且与温度成反比，与实验一致。',
+        detail: '$$C = \\frac{\\mu_0 N\\mu^2}{3k_B} = \\frac{4\\pi\\times10^{-7} \\times 1.0\\times10^{28} \\times (9.274\\times10^{-24})^2}{3 \\times 1.381\\times10^{-23}}$$\\n分子 $= 1.2566\\times10^{-6} \\times 8.60\\times10^{-47} = 1.081\\times10^{-52}$，故\\n$$C \\approx \\frac{1.081\\times10^{-52}}{4.143\\times10^{-23}} \\approx 2.6\\times10^{-2}\\ \\text{K}$$\\n$$\\chi(300\\ \\text{K}) = \\frac{C}{T} = \\frac{0.026}{300} \\approx 8.7\\times10^{-5}$$\\n顺磁磁化率微小且与温度成反比，与实验一致。',
       },
       {
         title: '低温磁化率与磁化强度',
-        detail: '$$\\chi(4.2\\ \\text{K}) = \\frac{0.026}{4.2} \\approx 6.2\\times10^{-3}$$\n$$M = \\chi H = \\chi\\frac{B}{\\mu_0} = 6.2\\times10^{-3} \\times \\frac{1}{4\\pi\\times10^{-7}} \\approx 4.9\\times10^{3}\\ \\text{A/m}$$\n适用条件检验：$\\mu B = 9.274\\times10^{-24}\\ \\text{J/T} \\times 1\\ \\text{T} = 9.27\\times10^{-24}\\ \\text{J}$，而 $k_BT = 1.381\\times10^{-23} \\times 4.2 \\approx 5.8\\times10^{-23}\\ \\text{J}$，比值 $\\mu B/k_BT \\approx 0.16 \\ll 1$，磁矩远未饱和，居里定律适用（若低温强场下比值趋近 1，则需用完整的朗之万函数 $L(x) = \\coth x - 1/x$）。',
+        detail: '$$\\chi(4.2\\ \\text{K}) = \\frac{0.026}{4.2} \\approx 6.2\\times10^{-3}$$\\n$$M = \\chi H = \\chi\\frac{B}{\\mu_0} = 6.2\\times10^{-3} \\times \\frac{1}{4\\pi\\times10^{-7}} \\approx 4.9\\times10^{3}\\ \\text{A/m}$$\\n适用条件检验：$\\mu B = 9.274\\times10^{-24}\\ \\text{J/T} \\times 1\\ \\text{T} = 9.27\\times10^{-24}\\ \\text{J}$，而 $k_BT = 1.381\\times10^{-23} \\times 4.2 \\approx 5.8\\times10^{-23}\\ \\text{J}$，比值 $\\mu B/k_BT \\approx 0.16 \\ll 1$，磁矩远未饱和，居里定律适用（若低温强场下比值趋近 1，则需用完整的朗之万函数 $L(x) = \\coth x - 1/x$）。',
       },
       {
         title: '居里-外斯定律与交换作用',
-        detail: '$T < T_C$ 时材料自发磁化，$T > T_C$ 后磁序虽已瓦解但交换作用仍使自旋关联增强，磁化率改用居里-外斯定律：\n$$\\chi = \\frac{C}{T - T_C}$$\n接近 $T_C$ 时 $\\chi$ 发散，反映磁相变（二级相变）的临界行为。平均场理论给出 $k_BT_C \\approx \\dfrac{2JzS(S+1)}{3k_B}$ 量级（$J$ 为交换积分、$z$ 为近邻数），即 $T_C$ 直接度量交换作用强度——铁的 $T_C \\approx 1043\\ \\text{K}$ 对应交换能约 $0.1\\ \\text{eV}$，远大于磁偶极相互作用（约 $10^{-4}\\ \\text{eV}$），说明铁磁性本质上是量子交换效应。',
+        detail: '$T < T_C$ 时材料自发磁化，$T > T_C$ 后磁序虽已瓦解但交换作用仍使自旋关联增强，磁化率改用居里-外斯定律：\\n$$\\chi = \\frac{C}{T - T_C}$$\\n接近 $T_C$ 时 $\\chi$ 发散，反映磁相变（二级相变）的临界行为。平均场理论给出 $k_BT_C \\approx \\dfrac{2JzS(S+1)}{3k_B}$ 量级（$J$ 为交换积分、$z$ 为近邻数），即 $T_C$ 直接度量交换作用强度——铁的 $T_C \\approx 1043\\ \\text{K}$ 对应交换能约 $0.1\\ \\text{eV}$，远大于磁偶极相互作用（约 $10^{-4}\\ \\text{eV}$），说明铁磁性本质上是量子交换效应。',
       },
     ],
     answer: '$C \\approx 0.026\\ \\text{K}$；$\\chi(300\\ \\text{K}) \\approx 8.7\\times10^{-5}$；$\\chi(4.2\\ \\text{K}) \\approx 6.2\\times10^{-3}$，$M \\approx 4.9\\times10^{3}\\ \\text{A/m}$，且 $\\mu B/k_BT \\approx 0.16 \\ll 1$ 居里定律成立；$T > T_C$ 时用 $\\chi = C/(T - T_C)$，$T_C$ 由交换作用强度决定。',
@@ -207,15 +207,15 @@ export const solid_state_physicsProblems: Problem[] = [
     solution: [
       {
         title: '区边界动能与禁带宽度',
-        detail: '倒格矢 $G = 2\\pi/a = 2\\pi/(5.0\\times10^{-10}) = 1.257\\times10^{10}\\ \\text{m}^{-1}$，区边界 $k = G/2 = \\pi/a = 6.28\\times10^9\\ \\text{m}^{-1}$。该处自由电子动能\n$$E_0 = \\frac{\\hbar^2}{2m}\\left(\\frac{\\pi}{a}\\right)^2 = \\frac{(1.055\\times10^{-34})^2(6.28\\times10^9)^2}{2\\times9.11\\times10^{-31}} = 2.41\\times10^{-19}\\ \\text{J} = 1.51\\ \\text{eV}$$\n周期势的傅里叶分量 $V_G = V_1 = 0.75\\ \\text{eV}$ 把简并态劈裂为 $E_\\pm = E_0 \\pm |V_G|$，故\n$$E_g = 2|V_1| = 1.5\\ \\text{eV}$$\n$$E_- = 1.51 - 0.75 = 0.76\\ \\text{eV}, \\qquad E_+ = 1.51 + 0.75 = 2.26\\ \\text{eV}$$\n注意禁带宽度与自由电子动能同量级：周期势虽"弱"，但在简并点上是共振作用，其效果绝不是小修正。',
+        detail: '倒格矢 $G = 2\\pi/a = 2\\pi/(5.0\\times10^{-10}) = 1.257\\times10^{10}\\ \\text{m}^{-1}$，区边界 $k = G/2 = \\pi/a = 6.28\\times10^9\\ \\text{m}^{-1}$。该处自由电子动能\\n$$E_0 = \\frac{\\hbar^2}{2m}\\left(\\frac{\\pi}{a}\\right)^2 = \\frac{(1.055\\times10^{-34})^2(6.28\\times10^9)^2}{2\\times9.11\\times10^{-31}} = 2.41\\times10^{-19}\\ \\text{J} = 1.51\\ \\text{eV}$$\\n周期势的傅里叶分量 $V_G = V_1 = 0.75\\ \\text{eV}$ 把简并态劈裂为 $E_\\pm = E_0 \\pm |V_G|$，故\\n$$E_g = 2|V_1| = 1.5\\ \\text{eV}$$\\n$$E_- = 1.51 - 0.75 = 0.76\\ \\text{eV}, \\qquad E_+ = 1.51 + 0.75 = 2.26\\ \\text{eV}$$\\n注意禁带宽度与自由电子动能同量级：周期势虽"弱"，但在简并点上是共振作用，其效果绝不是小修正。',
       },
       {
         title: '紧束缚带宽与带底有效质量',
-        detail: '带宽\n$$W = 12|J| = 12\\times0.40 = 4.8\\ \\text{eV}$$\n带底位于 $\\vec{k} = 0$。在此附近把 $\\cos k_ia \\approx 1 - k_i^2a^2/2$ 代入：\n$$E \\approx E_0 - 2J\\left(3 - \\frac{a^2}{2}(k_x^2 + k_y^2 + k_z^2)\\right) = E_0 - 6J + Ja^2k^2$$\n与自由粒子形式 $E = E_{\\text{底}} + \\hbar^2k^2/2m^*$ 对比，得 $\\hbar^2/2m^* = Ja^2$，即\n$$m^* = \\frac{\\hbar^2}{2Ja^2} = \\frac{(1.055\\times10^{-34})^2}{2\\times0.40\\times1.602\\times10^{-19}\\times(5.0\\times10^{-10})^2} = 3.47\\times10^{-31}\\ \\text{kg} \\approx 0.38m$$\n顺便校验带宽与有效质量的相容性：$W = 6\\hbar^2/(m^*a^2) = 6\\times1.113\\times10^{-68}/(3.47\\times10^{-31}\\times2.5\\times10^{-19}) = 4.8\\ \\text{eV}$，与直接结果一致。',
+        detail: '带宽\\n$$W = 12|J| = 12\\times0.40 = 4.8\\ \\text{eV}$$\\n带底位于 $\\vec{k} = 0$。在此附近把 $\\cos k_ia \\approx 1 - k_i^2a^2/2$ 代入：\\n$$E \\approx E_0 - 2J\\left(3 - \\frac{a^2}{2}(k_x^2 + k_y^2 + k_z^2)\\right) = E_0 - 6J + Ja^2k^2$$\\n与自由粒子形式 $E = E_{\\text{底}} + \\hbar^2k^2/2m^*$ 对比，得 $\\hbar^2/2m^* = Ja^2$，即\\n$$m^* = \\frac{\\hbar^2}{2Ja^2} = \\frac{(1.055\\times10^{-34})^2}{2\\times0.40\\times1.602\\times10^{-19}\\times(5.0\\times10^{-10})^2} = 3.47\\times10^{-31}\\ \\text{kg} \\approx 0.38m$$\\n顺便校验带宽与有效质量的相容性：$W = 6\\hbar^2/(m^*a^2) = 6\\times1.113\\times10^{-68}/(3.47\\times10^{-31}\\times2.5\\times10^{-19}) = 4.8\\ \\text{eV}$，与直接结果一致。',
       },
       {
         title: '导电性判别与两种近似的适用对象',
-        detail: '一条能带有 $N$ 个 $k$ 值、每个 $k$ 态容纳 2 个自旋，共 $2N$ 个态。每原胞 2 个电子恰有 $2N$ 个电子，恰好填满该能带——满带中电子速度正负对称抵消，不导电。加上禁带 $E_g = 1.5\\ \\text{eV}$ 属半导体量级，故该晶体为半导体。\n两种极限近似的适用对象：近自由电子图像适合周期势浅、外层电子巡游的金属（如碱金属），其能带宽、有效质量接近自由电子质量；紧束缚图像适合轨道局域、交叠积分小的窄带体系（过渡金属 d 带、绝缘体与半导体的价带），交叠越弱则 $J$ 越小、带越窄、有效质量越大。真实材料的能带位于两极之间，理解两个极限才能读懂任何一张能带图。',
+        detail: '一条能带有 $N$ 个 $k$ 值、每个 $k$ 态容纳 2 个自旋，共 $2N$ 个态。每原胞 2 个电子恰有 $2N$ 个电子，恰好填满该能带——满带中电子速度正负对称抵消，不导电。加上禁带 $E_g = 1.5\\ \\text{eV}$ 属半导体量级，故该晶体为半导体。\\n两种极限近似的适用对象：近自由电子图像适合周期势浅、外层电子巡游的金属（如碱金属），其能带宽、有效质量接近自由电子质量；紧束缚图像适合轨道局域、交叠积分小的窄带体系（过渡金属 d 带、绝缘体与半导体的价带），交叠越弱则 $J$ 越小、带越窄、有效质量越大。真实材料的能带位于两极之间，理解两个极限才能读懂任何一张能带图。',
       },
     ],
     answer: '$E_0 \\approx 1.51\\ \\text{eV}$，$E_g = 2|V_1| = 1.5\\ \\text{eV}$（$E_- \\approx 0.76\\ \\text{eV}$、$E_+ \\approx 2.26\\ \\text{eV}$）；$W = 12|J| = 4.8\\ \\text{eV}$，$m^* = \\hbar^2/(2Ja^2) \\approx 3.47\\times10^{-31}\\ \\text{kg} \\approx 0.38m$；每原胞 2 个电子恰好填满该带，晶体为禁带 1.5 eV 的半导体。',

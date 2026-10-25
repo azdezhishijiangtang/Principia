@@ -87,7 +87,7 @@ export const mechanicsProblems: Problem[] = [
     solution: [
       {
         title: '动量守恒求共速',
-        detail: '碰前总动量 $p = mv = 0.01 \\times 400 = 4\\ \\text{kg\\cdot m/s}$；碰后总质量 $m+M = 2.00\\ \\text{kg}$。由 $mv = (m+M)V$ 得 $V = \\dfrac{4}{2.00} = 2\\ \\text{m/s}$。',
+        detail: '碰前总动量 $p = mv = 0.01 \\times 400 = 4\\ \\text{kg}\\cdot\\text{ m/s}$；碰后总质量 $m+M = 2.00\\ \\text{kg}$。由 $mv = (m+M)V$ 得 $V = \\dfrac{4}{2.00} = 2\\ \\text{m/s}$。',
       },
       {
         title: '碰前动能',
@@ -148,7 +148,7 @@ export const mechanicsProblems: Problem[] = [
     topicId: 'angular-momentum',
     title: '收臂旋转的的角动量守恒',
     difficulty: 2,
-    question: '一人站在可无摩擦自由转动的转盘上，初始张开双臂，系统转动惯量 $I_1 = 3\\ \\text{kg\\cdot m}^2$，角速度 $\\omega_1 = 2\\ \\text{rad/s}$。他将双臂收拢后系统转动惯量变为 $I_2 = 1\\ \\text{kg\\cdot m}^2$。求：(1) 收臂后的角速度 $\\omega_2$；(2) 系统转动动能的变化量。',
+    question: '一人站在可无摩擦自由转动的转盘上，初始张开双臂，系统转动惯量 $I_1 = 3\\ \\text{kg}\\cdot\\text{ m}^2$，角速度 $\\omega_1 = 2\\ \\text{rad/s}$。他将双臂收拢后系统转动惯量变为 $I_2 = 1\\ \\text{kg}\\cdot\\text{ m}^2$。求：(1) 收臂后的角速度 $\\omega_2$；(2) 系统转动动能的变化量。',
     hints: [
       '转轴竖直且系统不受外力矩，角动量守恒：$I_1\\omega_1 = I_2\\omega_2$。',
       '转动动能 $E_k = \\dfrac12 I\\omega^2$，代入守恒后的 $\\omega_2$ 计算。',
@@ -165,7 +165,7 @@ export const mechanicsProblems: Problem[] = [
       },
       {
         title: '末态转动动能',
-        detail: '$E_{k2} = \\dfrac12 I_2 \\omega_2^2 = \\dfrac12 \\times 1 \times 6^2 = 18\\ \\text{J}$。',
+        detail: '$E_{k2} = \\dfrac12 I_2 \\omega_2^2 = \\dfrac12 \\times 1 \\times 6^2 = 18\\ \\text{J}$。',
       },
       {
         title: '动能变化',

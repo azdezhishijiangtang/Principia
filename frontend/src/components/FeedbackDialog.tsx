@@ -72,7 +72,7 @@ const FeedbackDialog = ({ open, onOpenChange }: FeedbackDialogProps) => {
       toast.error('请填写标题和详细描述');
       return;
     }
-    addFeedback({
+    const res = addFeedback({
       userId,
       userName: user?.name ?? '访客',
       type,
@@ -81,6 +81,10 @@ const FeedbackDialog = ({ open, onOpenChange }: FeedbackDialogProps) => {
       contact: contact.trim() || undefined,
       pageUrl: `${window.location.pathname}${window.location.search}`,
     });
+    if (!res.ok) {
+      toast.error(res.error ?? '反馈提交失败');
+      return;
+    }
     toast.success('反馈已提交，感谢你的建议！');
     setTitle('');
     setContent('');
@@ -114,9 +118,9 @@ const FeedbackDialog = ({ open, onOpenChange }: FeedbackDialogProps) => {
           <TabsContent value="write" className="mt-5 space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>反馈类型</Label>
+                <Label htmlFor="fb-type">反馈类型</Label>
                 <Select value={type} onValueChange={(v) => setType(v as FeedbackType)}>
-                  <SelectTrigger>
+                  <SelectTrigger id="fb-type">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -129,8 +133,9 @@ const FeedbackDialog = ({ open, onOpenChange }: FeedbackDialogProps) => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>联系方式（选填）</Label>
+                <Label htmlFor="fb-contact">联系方式（选填）</Label>
                 <Input
+                  id="fb-contact"
                   value={contact}
                   onChange={(e) => setContact(e.target.value)}
                   placeholder="邮箱 / 微信，方便进一步沟通"
@@ -139,10 +144,11 @@ const FeedbackDialog = ({ open, onOpenChange }: FeedbackDialogProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label>
+              <Label htmlFor="fb-title">
                 标题 <span className="text-destructive">*</span>
               </Label>
               <Input
+                id="fb-title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="一句话概括你的反馈"
@@ -151,10 +157,11 @@ const FeedbackDialog = ({ open, onOpenChange }: FeedbackDialogProps) => {
             </div>
 
             <div className="space-y-2">
-              <Label>
+              <Label htmlFor="fb-content">
                 详细描述 <span className="text-destructive">*</span>
               </Label>
               <Textarea
+                id="fb-content"
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="请尽量描述清楚：出现在哪个页面、期望的效果、复现步骤等"

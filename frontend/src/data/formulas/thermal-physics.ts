@@ -45,7 +45,7 @@ export const thermal_physicsFormulaGroups: FormulaGroup[] = [
         id: 'thermal-physics-f6',
         group: '常用常数',
         name: '气体常量与玻尔兹曼常数',
-        latex: 'R = 8.314\\ \\text{J/(mol\\cdot K)},\\quad N_A = 6.02 \\times 10^{23}\\ \\text{mol}^{-1},\\quad k = \\frac{R}{N_A} = 1.38 \\times 10^{-23}\\ \\text{J/K}',
+        latex: 'R = 8.314\\ \\text{J/(mol}\\cdot\\text{ K)},\\quad N_A = 6.02 \\times 10^{23}\\ \\text{mol}^{-1},\\quad k = \\frac{R}{N_A} = 1.38 \\times 10^{-23}\\ \\text{J/K}',
         note: '涉及比例关系（状态方程、分布函数等）时温度必须用开尔文温标。',
       },
     ],

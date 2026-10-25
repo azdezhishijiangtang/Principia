@@ -250,7 +250,7 @@ export const formulaGroups: FormulaGroup[] = [
       { id: 'f-81', group: '元定理', name: '可靠性与完备性', latex: '\\Gamma\\vdash\\varphi \\iff \\Gamma\\vDash\\varphi\\ \\text{(一阶逻辑)}' },
       { id: 'f-82', group: '元定理', name: '紧致性定理', latex: '\\text{每个有限子集可满足} \\Rightarrow \\text{整体可满足}' },
       { id: 'f-83', group: '哥德尔', name: '第一不完备性', latex: 'T\\ \\text{相容且足够强} \\Rightarrow \\exists G:\\ T\\nvdash G,\\ T\\nvdash\\neg G' },
-      { id: 'f-84', group: '可计算性', name: '对角线法', latex: 'D(P)=\\begin{cases}\\text{死循环} & H(P,P)\\text{判定停机}\\\\text{停机} & \\text{否则}\end{cases}\\Rightarrow H\\text{不存在}' },
+      { id: 'f-84', group: '可计算性', name: '对角线法', latex: 'D(P)=\\begin{cases}\\text{死循环} & H(P,P)\\text{判定停机}\\\\text{停机} & \\text{否则}\\end{cases}\\Rightarrow H\\text{不存在}' },
     ],
   },
   // 物理区

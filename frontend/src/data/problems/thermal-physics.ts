@@ -39,7 +39,7 @@ export const thermal_physicsProblems: Problem[] = [
     topicId: 'molecular-kinetic',
     title: '氮气分子的方均根速率、平均平动动能与数密度',
     difficulty: 2,
-    question: '一容器内装有处于平衡态的氮气（$M = 28 \\times 10^{-3}\\ \\text{kg/mol}$），温度 $T = 300\\ \\text{K}$，压强 $p = 1.0 \\times 10^{5}\\ \\text{Pa}$。已知 $R = 8.314\\ \\text{J/(mol\\cdot K)}$，$k = 1.38 \\times 10^{-23}\\ \\text{J/K}$。求：(1) 氮气分子的方均根速率 $v_\\text{rms}$；(2) 分子的平均平动动能 $\\overline{\\varepsilon_t}$；(3) 分子数密度 $n$。',
+    question: '一容器内装有处于平衡态的氮气（$M = 28 \\times 10^{-3}\\ \\text{kg/mol}$），温度 $T = 300\\ \\text{K}$，压强 $p = 1.0 \\times 10^{5}\\ \\text{Pa}$。已知 $R = 8.314\\ \\text{J/(mol}\\cdot\\text{ K)}$，$k = 1.38 \\times 10^{-23}\\ \\text{J/K}$。求：(1) 氮气分子的方均根速率 $v_\\text{rms}$；(2) 分子的平均平动动能 $\\overline{\\varepsilon_t}$；(3) 分子数密度 $n$。',
     hints: [
       '方均根速率用宏观量表示为 $v_\\text{rms} = \\sqrt{\\dfrac{3RT}{M}}$，注意摩尔质量要换算成 $\\text{kg/mol}$。',
       '平均平动动能只与温度有关：$\\overline{\\varepsilon_t} = \\dfrac{3}{2}kT$，与气体种类无关。',
@@ -74,7 +74,7 @@ export const thermal_physicsProblems: Problem[] = [
     topicId: 'first-law',
     title: '单原子理想气体等压膨胀与等容升温的对比',
     difficulty: 2,
-    question: '$1\\ \\text{mol}$ 单原子理想气体（自由度 $i = 3$）初态温度 $T_1 = 300\\ \\text{K}$，$R = 8.314\\ \\text{J/(mol\\cdot K)}$。(1) 若气体等压膨胀升温至 $T_2 = 400\\ \\text{K}$，求内能增量 $\\Delta U$、对外做功 $W$ 与吸收热量 $Q$；(2) 若改为等容升温至同一温度，吸收的热量又是多少？比较两种过程并说明原因。',
+    question: '$1\\ \\text{mol}$ 单原子理想气体（自由度 $i = 3$）初态温度 $T_1 = 300\\ \\text{K}$，$R = 8.314\\ \\text{J/(mol}\\cdot\\text{ K)}$。(1) 若气体等压膨胀升温至 $T_2 = 400\\ \\text{K}$，求内能增量 $\\Delta U$、对外做功 $W$ 与吸收热量 $Q$；(2) 若改为等容升温至同一温度，吸收的热量又是多少？比较两种过程并说明原因。',
     hints: [
       '理想气体内能只是温度的函数：$\\Delta U = \\dfrac{i}{2}nR\\Delta T$，两条路径的 $\\Delta U$ 相同。',
       '等压过程对外做功 $W = nR\\Delta T$（也可由 $W = p\\Delta V$ 结合状态方程得到）。',
@@ -109,7 +109,7 @@ export const thermal_physicsProblems: Problem[] = [
     topicId: 'heat-capacity',
     title: '单原子理想气体的绝热压缩：末态温度、压强与做功',
     difficulty: 3,
-    question: '$1\\ \\text{mol}$ 单原子理想气体（比热比 $\\gamma = 5/3$）初态体积 $V_1 = 4.0\\ \\text{L}$、温度 $T_1 = 300\\ \\text{K}$，经准静态绝热过程被压缩至 $V_2 = 1.0\\ \\text{L}$。$R = 8.314\\ \\text{J/(mol\\cdot K)}$。求：(1) 末态温度 $T_2$；(2) 初态压强 $p_1$ 与末态压强 $p_2$；(3) 该过程中外界对气体做的功 $W^{\\prime}$。',
+    question: '$1\\ \\text{mol}$ 单原子理想气体（比热比 $\\gamma = 5/3$）初态体积 $V_1 = 4.0\\ \\text{L}$、温度 $T_1 = 300\\ \\text{K}$，经准静态绝热过程被压缩至 $V_2 = 1.0\\ \\text{L}$。$R = 8.314\\ \\text{J/(mol}\\cdot\\text{ K)}$。求：(1) 末态温度 $T_2$；(2) 初态压强 $p_1$ 与末态压强 $p_2$；(3) 该过程中外界对气体做的功 $W^{\\prime}$。',
     hints: [
       '绝热过程满足泊松方程 $TV^{\\gamma-1} = $ 常量，故 $T_2 = T_1\\left(\\dfrac{V_1}{V_2}\\right)^{\\gamma-1}$。',
       '初态压强由状态方程 $p_1 = \\dfrac{nRT_1}{V_1}$ 求出；末态压强可用 $p_2 = p_1\\left(\\dfrac{V_1}{V_2}\\right)^{\\gamma}$，再用 $p_2 V_2 = nRT_2$ 验算。',
@@ -148,7 +148,7 @@ export const thermal_physicsProblems: Problem[] = [
     hints: [
       '卡诺效率只由两热源温度决定：$\\eta_C = 1 - \\dfrac{T_2}{T_1}$，再结合 $\\eta = W/Q_1$ 与 $W = Q_1 - Q_2$ 求功与放热。',
       '卡诺定理：同温限下任何热机效率都不能超过可逆卡诺效率，比较声称效率与 $\\eta_C$ 即可判断。',
-      '可逆制冷机的制冷系数 $\\varepsilon = \\dfrac{T_2^{\\prime}}{T_1^{\\prime} - T_2^{\\prime}}$，最少耗功对应可逆极限 $W_\\min = Q_2/\\varepsilon$。',
+      '可逆制冷机的制冷系数 $\\varepsilon = \\dfrac{T_2^{\\prime}}{T_1^{\\prime} - T_2^{\\prime}}$，最少耗功对应可逆极限 $W_{\\min} = Q_2/\\varepsilon$。',
     ],
     solution: [
       {
@@ -161,14 +161,14 @@ export const thermal_physicsProblems: Problem[] = [
       },
       {
         title: '求制冷机的最少耗功',
-        detail: '可逆制冷机制冷系数 $\\varepsilon = \\dfrac{T_2^{\\prime}}{T_1^{\\prime} - T_2^{\\prime}} = \\dfrac{270}{300 - 270} = 9$。最少耗功对应可逆情形：$W_\\min = \\dfrac{Q_2}{\\varepsilon} = \\dfrac{900}{9} = 100\\ \\text{J}$。实际制冷机不可逆，耗功必大于 $100\\ \\text{J}$。',
+        detail: '可逆制冷机制冷系数 $\\varepsilon = \\dfrac{T_2^{\\prime}}{T_1^{\\prime} - T_2^{\\prime}} = \\dfrac{270}{300 - 270} = 9$。最少耗功对应可逆情形：$W_{\\min} = \\dfrac{Q_2}{\\varepsilon} = \\dfrac{900}{9} = 100\\ \\text{J}$。实际制冷机不可逆，耗功必大于 $100\\ \\text{J}$。',
       },
       {
         title: '结果讨论',
         detail: '热机必须向低温热源排热（本例占吸热的一半），这是第二定律的强制要求；而制冷机"搬运"热量的代价可以远小于搬运量（$100\\ \\text{J}$ 搬 $900\\ \\text{J}$），制冷系数大于 1 不违反能量守恒。',
       },
     ],
-    answer: '(1) $\\eta_C = 50\\%$，$W = 600\\ \\text{J}$，$Q_2 = 600\\ \\text{J}$；(2) 不可能，$60\\% > \\eta_C = 50\\%$ 违反卡诺定理；(3) $W_\\min = 100\\ \\text{J}$',
+    answer: '(1) $\\eta_C = 50\\%$，$W = 600\\ \\text{J}$，$Q_2 = 600\\ \\text{J}$；(2) 不可能，$60\\% > \\eta_C = 50\\%$ 违反卡诺定理；(3) $W_{\\min} = 100\\ \\text{J}$',
     tags: ['卡诺循环', '热机效率', '卡诺定理', '制冷系数'],
   },
 
@@ -179,7 +179,7 @@ export const thermal_physicsProblems: Problem[] = [
     topicId: 'entropy',
     title: '有限温差传热与气体自由膨胀的熵变',
     difficulty: 3,
-    question: '(1) 将 $Q = 1000\\ \\text{J}$ 热量从高温热源（$T_1 = 500\\ \\text{K}$）直接传给低温热源（$T_2 = 300\\ \\text{K}$），求两热源构成的总系统的熵变，并判断过程能否自发进行；(2) $2\\ \\text{mol}$ 理想气体向真空自由膨胀，体积从 $V_1$ 增大到 $2V_1$（过程绝热且不做功），求气体的熵变，并用克劳修斯不等式说明该过程不可逆。$R = 8.314\\ \\text{J/(mol\\cdot K)}$。',
+    question: '(1) 将 $Q = 1000\\ \\text{J}$ 热量从高温热源（$T_1 = 500\\ \\text{K}$）直接传给低温热源（$T_2 = 300\\ \\text{K}$），求两热源构成的总系统的熵变，并判断过程能否自发进行；(2) $2\\ \\text{mol}$ 理想气体向真空自由膨胀，体积从 $V_1$ 增大到 $2V_1$（过程绝热且不做功），求气体的熵变，并用克劳修斯不等式说明该过程不可逆。$R = 8.314\\ \\text{J/(mol}\\cdot\\text{ K)}$。',
     hints: [
       '熵是状态函数：热源吸放热时温度不变，各自熵变为 $\\pm Q/T$，总熵变相加。',
       '自由膨胀虽不可逆，但初末态都是平衡态，熵变可沿任意可逆路径（如可逆等温膨胀）计算：$\\Delta S = nR\\ln(V_2/V_1)$。',

@@ -17,7 +17,7 @@ export const electromagnetismTopics: Topic[] = [
       '电偶极子远场按 $1/r^3$ 衰减，与单电荷的 $1/r^2$ 不同',
     ],
     relatedProblemIds: ['electromagnetism-p1'],
-    content: String.raw`## 一、直觉引入：电荷之间的"无形之手"
+    content: String.raw`
 
 摩擦过的气球能吸起纸屑，梳子能吸引头发，雷电能在云层与大地之间迸发——这些现象背后都藏着同一种东西：电荷以及电荷之间的相互作用力。早在公元前，人们就观察到琥珀摩擦后吸引轻小物体，但真正把这种力说清楚，要等到十八世纪库仑用扭秤做的一系列精巧实验。我们日常看不见"场"，却能看见它的效果：指针偏转、纸屑飞舞、头发竖起。物理学的任务，正是把这种看不见的相互作用，翻译成可用数学精确计算的语言。
 
@@ -145,14 +145,14 @@ $$E_y = \int_0^\pi \frac{1}{4\pi\varepsilon_0}\frac{\lambda R\,d\theta}{R^2}\sin
     title: '静电场的高斯定理',
     summary: '电通量描述穿过曲面的电场"条数"，高斯定理把任意闭合曲面的总通量与内部净电荷联系起来，是求解高度对称电荷分布电场的利器。',
     keyPoints: [
-      '电通量 $\Phi_E = \iint_S \vec E\cdot d\vec S$',
-      '高斯定理 $\oiint_S \vec E\cdot d\vec S = Q_{\text{内}}/\varepsilon_0$',
+      '电通量 $\\Phi_E = \\iint_S \\vec E\\cdot d\\vec S$',
+      '高斯定理 $\\oiint_S \\vec E\\cdot d\\vec S = Q_{\\text{内}}/\\varepsilon_0$',
       '高斯定理反映静电场是有源场，源头是电荷',
-      '仅当电荷分布高度对称（球、柱、面）时可直接求出 $\vec E$',
+      '仅当电荷分布高度对称（球、柱、面）时可直接求出 $\\vec E$',
       '球对称用球面、轴对称用柱面、面对称用 pillbox 高斯面',
     ],
     relatedProblemIds: ['electromagnetism-p2'],
-    content: String.raw`## 一、直觉引入：给电场"数线头"
+    content: String.raw`
 
 第一章我们逐点叠加求场强，但遇到均匀带电球壳、无限长圆柱这类高度对称的分布时，逐点积分会非常繁琐。有没有更聪明的办法？回想电场线：我们规定穿过单位面积的电场线数目正比于场强。那么穿过一整个闭合曲面的电场线"净条数"，应该和曲面里包住的电荷有关——因为电场线起于正电荷、止于负电荷。高斯定理正是把这个直觉写成一个精确等式：穿出闭合曲面的净电通量，等于内部净电荷除以 $\varepsilon_0$。
 
@@ -344,17 +344,17 @@ $$2EA = \frac{\sigma A}{\varepsilon_0}\quad\Rightarrow\quad E = \frac{\sigma}{2\
     courseId: 'electromagnetism',
     chapter: '第三章 电势',
     title: '电势能与电势',
-    summary: '静电场是保守场，可引入电势能把"做功"变成"位置函数之差"；电势叠加与梯度关系 $E=-\nabla\varphi$ 把场与势连成互补的两种描述。',
+    summary: '静电场是保守场，可引入电势能把"做功"变成"位置函数之差"；电势叠加与梯度关系 $E=-\\nabla\\varphi$ 把场与势连成互补的两种描述。',
     keyPoints: [
       '静电力做功与路径无关，电场是保守场',
-      '电势能 $W_a = q\varphi_a$，做功 $A_{ab}=q(\varphi_a-\varphi_b)$',
-      '点电荷电势 $\varphi = \dfrac{1}{4\pi\varepsilon_0}\dfrac{q}{r}$',
-      '电势叠加 $\varphi = \sum \dfrac{1}{4\pi\varepsilon_0}\dfrac{q_i}{r_i}$',
-      '场强与电势关系 $\vec E = -\nabla\varphi$',
+      '电势能 $W_a = q\\varphi_a$，做功 $A_{ab}=q(\\varphi_a-\\varphi_b)$',
+      '点电荷电势 $\\varphi = \\dfrac{1}{4\\pi\\varepsilon_0}\\dfrac{q}{r}$',
+      '电势叠加 $\\varphi = \\sum \\dfrac{1}{4\\pi\\varepsilon_0}\\dfrac{q_i}{r_i}$',
+      '场强与电势关系 $\\vec E = -\\nabla\\varphi$',
       '等势面上移动电荷不做功，等势面与电场线处处垂直',
     ],
     relatedProblemIds: ['electromagnetism-p3'],
-    content: String.raw`## 一、直觉引入：为什么还要学"电势"
+    content: String.raw`
 
 有了电场强度 $\vec E$，似乎一切静电问题都解决了：受力、运动、平衡都能算。但工程师更常关心的是"把电荷从 A 搬到 B 要消耗多少能量"，而不是每一点的力。比如设计显像管、粒子加速器，核心指标是加速电压（电势差）而非电场分布。直接逐点积分力做功很麻烦，于是我们寻找一个像"重力势能"那样的标量函数——电势 $\varphi$，让"做功"等于始末电势之差乘以电荷量。标量比矢量好算得多：不需要矢量叠加，只要把各个电荷贡献的电势（标量）相加，再求梯度就回到场强。
 
@@ -566,13 +566,13 @@ $$A_{\text{电}} = q(\varphi_{\text{表面}}-\varphi_{0.20}) = (2.0\times10^{-9}
     keyPoints: [
       '静电平衡：导体内部 $E=0$，表面场垂直表面',
       '导体是等势体，电荷只分布于表面',
-      '电容 $C = Q/U$，平行板 $C = \varepsilon_0 S/d$',
-      '电介质使电容增大：$\varepsilon_r$ 为相对介电常数',
-      '电容器储能 $W = \tfrac12 CU^2 = Q^2/(2C)$',
-      '电位移 $\vec D = \varepsilon_0\vec E+\vec P$，有介质时 $\vec D$ 高斯定理更简洁',
+      '电容 $C = Q/U$，平行板 $C = \\varepsilon_0 S/d$',
+      '电介质使电容增大：$\\varepsilon_r$ 为相对介电常数',
+      '电容器储能 $W = \\tfrac12 CU^2 = Q^2/(2C)$',
+      '电位移 $\\vec D = \\varepsilon_0\\vec E+\\vec P$，有介质时 $\\vec D$ 高斯定理更简洁',
     ],
     relatedProblemIds: ['electromagnetism-p4'],
-    content: String.raw`## 一、直觉引入：金属里的自由电子
+    content: String.raw`
 
 金属之所以是良导体，是因为内部有大量可自由移动的电子。把一块金属放入外电场，这些自由电子立刻在电场力下漂移，重新分布，直到在导体表面堆积出感应电荷。感应电荷产生的"内场"恰好把外电场抵消，使导体内部总场变为零。此时电子不再定向移动，系统达到**静电平衡**。这一自动"屏蔽"内部电场的过程，是静电应用（法拉第笼、屏蔽线）的物理基础。
 
@@ -804,14 +804,14 @@ $$W_{\text{后}} = \frac12 C_{\text{总}} U^2 = \frac12\times(5.0\times10^{-6})\
     title: '电流密度与欧姆定律',
     summary: '电荷的定向移动形成电流，电流密度描述其空间分布；欧姆定律与基尔霍夫定律把电路从微观载流子输运提升到宏观网络求解。',
     keyPoints: [
-      '电流 $I = dq/dt$，电流密度 $\vec j = \rho\vec v$',
-      '欧姆定律微分形式 $\vec j = \sigma\vec E$',
-      '电阻 $R = \rho l/S$，电阻律 $\rho$ 与温度相关',
+      '电流 $I = dq/dt$，电流密度 $\\vec j = \\rho\\vec v$',
+      '欧姆定律微分形式 $\\vec j = \\sigma\\vec E$',
+      '电阻 $R = \\rho l/S$，电阻律 $\\rho$ 与温度相关',
       '电动势维持稳恒电流，电源内阻不可忽略',
-      '基尔霍夫电流定律 $\sum I=0$、电压定律 $\sum U=0$',
+      '基尔霍夫电流定律 $\\sum I=0$、电压定律 $\\sum U=0$',
     ],
     relatedProblemIds: ['electromagnetism-p5'],
-    content: String.raw`## 一、直觉引入：电荷是怎样"流动"起来的
+    content: String.raw`
 
 接上电池，灯泡亮了——背后是金属中自由电子在电场驱使下整体定向漂移。单个电子其实杂乱热运动、速度极大却随机抵消；加上电场后，它们获得一个微小的定向漂移速度（约 $10^{-4}\ \text{m/s}$ 量级），正是这个"净漂移"构成了可观测的电流。电流不是电子飞快穿过导线，而是"扰动的波"以近光速传播、电子缓慢随波逐流。
 
@@ -1039,7 +1039,7 @@ $$t \approx 0.10\ \text{s}$$
     title: '毕奥-萨伐尔与安培环路',
     summary: '运动电荷与电流激发磁场，毕奥-萨伐尔定律从微元积分出场，安培环路定理借对称性求场，洛伦兹力与霍尔效应把磁场与力学、电信号联系起来。',
     keyPoints: [
-      '毕奥-萨伐尔定律 $d\vec B = \\dfrac{\\mu_0}{4\\pi}\\dfrac{Id\\vec l\\times\\hat r}{r^2}$',
+      '毕奥-萨伐尔定律 $d\\vec B = \\dfrac{\\mu_0}{4\\pi}\\dfrac{Id\\vec l\\times\\hat r}{r^2}$',
       '安培环路定理 $\\oint \\vec B\\cdot d\\vec l = \\mu_0 I_{\\text{内}}$',
       '无限长直导线 $B = \\mu_0 I/(2\\pi r)$',
       '洛伦兹力 $\\vec F = q\\vec v\\times\\vec B$',
@@ -1047,7 +1047,7 @@ $$t \approx 0.10\ \text{s}$$
       '磁场是无源有旋场（$\\nabla\\cdot\\vec B=0$）',
     ],
     relatedProblemIds: ['electromagnetism-p6'],
-    content: String.raw`## 一、直觉引入：电与磁原来是一家
+    content: String.raw`
 
 奥斯特发现通电导线能让小磁针偏转，第一次把"电"与"磁"联系起来。随后毕奥、萨伐尔、安培等人定量地给出：电流（运动电荷）会在周围激发一种新场——磁场 $\vec B$。磁场虽看不见，却能让磁铁转动、让电动机转动、让粒子在加速器中划出圆弧。与静电场不同，磁场的力作用在运动电荷上，且方向垂直于速度与磁场（由叉乘决定），这带来许多反直觉却优美的结果。
 
@@ -1276,7 +1276,7 @@ $$U_H = \frac{IB}{n q d} = \frac{5.0\times0.80}{(8.5\times10^{28})\times(1.6\tim
       '磁场能量密度 $w_m = \\dfrac{B^2}{2\\mu_0}$，线圈储能 $W=\\tfrac12 LI^2$',
     ],
     relatedProblemIds: ['electromagnetism-p3', 'electromagnetism-p6'],
-    content: String.raw`## 一、直觉引入：磁也能"生电"
+    content: String.raw`
 
 法拉第用十年时间反复实验，最终确认：仅仅让磁铁靠近线圈，线圈里就出现了电流——条件是磁通在变。静止的磁场不产生电流，变化的磁通才"感应"出电动势。这是电磁学的又一重大统一：电场可由电荷激发（库仑），也可由变化的磁场激发（法拉第）。后者正是发电机、变压器、感应炉的工作原理，也是麦克斯韦预言电磁波的关键一环。
 

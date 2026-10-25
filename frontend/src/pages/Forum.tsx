@@ -1,5 +1,5 @@
 /** 论坛：综合讨论区 + 课程分区；发帖分享理解/方法/知识与文档附件 */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { MessagesSquare, Paperclip, Plus, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -27,9 +27,28 @@ import {
 const formatTime = (ts: number): string =>
   new Date(ts).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
 
+// 访客匿名 ID：首次生成后持久化到 localStorage，刷新/重进都能认回自己的历史帖
+const ANON_ID_KEY = 'principia-forum-anon-id';
+const getAnonId = (): string => {
+  try {
+    const existing = localStorage.getItem(ANON_ID_KEY);
+    if (existing) return existing;
+  } catch {
+    /* localStorage 不可用时退回每次随机 */
+  }
+  const id = `anon-${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    localStorage.setItem(ANON_ID_KEY, id);
+  } catch {
+    /* ignore */
+  }
+  return id;
+};
+
 const Forum = () => {
   const { user } = useAuth();
-  const userId = user?.id ?? 'guest';
+  const [anonId] = useState(getAnonId);
+  const userId = user?.id ?? anonId;
   const userName = user?.name ?? '访客';
 
   const [section, setSection] = useState(GENERAL_SECTION);
@@ -45,6 +64,11 @@ const Forum = () => {
   const [openPostId, setOpenPostId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const openPost: ForumPost | undefined = posts.find((p) => p.id === openPostId);
+
+  // 切换帖子时清空回复输入框，避免把上一条帖子的草稿误发到另一条
+  useEffect(() => {
+    setReplyText('');
+  }, [openPostId]);
 
   const pickAttachments = async (files: FileList | null) => {
     if (!files) return;
@@ -166,12 +190,13 @@ const Forum = () => {
           {showForm && (
             <FadeIn className="mt-4 border border-border bg-card p-5">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">标题 *</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="一句话概括你的分享/提问" />
+                <Label htmlFor="forum-title" className="text-xs text-muted-foreground">标题 *</Label>
+                <Input id="forum-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="一句话概括你的分享/提问" />
               </div>
               <div className="mt-3 space-y-1.5">
-                <Label className="text-xs text-muted-foreground">正文 *（支持 Markdown 与 LaTeX 公式）</Label>
+                <Label htmlFor="forum-content" className="text-xs text-muted-foreground">正文 *（支持 Markdown 与 LaTeX 公式）</Label>
                 <Textarea
+                  id="forum-content"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   rows={6}
@@ -191,7 +216,7 @@ const Forum = () => {
                 />
                 <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => attInputRef.current?.click()}>
                   <Paperclip className="h-4 w-4" />
-                  添加附件（≤500MB/个）
+                  添加附件（≤2MB/个）
                 </Button>
                 <span className="text-xs text-muted-foreground">{attachments.length}/{MAX_ATTACHMENTS}</span>
                 <Button className="ml-auto" onClick={submitPost}>发布</Button>
@@ -221,14 +246,14 @@ const Forum = () => {
                     ← 返回列表
                   </button>
                   <h3 className="mt-2 font-serif text-xl font-semibold">
-                    <InlineMathText text={openPost.title} />
+                    <InlineMathText escape text={openPost.title} />
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {openPost.userName} · {formatTime(openPost.createdAt)} · {sectionName(openPost.sectionId)}
                   </p>
                 </div>
                 <div className="p-5">
-                  <MathText content={openPost.content} className="text-sm" />
+                  <MathText escape content={openPost.content} className="text-sm" />
                   {openPost.attachments && renderAttachments(openPost.attachments)}
                   {openPost.userId === userId && (
                     <Button
@@ -256,7 +281,7 @@ const Forum = () => {
                           {r.userName} · {formatTime(r.createdAt)}
                         </p>
                         <div className="mt-1 text-sm">
-                          <MathText content={r.content} className="text-sm" />
+                          <MathText escape content={r.content} className="text-sm" />
                         </div>
                       </div>
                     ))}
@@ -287,12 +312,12 @@ const Forum = () => {
                   >
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="min-w-0 truncate font-serif text-base font-semibold group-hover:text-info">
-                        <InlineMathText text={p.title} />
+                        <InlineMathText escape text={p.title} />
                       </h3>
                       <span className="shrink-0 text-xs text-muted-foreground">{p.replies.length} 回复</span>
                     </div>
                     <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
-                      <InlineMathText text={p.content.slice(0, 160)} />
+                      <InlineMathText escape text={p.content.slice(0, 160)} />
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground">
                       {p.userName} · {formatTime(p.createdAt)}

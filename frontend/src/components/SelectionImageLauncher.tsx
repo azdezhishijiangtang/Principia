@@ -70,9 +70,30 @@ const SelectionImageLauncher = () => {
   const [kind, setKind] = useState<DiagramKind>('auto');
   const [modelIndex, setModelIndex] = useState(0);
   const [svg, setSvg] = useState<string | null>(null);
+  const [svgBlobUrl, setSvgBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const autoRan = useRef(false);
+  // 生成请求的取消与序号保护：旧流/重试不得覆盖新结果
+  const abortRef = useRef<AbortController | null>(null);
+  const runSeqRef = useRef(0);
+
+  // 预览改用 <img src=blob:>：浏览器加载 SVG 图片时不执行其中的脚本，
+  // 从根本上杜绝 SVG 注入（比 sanitize 黑名单更可靠）；下载/复制仍用原始 SVG。
+  useEffect(() => {
+    if (!svg) {
+      setSvgBlobUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(
+      new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }),
+    );
+    setSvgBlobUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [svg]);
+
+  // 组件卸载时取消未完成的生成请求
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const configuredProfiles = readAiProfiles()
     .map((p, i) => ({ index: i, profile: p }))
@@ -177,6 +198,12 @@ const SelectionImageLauncher = () => {
       setError('所选存档尚未配置 API Key，请先到 AI 答疑页完成设置。');
       return;
     }
+    // 取消上一次未完成的生成，并取新序号：旧流的 chunk 一律丢弃
+    abortRef.current?.abort();
+    const seq = ++runSeqRef.current;
+    const isCurrent = () => runSeqRef.current === seq;
+    const abort = new AbortController();
+    abortRef.current = abort;
     setLoading(true);
     setError(null);
     setSvg(null);
@@ -190,7 +217,8 @@ const SelectionImageLauncher = () => {
         const msgs = extraHint
           ? [...messages, { role: 'user' as const, content: extraHint }]
           : messages;
-        for await (const chunk of streamChat(cfg, msgs)) {
+        for await (const chunk of streamChat(cfg, msgs, abort.signal)) {
+          if (!isCurrent()) return null;
           acc += chunk;
           const s = extractSvg(acc);
           if (s) setSvg(sanitizeSvg(s));
@@ -200,20 +228,23 @@ const SelectionImageLauncher = () => {
 
       let final = await runOnce();
       // 首次没拿到 SVG：带纠正提示重试一次
-      if (!final) {
+      if (isCurrent() && !final) {
         final = await runOnce(
           '上次输出不符合要求。请只返回一个完整的 <svg>…</svg>（含 xmlns 与 viewBox），不要任何解释文字或代码块标记。',
         );
       }
-      if (final) {
+      if (final && isCurrent()) {
         setSvg(sanitizeSvg(final));
-      } else {
+      } else if (isCurrent()) {
         setError('模型没有返回有效的 SVG，请重试或更换一个模型/存档。');
       }
     } catch (err) {
-      setError(describeAiError(err));
+      if (isCurrent()) setError(describeAiError(err));
     } finally {
-      setLoading(false);
+      if (isCurrent()) {
+        setLoading(false);
+        abortRef.current = null;
+      }
     }
   }, [modelIndex, text, kind]);
 
@@ -281,7 +312,13 @@ const SelectionImageLauncher = () => {
         生成示意图
       </button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) abortRef.current?.abort();
+          setOpen(next);
+        }}
+      >
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -363,9 +400,10 @@ const SelectionImageLauncher = () => {
               </div>
             )}
             {svg && (
-              <div
-                className="[&_svg]:max-w-full [&_svg]:h-auto [&_svg]:max-h-[55vh] w-full flex justify-center"
-                dangerouslySetInnerHTML={{ __html: sanitizeSvg(svg) }}
+              <img
+                src={svgBlobUrl ?? undefined}
+                alt="AI 生成的示意图"
+                className="max-w-full h-auto max-h-[55vh]"
               />
             )}
             {!loading && !svg && !error && !noProfile && (

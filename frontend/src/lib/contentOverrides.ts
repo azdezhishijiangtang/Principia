@@ -27,11 +27,18 @@ export const loadOverrides = (): Record<string, TopicOverride> => {
   }
 };
 
-const writeAll = (all: Record<string, TopicOverride>): void => {
+/** localStorage 写入结果：失败时 ok=false 并带中文原因，供调用方提示用户 */
+export interface WriteResult {
+  ok: boolean;
+  error?: string;
+}
+
+const writeAll = (all: Record<string, TopicOverride>): WriteResult => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+    return { ok: true };
   } catch {
-    /* 存储失败时静默降级 */
+    return { ok: false, error: '存储空间不足，请清理旧数据' };
   }
 };
 
@@ -39,18 +46,18 @@ const writeAll = (all: Record<string, TopicOverride>): void => {
 export const saveOverride = (
   topicId: string,
   patch: { title?: string; summary?: string; content?: string },
-): void => {
+): WriteResult => {
   const all = loadOverrides();
   const prev = all[topicId] ?? { updatedAt: 0 };
   all[topicId] = { ...prev, ...patch, updatedAt: Date.now() };
-  writeAll(all);
+  return writeAll(all);
 };
 
 /** 撤销某专题的覆盖 */
-export const removeOverride = (topicId: string): void => {
+export const removeOverride = (topicId: string): WriteResult => {
   const all = loadOverrides();
   delete all[topicId];
-  writeAll(all);
+  return writeAll(all);
 };
 
 /** 覆盖数量 */

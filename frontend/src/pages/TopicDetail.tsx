@@ -114,12 +114,18 @@ const TopicDetail = () => {
   const exportRef = useRef<HTMLDivElement>(null);
 
   const handleExportPdf = async () => {
+    // 注意：离屏导出节点仅在 exporting 为 true 时才挂载，
+    // 因此必须先 setExporting(true)、等渲染提交后再取 ref（旧代码在渲染前判空，导出恒失效）。
     setExporting(true);
     try {
-      // 先挂载离屏节点，等待两帧渲染与 KaTeX/字体就绪
+      // 等待离屏节点渲染与 KaTeX/字体就绪
       await new Promise((r) => requestAnimationFrame(() => r(null)));
       await new Promise((r) => requestAnimationFrame(() => r(null)));
-      try { await document.fonts.ready; } catch {}
+      try {
+        await document.fonts.ready;
+      } catch {
+        /* 字体 API 不可用时忽略 */
+      }
       await new Promise((r) => setTimeout(r, 200));
       const node = exportRef.current;
       if (!node) throw new Error('导出节点尚未就绪');
@@ -152,7 +158,7 @@ const TopicDetail = () => {
           <ChevronRight className="h-3.5 w-3.5" />
           <span>{topic.chapter}</span>
           <ChevronRight className="h-3.5 w-3.5" />
-          <span className="text-foreground font-medium"><InlineMathText text={topic.title} /></span>
+          <span className="text-foreground font-medium"><InlineMathText escape text={topic.title} /></span>
         </nav>
       </FadeIn>
 
@@ -164,8 +170,8 @@ const TopicDetail = () => {
             <p className="text-sm font-semibold text-info tracking-wide mb-2">
               {course.name} · {topic.chapter}
             </p>
-            <h1 className="font-serif text-4xl font-semibold leading-tight"><InlineMathText text={topic.title} /></h1>
-            <p className="mt-4 text-lg text-muted-foreground leading-relaxed"><InlineMathText text={topic.summary} /></p>
+            <h1 className="font-serif text-4xl font-semibold leading-tight"><InlineMathText escape text={topic.title} /></h1>
+            <p className="mt-4 text-lg text-muted-foreground leading-relaxed"><InlineMathText escape text={topic.summary} /></p>
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <Button asChild className="gap-2 bg-info text-info-foreground hover:bg-info/90">
                 <Link to={`/tutor?topic=${topic.id}`}>
@@ -200,7 +206,7 @@ const TopicDetail = () => {
               <Sparkles className="h-4 w-4 shrink-0 text-info" />
               <p className="text-sm flex-1 min-w-0">
                 正在阅读：
-                <span className="text-info font-medium mx-1"><InlineMathText text={sectionParam} /></span>
+                <span className="text-info font-medium mx-1"><InlineMathText escape text={sectionParam} /></span>
                 <span className="text-muted-foreground">（AI 答疑时会结合这一节讲解）</span>
               </p>
               <button
@@ -229,7 +235,7 @@ const TopicDetail = () => {
                         activeId === s.id ? 'text-info font-medium' : 'text-muted-foreground'
                       }`}
                     >
-                      <InlineMathText text={s.title} />
+                      <InlineMathText escape text={s.title} />
                     </button>
                   </li>
                 ))}
@@ -258,7 +264,7 @@ const TopicDetail = () => {
                       </Link>
                     </div>
                   )}
-                  <MathText content={s.body} />
+                  <MathText escape content={s.body} />
                 </section>
               </FadeIn>
             ))}
@@ -277,7 +283,7 @@ const TopicDetail = () => {
                     <span className="flex h-5 w-5 shrink-0 items-center justify-center bg-info/10 text-info font-mono text-xs font-semibold mt-0.5">
                       {i + 1}
                     </span>
-                    <span className="text-foreground/90"><InlineMathText text={kp} /></span>
+                    <span className="text-foreground/90"><InlineMathText escape text={kp} /></span>
                   </li>
                 ))}
               </ul>
@@ -320,7 +326,7 @@ const TopicDetail = () => {
                   上一个知识点
                 </span>
                 <p className="mt-2 font-serif font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
-                  <InlineMathText text={prev.title} />
+                  <InlineMathText escape text={prev.title} />
                 </p>
               </Link>
             ) : (
@@ -336,7 +342,7 @@ const TopicDetail = () => {
                   <ChevronRight className="h-3.5 w-3.5" />
                 </span>
                 <p className="mt-2 font-serif font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
-                  <InlineMathText text={next.title} />
+                  <InlineMathText escape text={next.title} />
                 </p>
               </Link>
             )}
@@ -365,7 +371,7 @@ const TopicDetail = () => {
                               : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
                           }`}
                         >
-                          <InlineMathText text={s.title} />
+                          <InlineMathText escape text={s.title} />
                         </button>
                       </li>
                     ))}
@@ -384,7 +390,7 @@ const TopicDetail = () => {
                 {topic.keyPoints.map((kp, i) => (
                   <li key={i} className="flex gap-2.5 text-xs leading-relaxed text-muted-foreground">
                     <span className="font-mono text-info shrink-0">{String(i + 1).padStart(2, '0')}</span>
-                    <span><InlineMathText text={kp} /></span>
+                    <span><InlineMathText escape text={kp} /></span>
                   </li>
                 ))}
               </ul>
@@ -450,21 +456,21 @@ const TopicDetail = () => {
         <div id="pdf-export-root" aria-hidden="true">
           <div ref={exportRef} className="pdf-doc">
             <p className="pdf-doc-brand">{course.name} · {topic.chapter}</p>
-            <h1 className="pdf-doc-title"><InlineMathText text={topic.title} /></h1>
-            <p className="pdf-doc-lead"><InlineMathText text={topic.summary} /></p>
+            <h1 className="pdf-doc-title"><InlineMathText escape text={topic.title} /></h1>
+            <p className="pdf-doc-lead"><InlineMathText escape text={topic.summary} /></p>
             <div className="pdf-doc-body">
               {sections.map((s) => (
                 <section key={s.id}>
                   {s.title && (
-                    <h2 className="pdf-doc-section-title"><InlineMathText text={s.title} /></h2>
+                    <h2 className="pdf-doc-section-title"><InlineMathText escape text={s.title} /></h2>
                   )}
-                  <MathText content={s.body} />
+                  <MathText escape content={s.body} />
                 </section>
               ))}
               <h2 className="pdf-doc-subhead">核心要点</h2>
               <ol>
                 {topic.keyPoints.map((kp, i) => (
-                  <li key={i} className="pdf-doc-kp"><InlineMathText text={kp} /></li>
+                  <li key={i} className="pdf-doc-kp"><InlineMathText escape text={kp} /></li>
                 ))}
               </ol>
             </div>

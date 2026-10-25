@@ -6,6 +6,7 @@ import { FadeIn, Stagger } from '@/components/MotionPrimitives';
 import ProblemCard from '@/components/ProblemCard';
 import { problems } from '@/data/problems';
 import { courses, subjectCourses } from '@/data/courses';
+import { topics } from '@/data/topics';
 import { useSubject } from '@/lib/SubjectContext';
 import { SUBJECT_META } from '@/types';
 
@@ -148,17 +149,7 @@ const Problems = () => {
   );
 };
 
-const topicsTitle = (topicId: string) => {
-  const titles: Record<string, string> = {
-    limits: '极限与连续性',
-    taylor: '泰勒展开',
-    integrals: '不定积分与定积分',
-    determinants: '行列式',
-    eigen: '特征值与特征向量',
-    bayes: '条件概率与贝叶斯',
-    distributions: '常见分布',
-  };
-  return titles[topicId] ?? '知识点';
-};
+// 按 topicId 从 topics 数据查出真实标题，查不到时兜底为「知识点」
+const topicsTitle = (topicId: string) => topics.find((t) => t.id === topicId)?.title ?? '知识点';
 
 export default Problems;

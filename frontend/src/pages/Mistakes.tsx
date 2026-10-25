@@ -1,5 +1,5 @@
 /** 错题本：按课程分集合；AI 练习一键收录 + 手动录入（文字/代码/图片） */
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { BookX, Check, ImagePlus, Plus, RotateCcw, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import {
   countMistakesByCourse,
   deleteMistake,
   readImageFile,
+  subscribeMistakes,
   toggleMastered,
   useMistakes,
   type MistakeImage,
@@ -28,12 +29,15 @@ const Mistakes = () => {
   const subjectCourseList = subjectCourses(subject);
   const userId = user?.id ?? 'guest';
   const [activeCourse, setActiveCourse] = useState('all');
-  const counts = useMemo(() => countMistakesByCourse(userId), [userId]);
+  // 订阅错题数据变更（本地写操作/跨标签页），counts 随数据实时刷新
+  const [countsVersion, setCountsVersion] = useState(0);
+  useEffect(() => subscribeMistakes(() => setCountsVersion((v) => v + 1)), []);
+  const counts = useMemo(() => countMistakesByCourse(userId), [userId, countsVersion]);
   const mistakes = useMistakes(userId, activeCourse);
 
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState('');
-  const [courseId, setCourseId] = useState('calculus');
+  const [courseId, setCourseId] = useState(subjectCourseList[0]?.id ?? '');
   const [content, setContent] = useState('');
   const [images, setImages] = useState<MistakeImage[]>([]);
   const imgInputRef = useRef<HTMLInputElement>(null);
@@ -42,6 +46,16 @@ const Mistakes = () => {
     () => subjectCourseList.filter((c) => (counts[c.id] ?? 0) > 0 || c.id === courseId),
     [counts, courseId, subjectCourseList],
   );
+
+  // 学科切换时重置课程筛选与表单课程选择，避免残留旧学科的课程 id（首次挂载不重置）
+  const lastSubjectRef = useRef(subject);
+  useEffect(() => {
+    if (subject === lastSubjectRef.current) return;
+    lastSubjectRef.current = subject;
+    const firstCourseId = subjectCourses(subject)[0]?.id ?? '';
+    setActiveCourse(firstCourseId);
+    setCourseId(firstCourseId);
+  }, [subject]);
 
   const submit = () => {
     if (!title.trim() || !content.trim()) {
@@ -233,7 +247,7 @@ const Mistakes = () => {
                   </div>
                   <div className="p-5">
                     <h3 className="font-serif text-base font-semibold">{m.title}</h3>
-                    <MathText content={m.content} className="mt-3 text-sm" />
+                    <MathText escape content={m.content} className="mt-3 text-sm" />
                     {m.images && m.images.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {m.images.map((im, i) => (

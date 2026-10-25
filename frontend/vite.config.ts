@@ -17,10 +17,14 @@ export default defineConfig({
     port: 5173,
     allowedHosts: true,
     cors: true,
-    hmr: {
-        protocol: 'wss',
-        host: `5173-${process.env.X_IDE_SPACE_KEY}.e2b.${process.env.X_IDE_SPACE_REGION}.${process.env.X_IDE_SPACE_HOST}`
-    },
+    // 仅在云端 IDE 注入了空间环境变量时才启用远程 HMR；
+    // 本地或变量缺失时回退为 Vite 默认（localhost），避免 host 变成 "5173-undefined..." 导致 HMR 失效
+    hmr: process.env.X_IDE_SPACE_KEY
+      ? {
+          protocol: 'wss',
+          host: `5173-${process.env.X_IDE_SPACE_KEY}.e2b.${process.env.X_IDE_SPACE_REGION}.${process.env.X_IDE_SPACE_HOST}`,
+        }
+      : undefined,
     proxy: {
       '/api': {
         // 后端模板服务运行在 3001（3000 由发布应用的静态服务器占用）

@@ -64,8 +64,9 @@ const Login = () => {
     try {
       await signInWithPhone(identifier, loginPassword);
       navigate(from, { replace: true });
-    } catch (err) {
-      setPhoneError(err instanceof Error ? err.message : '登录失败，请重试');
+    } catch {
+      // 统一文案，避免泄露「账号不存在」vs「密码错误」，防止账号枚举
+      setPhoneError('账号或密码错误');
     } finally {
       setPhoneSubmitting(false);
     }

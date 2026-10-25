@@ -39,13 +39,18 @@ const Profile = () => {
     );
   }
 
-  const loginDate = new Date(user.loginAt).toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  // 校验 loginAt：非法/缺失时回退占位符，避免渲染出 "Invalid Date"
+  const loginAt = user.loginAt ? new Date(user.loginAt) : null;
+  const loginDate =
+    loginAt && !Number.isNaN(loginAt.getTime())
+      ? loginAt.toLocaleString('zh-CN', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      : '—';
 
   return (
     <div className="container py-14 lg:py-20 max-w-4xl">

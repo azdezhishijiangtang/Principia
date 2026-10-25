@@ -1,6 +1,6 @@
 /**
  * 论坛：综合讨论区 + 按课程分区。支持发帖（Markdown/LaTeX）与文档/图片附件、回帖。
- * 纯前端演示：数据存 localStorage（附件单个 ≤500MB，每帖 ≤3 个）。
+ * 纯前端演示：数据存 localStorage（附件单个 ≤2MB，每帖 ≤3 个）。
  */
 import { useMemo, useSyncExternalStore } from 'react';
 import { courses } from '@/data/courses';
@@ -41,7 +41,7 @@ export const sectionName = (id: string): string =>
   id === GENERAL_SECTION ? '综合讨论区' : courses.find((c) => c.id === id)?.name ?? '未知分区';
 
 export const MAX_ATTACHMENTS = 3;
-export const MAX_ATTACHMENT_BYTES = 500 * 1024 * 1024;
+export const MAX_ATTACHMENT_BYTES = 2 * 1024 * 1024;
 
 const STORAGE_KEY = 'mathlens-forum-v1';
 
@@ -101,11 +101,15 @@ export const addReply = (
   );
 };
 
-export const deletePost = (postId: string, userId: string): boolean => {
+export const deletePost = (
+  postId: string,
+  userId: string,
+): { ok: boolean; error?: string; deleted: boolean } => {
   const before = readAll();
   const after = before.filter((p) => !(p.id === postId && p.userId === userId));
-  writeAll(after);
-  return after.length < before.length;
+  const deleted = after.length < before.length;
+  const res = writeAll(after);
+  return { ...res, deleted };
 };
 
 export const listPosts = (sectionId?: string): ForumPost[] =>
@@ -134,7 +138,7 @@ export const useForumPosts = (sectionId?: string): ForumPost[] => {
 export const readAttachment = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
     if (file.size > MAX_ATTACHMENT_BYTES) {
-      return reject(new Error(`附件「${file.name}」超过 500MB，请压缩后再上传`));
+      return reject(new Error(`附件「${file.name}」超过 2MB，请压缩后再上传`));
     }
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result));

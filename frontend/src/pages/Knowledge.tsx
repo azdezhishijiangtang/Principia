@@ -19,7 +19,7 @@ const highlightMath = (text: string, query: string): ReactNode => {
   let m: RegExpExecArray | null;
   let seq = 0;
   const renderPlain = (plain: string, key: string): ReactNode => {
-    if (!query.trim()) return <InlineMathText key={key} text={plain} />;
+    if (!query.trim()) return <InlineMathText escape key={key} text={plain} />;
     const q = query.trim().toLowerCase();
     const lower = plain.toLowerCase();
     const nodes: ReactNode[] = [];
@@ -27,7 +27,7 @@ const highlightMath = (text: string, query: string): ReactNode => {
     let idx = lower.indexOf(q);
     let j = 0;
     while (idx !== -1) {
-      if (idx > l) nodes.push(<InlineMathText key={`${key}-t${j}`} text={plain.slice(l, idx)} />);
+      if (idx > l) nodes.push(<InlineMathText escape key={`${key}-t${j}`} text={plain.slice(l, idx)} />);
       nodes.push(
         <mark key={`${key}-m${j}`} className="bg-info/20 text-info px-0.5">
           {plain.slice(idx, idx + q.length)}
@@ -37,12 +37,12 @@ const highlightMath = (text: string, query: string): ReactNode => {
       idx = lower.indexOf(q, l);
       j++;
     }
-    if (l < plain.length) nodes.push(<InlineMathText key={`${key}-t${j}`} text={plain.slice(l)} />);
+    if (l < plain.length) nodes.push(<InlineMathText escape key={`${key}-t${j}`} text={plain.slice(l)} />);
     return <span key={key}>{nodes}</span>;
   };
   while ((m = mathRe.exec(text)) !== null) {
     if (m.index > last) out.push(renderPlain(text.slice(last, m.index), `s${seq++}`));
-    out.push(<InlineMathText key={`k${seq++}`} text={`$${m[1] ?? m[2]}$`} />);
+    out.push(<InlineMathText escape key={`k${seq++}`} text={`$${m[1] ?? m[2]}$`} />);
     last = m.index + m[0].length;
   }
   if (last < text.length) out.push(renderPlain(text.slice(last), `s${seq++}`));
@@ -66,9 +66,10 @@ const Knowledge = () => {
         .filter((t) => courseFilter === 'all' || t.courseId === courseFilter)
         .map((t) => ({ topic: t, score: 1, excerpt: t.summary }));
     }
-    return searchAll(query, 24, subject).topics.filter(
-      (h) => courseFilter === 'all' || h.topic.courseId === courseFilter,
-    );
+    // 先按课程过滤、再截断展示数量，避免搜索上限（24）先于课程过滤导致某课程结果被裁掉
+    return searchAll(query, 200, subject).topics
+      .filter((h) => courseFilter === 'all' || h.topic.courseId === courseFilter)
+      .slice(0, 24);
   }, [query, courseFilter, subject, subjectCourseIds]);
 
   // 每个课程的专题数
@@ -191,7 +192,7 @@ const Knowledge = () => {
                             key={i}
                             className="text-xs bg-secondary text-muted-foreground px-2 py-0.5 line-clamp-1"
                           >
-                            <InlineMathText text={kp} />
+                            <InlineMathText escape text={kp} />
                           </span>
                         ))}
                       </div>
