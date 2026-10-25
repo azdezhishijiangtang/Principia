@@ -26,7 +26,7 @@ const Donate = () => {
           <div className="flex justify-center">
             <div className="border border-border bg-background p-3 max-w-sm w-full">
               <img
-                src="/images/donate-code.png"
+                src={`${import.meta.env.BASE_URL}images/donate-code.png`}
                 alt="开发者赞赏码"
                 className="w-full h-auto"
                 loading="eager"

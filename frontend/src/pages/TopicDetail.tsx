@@ -114,13 +114,16 @@ const TopicDetail = () => {
   const exportRef = useRef<HTMLDivElement>(null);
 
   const handleExportPdf = async () => {
-    if (!exportRef.current) return;
     setExporting(true);
     try {
-      // 等待离屏节点渲染与 KaTeX/字体就绪
+      // 先挂载离屏节点，等待两帧渲染与 KaTeX/字体就绪
       await new Promise((r) => requestAnimationFrame(() => r(null)));
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      try { await document.fonts.ready; } catch {}
       await new Promise((r) => setTimeout(r, 200));
-      const blob = await elementToPdfBlob(exportRef.current);
+      const node = exportRef.current;
+      if (!node) throw new Error('导出节点尚未就绪');
+      const blob = await elementToPdfBlob(node);
       const safe = topic.title.replace(/[\\/:*?"<>|]/g, '_').slice(0, 60);
       downloadBlob(blob, `Principia-知识讲解-${safe}.pdf`);
       toast.success('已导出 PDF');

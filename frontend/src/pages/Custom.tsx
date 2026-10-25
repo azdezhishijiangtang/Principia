@@ -78,7 +78,7 @@ const Custom = () => {
           <div className="flex flex-col md:flex-row items-center gap-8">
             <div className="border border-border bg-background p-3 max-w-xs w-full shrink-0">
               <img
-                src="/images/wechat-qr.png"
+                src={`${import.meta.env.BASE_URL}images/wechat-qr.png`}
                 alt="开发者微信二维码"
                 className="w-full h-auto"
                 loading="eager"
