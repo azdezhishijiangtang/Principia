@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyRound, Check, Eye, EyeOff, AlertCircle, Save, Trash2, Zap, Brain, Sparkles, RefreshCw, ListTree, CloudDownload, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -68,6 +68,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
   const [manualModel, setManualModel] = useState(false);
+  /** 是否处于「其他」自定义服务商模式（用户自己填 Base URL） */
+  const [customActive, setCustomActive] = useState<boolean>(false);
+  /** 接口地址输入框引用，点击「其他」时聚焦引导用户填写 */
+  const baseUrlRef = useRef<HTMLInputElement>(null);
   /** 智能选模型开关（全局，不随存档保存） */
   const [autoModel, setAutoModel] = useState<boolean>(() => readAutoModel());
   /** 智能自检开关（全局，默认开启）：回答后自动复核纠错 */
@@ -141,6 +145,9 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
     setCatalog({ models: [], source: 'builtin', fetchedAt: 0 });
     setModelError(null);
     setManualModel(false);
+    // 该存档的 Base URL 匹配不到任何预设 → 视为「其他」自定义服务商
+    const presetMatch = p ? AI_PRESETS.some((pr) => pr.baseUrl === p.baseUrl) : false;
+    setCustomActive(Boolean(p?.baseUrl) && !presetMatch);
     // 已配置过的存档静默尝试拉取模型列表
     if (p?.apiKey && p?.baseUrl) void loadModels(p.baseUrl, p.apiKey, { silent: true });
   };
@@ -148,8 +155,20 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const applyPreset = (idx: number) => {
     const p = AI_PRESETS[idx];
     setForm((f) => ({ ...f, baseUrl: p.baseUrl, model: p.model }));
+    setCustomActive(false);
     // 已填 Key 时，应用预设后自动拉取该服务商的最新模型目录
     if (form.apiKey.trim()) void loadModels(p.baseUrl, form.apiKey);
+  };
+
+  /** 选择「其他」：进入自定义服务商模式，清空接口地址与模型，引导用户自己填写 */
+  const applyCustom = () => {
+    setCustomActive(true);
+    setForm((f) => ({ ...f, baseUrl: '', model: '' }));
+    setCatalog({ models: [], source: 'builtin', fetchedAt: 0 });
+    setModelError(null);
+    setManualModel(false);
+    // 聚焦到接口地址输入框，方便用户直接粘贴自己的 Base URL
+    requestAnimationFrame(() => baseUrlRef.current?.focus());
   };
 
   const handleSave = () => {
@@ -266,6 +285,19 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               {p.name}
             </button>
           ))}
+          {/* 其他：自定义任意 OpenAI 兼容接口地址 */}
+          <button
+            key="__custom__"
+            type="button"
+            onClick={applyCustom}
+            className={`text-xs px-2.5 py-1.5 border border-dashed transition-colors duration-[var(--duration-fast)] ${
+              customActive
+                ? 'border-info bg-info/10 text-info'
+                : 'border-border text-muted-foreground hover:border-info/50 hover:text-foreground'
+            }`}
+          >
+            ＋ 其他
+          </button>
         </div>
       </div>
 
@@ -273,11 +305,18 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
         <Label htmlFor="ai-baseurl">接口地址（Base URL）</Label>
         <Input
           id="ai-baseurl"
+          ref={baseUrlRef}
           value={form.baseUrl}
           onChange={(e) => setForm((f) => ({ ...f, baseUrl: e.target.value }))}
           placeholder="https://api.deepseek.com/v1"
           className="font-mono text-sm"
         />
+        {form.baseUrl.trim() === '' && (
+          <p className="text-[11px] leading-relaxed text-info">
+            填入你的 OpenAI 兼容接口地址（如 OpenRouter、Ollama 本地、或任意第三方兼容网关），保存 API Key
+            后会<b>自动检测可用模型</b>；若服务商不支持自动检测，可手动填写模型名。
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
