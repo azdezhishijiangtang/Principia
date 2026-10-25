@@ -278,6 +278,16 @@ const Tutor = () => {
                             {m.mode === 'deep' ? '深度思考' : '快速回答'}
                           </span>
                         )}
+                        {m.multiPath && (
+                          <span className="text-[10px] bg-info/15 text-info px-1.5 py-0.5">
+                            多路径·{m.multiPath}路
+                          </span>
+                        )}
+                        {m.crossModel && (
+                          <span className="text-[10px] bg-warning/15 text-warning px-1.5 py-0.5">
+                            交叉验证·{m.crossModel}
+                          </span>
+                        )}
                         {m.usage && (
                           <span className="text-[10px] text-muted-foreground">↑{m.usage.prompt} ↓{m.usage.completion} tokens</span>
                         )}
@@ -318,6 +328,37 @@ const Tutor = () => {
                           </summary>
                           <div className="mt-2 whitespace-pre-wrap leading-relaxed text-muted-foreground">
                             {m.selfCheck}
+                          </div>
+                        </details>
+                      )}
+                      {/* 多路径自洽：各路独立思路（深度/难题时启用） */}
+                      {m.paths && m.paths.length > 0 && (
+                        <details className="mb-2.5 border border-info/30 bg-info/5 px-3.5 py-2.5 text-xs">
+                          <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-info">
+                            <Sparkles className="h-3 w-3" />
+                            多路径推理 · {m.paths.length} 路独立思路
+                          </summary>
+                          <div className="mt-2 space-y-3">
+                            {m.paths.map((p, j) => (
+                              <div key={j}>
+                                <div className="mb-1 font-medium text-foreground">思路 {j + 1}</div>
+                                <div className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
+                                  {p}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+                      {/* 极致模式·双模型交叉验证：第二模型的独立解答 */}
+                      {m.crossCheck && (
+                        <details className="mb-2.5 border border-warning/30 bg-warning/5 px-3.5 py-2.5 text-xs">
+                          <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-warning">
+                            <RefreshCw className="h-3 w-3" />
+                            交叉验证 · 模型B（{m.crossModel}）独立解答
+                          </summary>
+                          <div className="mt-2 whitespace-pre-wrap leading-relaxed text-muted-foreground">
+                            {m.crossCheck}
                           </div>
                         </details>
                       )}

@@ -10,14 +10,23 @@ import {
   readAutoModel,
   readSelfCheck,
   readFallback,
+  readMultiPath,
+  readMultiPathCount,
+  readCrossCheck,
   pickAutoProfile,
   streamChat,
+  chatOnce,
+  classifyDifficulty,
   type ChatMeta,
   describeAiError,
   MATH_TUTOR_SYSTEM_PROMPT,
   getModeGuidance,
   resolveThinkingMode,
   SELF_CHECK_PROMPT,
+  MULTI_PATH_SOLVE_PROMPT,
+  MULTI_PATH_SYNTH_PROMPT,
+  CROSS_CHECK_SOLVE_PROMPT,
+  CROSS_CHECK_VERIFY_PROMPT,
   type ChatMessage,
   type AiConfig,
   type AiProfile,
@@ -43,6 +52,14 @@ export interface TutorMessage {
   auto?: boolean;
   /** 智能自检的复核结果（assistant 消息） */
   selfCheck?: string;
+  /** 多路径自洽：本次并发求解的路数（>=2 表示真正启用），仅深度/难题时生效 */
+  multiPath?: number;
+  /** 多路径自洽：各路独立解答原文（用于折叠展开查看） */
+  paths?: string[];
+  /** 极致模式·双模型交叉验证：第二模型独立做出的解答原文 */
+  crossCheck?: string;
+  /** 极致模式·双模型交叉验证：第二模型的名称 */
+  crossModel?: string;
   /** token 用量（assistant 消息） */
   usage?: { prompt: number; completion: number; total: number };
   /** 用户消息附带的图片（data URL） */
@@ -225,7 +242,16 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       let acc = '';
       let reasoningAcc = '';
       let modelName: string | undefined;
+      let lastUsage: { prompt: number; completion: number; total: number } | undefined;
       let usedCfg = effectiveCfg;
+      /** 多路径自洽：本次路数与各路原始解答 */
+      let multiCount = 0;
+      let paths: string[] = [];
+      /** 极致模式·双模型交叉验证：第二模型的解答与名称 */
+      let crossCheck: string | undefined;
+      let crossModel: string | undefined;
+
+      const isAborted = (e: unknown): boolean => e instanceof DOMException && e.name === 'AbortError';
 
       // ── 智能容错：候选模型列表（当前/自动选定的模型优先，其余已配置模型按序兜底）──
       const allValid = readAiProfiles().filter(
@@ -237,15 +263,30 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
         if (c.baseUrl !== effectiveCfg.baseUrl || c.model !== effectiveCfg.model) candidates.push(c);
       }
 
-      let lastErr: unknown = null;
-      let succeeded = false;
+      /** 把当前 acc / reasoning / usage 反映到占位消息（避免重复写大对象） */
+      const paint = (extra: Partial<TutorMessage> = {}) =>
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          return [
+            ...prev.slice(0, -1),
+            {
+              ...last,
+              content: acc,
+              reasoning: reasoningAcc,
+              sources,
+              mode: effMode,
+              auto: autoUsed,
+              ...(lastUsage ? { usage: lastUsage } : {}),
+              ...extra,
+            },
+          ];
+        });
 
-      const runStream = async (cfg: AiConfig) => {
-        acc = '';
-        reasoningAcc = '';
+      /** 流式生成并把增量写回 UI（用于正式回答 / 合成 / 验证等任何阶段的产出） */
+      const streamInto = async (cfg: AiConfig, msgs: ChatMessage[]): Promise<void> => {
         for await (const chunk of streamChat(
           cfg,
-          history,
+          msgs,
           controller.signal,
           (meta: ChatMeta) => {
             if (meta.model) {
@@ -253,22 +294,12 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
               setLastModel(meta.model);
             }
             if (meta.usage) {
+              lastUsage = meta.usage;
               setSessionUsage((u) => ({
                 prompt: u.prompt + meta.usage!.prompt,
                 completion: u.completion + meta.usage!.completion,
                 total: u.total + meta.usage!.total,
               }));
-              setMessages((prev) => [
-                ...prev.slice(0, -1),
-                {
-                  role: 'assistant',
-                  content: acc,
-                  reasoning: reasoningAcc,
-                  sources,
-                  model: meta.model,
-                  usage: meta.usage,
-                },
-              ]);
             }
           },
           (r: string) => {
@@ -276,44 +307,149 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
           },
         )) {
           acc += chunk;
-          setMessages((prev) => [
-            ...prev.slice(0, -1),
-            { role: 'assistant', content: acc, reasoning: reasoningAcc, sources, mode: effMode, auto: autoUsed },
-          ]);
+          paint();
         }
       };
 
-      for (let ci = 0; ci < candidates.length; ci++) {
-        const cfg = candidates[ci];
+      // ══ 第一步：主回答 ══
+      // 多路径自洽（仅深度思考 / 难题时）：并发 K 路独立求解 → 仲裁合成
+      const multiPathOn = readMultiPath();
+      const doMulti = multiPathOn && (effMode === 'deep' || classifyDifficulty(trimmed) === 'hard');
+      let didMulti = false;
+      if (doMulti) {
+        const K = readMultiPathCount();
         try {
-          await runStream(cfg);
-          usedCfg = cfg;
-          succeeded = true;
-          break;
-        } catch (err) {
-          lastErr = err;
-          const aborted = err instanceof DOMException && err.name === 'AbortError';
-          // 已产出部分内容、或用户主动停止：保留现状，不再切换重试
-          if (acc || reasoningAcc || aborted) break;
-          // 彻底失败且未产出任何内容：若还有候选模型且开启容错，则切换重试
-          if (ci < candidates.length - 1 && readFallback()) {
-            setMessages((prev) => [
-              ...prev.slice(0, -1),
-              { role: 'assistant', content: '', mode: effMode, auto: autoUsed },
-            ]);
-            continue;
+          const solveSystem = `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${MULTI_PATH_SOLVE_PROMPT}`;
+          const solveHistory: ChatMessage[] = [{ role: 'system', content: solveSystem }, ...history.slice(1)];
+          const solves = await Promise.all(
+            Array.from({ length: K }, async () => {
+              try {
+                return await chatOnce(effectiveCfg, solveHistory, controller.signal, { temperature: 0.75 });
+              } catch (e) {
+                if (isAborted(e)) throw e;
+                return null;
+              }
+            }),
+          );
+          const got = solves.filter((s): s is string => typeof s === 'string' && s.trim().length > 0);
+          if (got.length >= 2) {
+            paths = got;
+            multiCount = got.length;
+            const synthHistory: ChatMessage[] = [
+              { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${MULTI_PATH_SYNTH_PROMPT}` },
+              {
+                role: 'user',
+                content: `原始问题：\n${trimmed}\n\n以下是 ${got.length} 份独立解答：\n\n${got
+                  .map((p, i) => `【解答 ${i + 1}】\n${p}`)
+                  .join('\n\n---\n\n')}`,
+              },
+            ];
+            acc = '';
+            reasoningAcc = '';
+            await streamInto(effectiveCfg, synthHistory);
+            if (acc.trim()) {
+              usedCfg = effectiveCfg;
+              didMulti = true;
+              modelName = modelName ?? effectiveCfg.model;
+              paint({ multiPath: multiCount, paths });
+            }
           }
-          break;
+        } catch (e) {
+          if (isAborted(e)) {
+            setStreaming(false);
+            setStatus('idle');
+            abortRef.current = null;
+            return;
+          }
+          /* 多路径异常则回退到常规单路生成 */
         }
       }
 
-      if (!succeeded) {
-        if (!acc && !reasoningAcc) setMessages((prev) => prev.slice(0, -1));
-        setError(describeAiError(lastErr));
-        setStreaming(false);
-        setStatus('idle');
-        abortRef.current = null;
-        return;
+      // 未走多路径（关闭 / 简单题 / 多路径不足 2 路）：常规单路流式 + 智能容错
+      if (!didMulti) {
+        let lastErr: unknown = null;
+        let succeeded = false;
+        for (let ci = 0; ci < candidates.length; ci++) {
+          const cfg = candidates[ci];
+          try {
+            acc = '';
+            reasoningAcc = '';
+            lastUsage = undefined;
+            await streamInto(cfg, history);
+            usedCfg = cfg;
+            succeeded = true;
+            break;
+          } catch (err) {
+            lastErr = err;
+            const aborted = isAborted(err);
+            if (acc || reasoningAcc || aborted) break;
+            if (ci < candidates.length - 1 && readFallback()) {
+              setMessages((prev) => [...prev.slice(0, -1), { role: 'assistant', content: '', mode: effMode, auto: autoUsed }]);
+              continue;
+            }
+            break;
+          }
+        }
+        if (!succeeded) {
+          if (!acc && !reasoningAcc) setMessages((prev) => prev.slice(0, -1));
+          setError(describeAiError(lastErr));
+          setStreaming(false);
+          setStatus('idle');
+          abortRef.current = null;
+          return;
+        }
+        paint();
+      }
+
+      // ══ 第二步：极致模式 · 双模型交叉验证 ══
+      // 用第二个已配置模型独立重做同一题，再交叉比对、标注分歧（需至少 2 个存档）
+      const crossOn = readCrossCheck();
+      if (crossOn && acc.trim()) {
+        const second = allValid.find((p) => p.baseUrl !== usedCfg.baseUrl || p.model !== usedCfg.model);
+        if (second) {
+          const secondCfg: AiConfig = { baseUrl: second.baseUrl, apiKey: second.apiKey, model: second.model };
+          try {
+            const secondSystem = `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${CROSS_CHECK_SOLVE_PROMPT}`;
+            const secondHistory: ChatMessage[] = [{ role: 'system', content: secondSystem }, ...history.slice(1)];
+            const secondSolve = await chatOnce(secondCfg, secondHistory, controller.signal);
+            if (secondSolve.trim()) {
+              crossModel = second.model;
+              crossCheck = secondSolve;
+              const verifyHistory: ChatMessage[] = [
+                { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${CROSS_CHECK_VERIFY_PROMPT}` },
+                {
+                  role: 'user',
+                  content: `原始问题：\n${trimmed}\n\n【模型A 解答】\n${acc}\n\n【模型B（${second.model}）解答】\n${secondSolve}`,
+                },
+              ];
+              // 用主模型把两份答案比对、仲裁，输出最终权威解答，并保留第二模型原文供查看
+              const prevAcc = acc;
+              acc = '';
+              try {
+                await streamInto(usedCfg, verifyHistory);
+                if (!acc.trim()) acc = prevAcc;
+              } catch (e) {
+                if (isAborted(e)) {
+                  setStreaming(false);
+                  setStatus('idle');
+                  abortRef.current = null;
+                  return;
+                }
+                // 验证失败：回退到主回答（仍保留第二模型解答供查看）
+                acc = prevAcc;
+              }
+              paint({ crossCheck, crossModel });
+            }
+          } catch (e) {
+            if (isAborted(e)) {
+              setStreaming(false);
+              setStatus('idle');
+              abortRef.current = null;
+              return;
+            }
+            /* 第二模型失败：不影响主回答 */
+          }
+        }
       }
 
       // 收尾：确保思考过程与正文完整保留，且不覆盖已有的 usage / 模型信息
@@ -327,9 +463,11 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
             reasoning: reasoningAcc,
             sources,
             model: last?.model ?? modelName,
-            usage: last?.usage,
+            usage: last?.usage ?? lastUsage,
             mode: effMode,
             auto: autoUsed,
+            ...(multiCount ? { multiPath: multiCount, paths } : {}),
+            ...(crossModel ? { crossCheck, crossModel } : {}),
           },
         ];
       });

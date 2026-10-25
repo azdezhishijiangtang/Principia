@@ -345,6 +345,57 @@ export const writeFallback = (on: boolean): void => {
   localStorage.setItem(FALLBACK_KEY, on ? '1' : '0');
 };
 
+/**
+ * 全局「多路径自洽（Self-Consistency）」开关（默认关闭）：深度思考或难题时，
+ * 并发生成多条独立思路，再由模型仲裁取最可靠答案。数学题正确率提升最明显的一招，
+ * 但会成倍（K 倍）消耗算力。仅在深度思考模式或识别为难题时生效；快速回答/简单概念题自动跳过。
+ */
+const MULTI_PATH_KEY = 'mathlens-ai-multi-path';
+const MULTI_PATH_COUNT_KEY = 'mathlens-ai-multi-path-count';
+
+export const readMultiPath = (): boolean => localStorage.getItem(MULTI_PATH_KEY) === '1';
+export const writeMultiPath = (on: boolean): void => {
+  localStorage.setItem(MULTI_PATH_KEY, on ? '1' : '0');
+};
+/** 并发求解的路数：2/3/4，默认 3 */
+export const readMultiPathCount = (): number => {
+  const n = Number(localStorage.getItem(MULTI_PATH_COUNT_KEY));
+  return [2, 3, 4].includes(n) ? n : 3;
+};
+export const writeMultiPathCount = (n: number): void => {
+  localStorage.setItem(MULTI_PATH_COUNT_KEY, String(n));
+};
+
+/**
+ * 全局「极致模式 / 双模型交叉验证」开关（默认关闭）：用第二个已配置模型独立重做同一题，
+ * 再交叉比对、标注分歧，把「单一模型唯一答案」的偶然错误风险降到最低。需至少 2 个已配置存档。
+ */
+const CROSS_CHECK_KEY = 'mathlens-ai-cross-check';
+export const readCrossCheck = (): boolean => localStorage.getItem(CROSS_CHECK_KEY) === '1';
+export const writeCrossCheck = (on: boolean): void => {
+  localStorage.setItem(CROSS_CHECK_KEY, on ? '1' : '0');
+};
+
+/** 多路径：单路求解的系统提示词附加要求（鼓励独立、完整地给出解法） */
+export const MULTI_PATH_SOLVE_PROMPT = `请独立、完整地解答下面的问题，给出关键步骤与最终结论。从你自己的思路出发认真推导，不必参考任何他人解法，也不要省略关键步骤。`;
+
+/** 多路径：仲裁合成的系统提示词附加要求 */
+export const MULTI_PATH_SYNTH_PROMPT = `你是严谨的答卷仲裁者。下面给出了同一道题的多份独立解答。请：
+1) 逐份核对每一条推导与最终结果；
+2) 若多数/全部一致，给出共识的最终答案，并采用其中最清晰的一种推导完整呈现；
+3) 若存在分歧，判定哪个（或哪种思路）正确，并说明其余错在哪里；
+4) 最终只输出一份正确的、完整的权威解答（含关键步骤）。不要罗列全部原始解答，也不要复述原题。`;
+
+/** 双模型交叉验证：第二模型独立求解的系统提示词附加要求 */
+export const CROSS_CHECK_SOLVE_PROMPT = `请独立、完整地解答下面的问题，给出关键步骤与最终结论。不要参考任何已有解答，凭你自己的推理完成，也不要省略关键步骤。`;
+
+/** 双模型交叉验证：比对仲裁的系统提示词附加要求 */
+export const CROSS_CHECK_VERIFY_PROMPT = `你是严谨的交叉验证仲裁者。下面给出同一道题的两份独立解答（分别来自不同模型）。请：
+1) 逐份核对推导与最终结果；
+2) 若两份一致，确认结论并给出最清晰的完整推导；
+3) 若不一致，判定哪一份（或哪种思路）正确，并说明另一份错在哪里，必要时给出你自己的正确推导；
+4) 最终输出一份正确的、完整的权威解答，并在开头用一两句话说明两份解答是否一致、以谁为准。`;
+
 /** 智能自检的复核指令：追加在「问题 + 原回答」之后，要求模型批判性复核 */
 export const SELF_CHECK_PROMPT = `你是严谨的答卷复核员。请基于学生的原始问题，批判性审查上面助教的回答：
 1) 计算或推导是否有误、符号/常数是否抄错、跳步是否导致结论不成立；
@@ -587,24 +638,42 @@ export async function* streamChat(
   }
 }
 
-/** 一次性对话（非流式），用于学习总结等后台任务 */
+/**
+ * 一次性对话（非流式），用于多路径求解、交叉验证第二解答等后台任务。
+ * opts.temperature 用于多路径的多样性采样；深度思考模式下自动带上各服务商的思考参数，
+ * 并在服务商不认识该参数（400）时自动降级，保证一定拿到答案。
+ */
 export const chatOnce = async (
   config: AiConfig,
   messages: ChatMessage[],
   signal?: AbortSignal,
+  opts?: { temperature?: number },
 ): Promise<string> => {
   const url = `${config.baseUrl.replace(/\/+$/, '')}/chat/completions`;
-  let res: Response;
-  try {
-    res = await fetch(url, {
+  const mode = resolveThinkingMode(config);
+  const plan = MODE_PLAN[mode];
+  const buildBody = (withThinking: boolean): string =>
+    JSON.stringify({
+      model: config.model,
+      messages,
+      temperature: opts?.temperature ?? 0.3,
+      max_tokens: plan.maxTokens,
+      ...(withThinking ? thinkingParams(config.baseUrl, config.model, mode) : {}),
+    });
+  const post = (withThinking: boolean) =>
+    fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${config.apiKey}`,
       },
-      body: JSON.stringify({ model: config.model, messages, temperature: 0.3 }),
+      body: buildBody(withThinking),
       signal,
     });
+  let res: Response;
+  try {
+    res = await post(true);
+    if (!res.ok && res.status === 400) res = await post(false);
   } catch (err) {
     throw new Error(describeAiError(err));
   }

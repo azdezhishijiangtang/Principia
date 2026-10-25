@@ -19,6 +19,12 @@ import {
   writeSelfCheck,
   readFallback,
   writeFallback,
+  readMultiPath,
+  writeMultiPath,
+  readMultiPathCount,
+  writeMultiPathCount,
+  readCrossCheck,
+  writeCrossCheck,
 } from '@/lib/ai';
 import {
   getCatalog,
@@ -64,6 +70,12 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const [selfCheck, setSelfCheck] = useState<boolean>(() => readSelfCheck());
   /** 智能容错开关（全局，默认开启）：失败时自动切换其他模型重试 */
   const [fallback, setFallback] = useState<boolean>(() => readFallback());
+  /** 多路径自洽开关（全局，默认关闭）：深度/难题时并发生成多条思路再仲裁 */
+  const [multiPath, setMultiPath] = useState<boolean>(() => readMultiPath());
+  /** 多路径并发求解路数（2/3/4，默认 3） */
+  const [multiPathCount, setMultiPathCount] = useState<number>(() => readMultiPathCount());
+  /** 极致模式·双模型交叉验证开关（全局，默认关闭）：用第二个模型独立重做并比对 */
+  const [crossCheck, setCrossCheck] = useState<boolean>(() => readCrossCheck());
   /** 当前生效的思考偏好（兼容旧存档里只存了 reasoningEffort 的情况） */
   const mode = thinkingModePref(form);
 
@@ -496,6 +508,103 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
             {fallback ? '已开启' : '已关闭'}
           </span>
         </button>
+
+        <button
+          type="button"
+          onClick={() => {
+            const next = !multiPath;
+            setMultiPath(next);
+            writeMultiPath(next);
+          }}
+          aria-pressed={multiPath}
+          className={`flex w-full items-start justify-between gap-3 border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+            multiPath ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
+          }`}
+        >
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Sparkles className="h-3.5 w-3.5" />
+              多路径自洽（Self-Consistency）
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              深度思考或难题时，并发生成多条独立思路，再由模型仲裁取最可靠答案——数学题正确率提升最明显。
+            </span>
+          </span>
+          <span
+            className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
+              multiPath ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
+            }`}
+          >
+            {multiPath ? '已开启' : '已关闭'}
+          </span>
+        </button>
+
+        {multiPath && (
+          <div className="ml-1 flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">并发路数</span>
+            <div className="flex gap-1">
+              {[2, 3, 4].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => {
+                    setMultiPathCount(n);
+                    writeMultiPathCount(n);
+                  }}
+                  aria-pressed={multiPathCount === n}
+                  className={`px-2.5 py-1 text-xs border transition-colors duration-[var(--duration-fast)] ${
+                    multiPathCount === n
+                      ? 'border-info bg-info/10 text-info'
+                      : 'border-input text-muted-foreground hover:border-info/50'
+                  }`}
+                >
+                  {n} 路
+                </button>
+              ))}
+            </div>
+            <span className="text-[11px] text-warning">约 {multiPathCount}× 算力</span>
+          </div>
+        )}
+        {multiPath && (
+          <p className="text-[11px] text-muted-foreground">
+            仅在「深度思考」模式或识别为难题（证明/计算/推导等）时生效；快速回答与简单概念题自动跳过，不额外消耗算力。
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={() => {
+            const next = !crossCheck;
+            setCrossCheck(next);
+            writeCrossCheck(next);
+          }}
+          aria-pressed={crossCheck}
+          className={`flex w-full items-start justify-between gap-3 border px-3 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
+            crossCheck ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
+          }`}
+        >
+          <span>
+            <span className="flex items-center gap-1.5 text-sm font-medium">
+              <Sparkles className="h-3.5 w-3.5" />
+              极致模式 · 双模型交叉验证
+            </span>
+            <span className="mt-0.5 block text-xs text-muted-foreground">
+              用第二个已配置模型独立重做同一题，再交叉比对、标注分歧，把「单一模型唯一答案」的偶然错误风险降到最低。
+            </span>
+          </span>
+          <span
+            className={`mt-0.5 shrink-0 rounded-full px-2 py-0.5 text-[11px] ${
+              crossCheck ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
+            }`}
+          >
+            {crossCheck ? '已开启' : '已关闭'}
+          </span>
+        </button>
+        {crossCheck && (
+          <p className="text-[11px] text-muted-foreground">
+            需至少配置 2 个模型存档才会真正启用；否则自动跳过。开启后单题算力约 2–3 倍。
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
