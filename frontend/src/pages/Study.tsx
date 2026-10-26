@@ -561,6 +561,14 @@ const Study = () => {
                           </>
                         )}
                         <span className="ml-auto">{formatDate(e.ts)}</span>
+                        {e.usage && (
+                          <span
+                            className="font-mono text-[10px] bg-secondary px-1.5 py-0.5"
+                            title="本次回答 token 消耗：↑输入 ↓输出"
+                          >
+                            ↑{e.usage.prompt} ↓{e.usage.completion} · 共 {e.usage.total} tokens
+                          </span>
+                        )}
                         <button
                           onClick={() => deleteQaEntry(e.id)}
                           className="hover:text-destructive transition-colors duration-[var(--duration-fast)]"
@@ -571,6 +579,18 @@ const Study = () => {
                       </div>
                       <div className="p-5 space-y-4">
                         <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap"><InlineMathText escape text={e.question} /></p>
+                        {/* 思考过程记录（可选） */}
+                        {e.thinking && (
+                          <details className="group">
+                            <summary className="flex items-center gap-1.5 text-xs text-warning cursor-pointer select-none">
+                              <BrainCircuit className="h-3.5 w-3.5" />
+                              查看思考过程
+                            </summary>
+                            <div className="mt-3 border-t border-border pt-3 text-xs text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                              {e.thinking}
+                            </div>
+                          </details>
+                        )}
                         <details className="group">
                           <summary className="flex items-center gap-1.5 text-xs text-info cursor-pointer select-none">
                             <Eye className="h-3.5 w-3.5" />

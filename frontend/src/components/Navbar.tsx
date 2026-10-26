@@ -25,7 +25,6 @@ const navLinks = [
   { to: '/problems', label: '例题广场' },
   { to: '/formulas', label: '公式速查' },
   { to: '/mistakes', label: '错题本' },
-  { to: '/forum', label: '论坛' },
   { to: '/about', label: '关于' },
 ];
 

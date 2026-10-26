@@ -20,6 +20,17 @@ export const renderMath = (latex: string, displayMode = false): string => {
   }
 };
 
+/**
+ * 规范化 LaTeX 分隔符：把 \(...\) 与 \[...\] 转成 $...$ / $$...$$。
+ * GPT 等很多模型默认输出标准 LaTeX 圆括号 / 方括号定界符，而本站渲染器
+ * 只认 $ 定界符；不转换就会整段显示为"乱码"源码。
+ * (?<!\\) 负向断言避免误伤 \\[2pt] 这类换行间距命令。
+ */
+const normalizeMathDelimiters = (text: string): string =>
+  text
+    .replace(/(?<!\\)\\\[((?:.|\n)+?)\\\]/g, (_m, inner: string) => `\n\n$$${inner}$$\n\n`)
+    .replace(/(?<!\\)\\\(((?:.|\n)+?)\\\)/g, (_m, inner: string) => `$${inner}$`);
+
 /** 预处理：把同一行中的 $$...$$ 块拆分为独立行，避免行内文本被吞入公式 */
 const preprocessLines = (text: string): string[] => {
   const out: string[] = [];
@@ -67,23 +78,24 @@ const parseInline = (text: string, escape = false): string => {
 };
 
 /** 行内渲染：**加粗** 与 $行内公式$（供标题等行内场景使用） */
-export const renderInline = (text: string): string => parseInline(text);
+export const renderInline = (text: string): string => parseInline(normalizeMathDelimiters(text));
 
 /**
  * 用户输入的行内渲染：非公式文本做 HTML 转义，公式段正常渲染。
  * 用于答疑提问、反馈内容等不可信文本。
  */
 export const renderUserInline = (text: string): string => {
+  const norm = normalizeMathDelimiters(text);
   const mathRegex = /\$\$([^$]+?)\$\$|\$([^$]+?)\$/g;
   const out: string[] = [];
   let last = 0;
   let m: RegExpExecArray | null;
-  while ((m = mathRegex.exec(text)) !== null) {
-    if (m.index > last) out.push(escapeHtml(text.slice(last, m.index)));
+  while ((m = mathRegex.exec(norm)) !== null) {
+    if (m.index > last) out.push(escapeHtml(norm.slice(last, m.index)));
     out.push(renderMath(m[1] ?? m[2], false));
     last = m.index + m[0].length;
   }
-  if (last < text.length) out.push(escapeHtml(text.slice(last)));
+  if (last < norm.length) out.push(escapeHtml(norm.slice(last)));
   return out.join('');
 };
 
@@ -103,7 +115,7 @@ export const InlineMathText = ({ text, className = '', escape = false }: InlineM
 
 /** 块级解析：Markdown + LaTeX 混合 */
 const parseBlock = (text: string, escape = false): string => {
-  const lines = preprocessLines(text);
+  const lines = preprocessLines(normalizeMathDelimiters(text));
   const html: string[] = [];
   let i = 0;
 

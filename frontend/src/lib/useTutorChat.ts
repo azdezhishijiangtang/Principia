@@ -564,6 +564,9 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
         topicTitle: topic?.title,
         sources: sources.length > 0 ? sources : undefined,
         model: modelName ?? lastModel,
+        // 学习档案留存：token 消耗量与思考过程
+        usage: lastUsage,
+        ...(reasoningAcc.trim() ? { thinking: reasoningAcc } : {}),
       });
       setStreaming(false);
       setStatus('idle');
