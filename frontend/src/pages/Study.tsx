@@ -50,6 +50,8 @@ import {
   type AiProfile,
   type ChatMessage,
 } from '@/lib/ai';
+import { isEn } from '@/i18n/lang';
+import { localizeCourse } from '@/i18n/data';
 import {
   useQaEntries,
   deleteQaEntry,
@@ -250,15 +252,18 @@ const Study = () => {
           `「${AI_PROFILE_LABELS[selectedProfile]}」尚未配置 API Key，请先在 AI 答疑页设置该存档。`,
         );
       }
+      const summaryUser = isEn()
+        ? `Here are the ${recent.length} questions I have asked the AI tutor on Principia:\n\n${questionList}\n\nAct as my study advisor and produce a summary including:\n1. **Question distribution**: summarize by course/topic what I mainly ask about;\n2. **Weak areas**: infer from the questions the topics I may not have mastered, with reasons;\n3. **Study suggestions**: give a concrete review roadmap (what to review first, then what to practice);\n4. **3 topics worth reviewing**: each with a one-sentence core reminder.`
+        : `以下是我在 Principia 上向 AI 助教提出过的 ${recent.length} 个问题：\n\n${questionList}\n\n请作为我的学习顾问输出一份总结，包含：\n1. **问题分布**：按课程/知识点归纳我主要在问什么；\n2. **薄弱环节**：从问题反推我可能掌握不牢的知识点，说明理由；\n3. **学习建议**：给出一个具体的复习路线（先补什么、再练什么）；\n4. **值得复习的 3 个知识点**：各附一句核心提醒。`;
       const final = await runStream(
         [
           {
             role: 'system',
-            content: MATH_TUTOR_SYSTEM_PROMPT,
+            content: MATH_TUTOR_SYSTEM_PROMPT(),
           },
           {
             role: 'user',
-            content: `以下是我在 Principia 上向 AI 助教提出过的 ${recent.length} 个问题：\n\n${questionList}\n\n请作为我的学习顾问输出一份总结，包含：\n1. **问题分布**：按课程/知识点归纳我主要在问什么；\n2. **薄弱环节**：从问题反推我可能掌握不牢的知识点，说明理由；\n3. **学习建议**：给出一个具体的复习路线（先补什么、再练什么）；\n4. **值得复习的 3 个知识点**：各附一句核心提醒。`,
+            content: summaryUser,
           },
         ],
         (acc) => setSummary(acc),
@@ -290,22 +295,30 @@ const Study = () => {
     setPracticeRaw('');
     setRevealed({});
     try {
-      const course = getCourse(practiceCourse);
+      const course = localizeCourse(getCourse(practiceCourse)!);
       // 结合历史问题，让练习更有针对性
       const relatedQuestions = entries
         .filter((e) => e.courseId === practiceCourse)
         .slice(0, 10)
         .map((e) => e.question);
-      const relatedHint =
+      const levelEn = practiceLevel === '基础' ? 'basic' : practiceLevel === '高阶' ? 'advanced' : 'intermediate';
+      const relatedHintZh =
         relatedQuestions.length > 0
           ? `\n该学生历史上在该课程问过这些问题，请围绕这些薄弱点命题：\n${relatedQuestions.map((q) => `- ${q}`).join('\n')}`
           : '';
+      const relatedHintEn =
+        relatedQuestions.length > 0
+          ? `\nThis student has previously asked these questions in this course; please design problems around these weak points:\n${relatedQuestions.map((q) => `- ${q}`).join('\n')}`
+          : '';
+      const practiceUser = isEn()
+        ? `Please generate ${practiceCount} practice problems at ${levelEn} difficulty for "${course?.name ?? practiceCourse}".${relatedHintEn}\n\nOutput format (strictly follow): each problem starts with "### Problem N", followed by the statement (LaTeX with $ or $$), then a line "Hint:" with one key hint, then a line "Solution:" with the full step-by-step solution. Do not add anything else between problems.`
+        : `请为我生成 ${practiceCount} 道「${course?.name ?? practiceCourse}」的${practiceLevel}难度练习题。${relatedHintZh}\n\n输出格式要求（严格遵守）：\n每道题以「### 题目 N」开头，随后是题干（LaTeX 公式用 $ 或 $$ 包裹），然后单独一行「提示：」给一条关键提示，再单独一行「解答：」给完整分步解答。题目之间不要加其他内容。`;
       await runStream(
         [
-          { role: 'system', content: MATH_TUTOR_SYSTEM_PROMPT },
+          { role: 'system', content: MATH_TUTOR_SYSTEM_PROMPT() },
           {
             role: 'user',
-            content: `请为我生成 ${practiceCount} 道「${course?.name ?? practiceCourse}」的${practiceLevel}难度练习题。${relatedHint}\n\n输出格式要求（严格遵守）：\n每道题以「### 题目 N」开头，随后是题干（LaTeX 公式用 $ 或 $$ 包裹），然后单独一行「提示：」给一条关键提示，再单独一行「解答：」给完整分步解答。题目之间不要加其他内容。`,
+            content: practiceUser,
           },
         ],
         (acc) => setPracticeRaw(acc),

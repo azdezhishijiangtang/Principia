@@ -13,6 +13,7 @@ import SelectionImageLauncher from "@/components/SelectionImageLauncher";
 import { AuthProvider } from "@/lib/AuthContext";
 import { ThemeProvider } from "@/lib/ThemeContext";
 import { SubjectProvider } from "@/lib/SubjectContext";
+import { LocaleProvider } from "@/i18n/LocaleContext";
 import Index from "./pages/Index";
 import Courses from "./pages/Courses";
 import CourseDetail from "./pages/CourseDetail";
@@ -134,7 +135,9 @@ function App() {
           <BrowserRouter basename={import.meta.env.BASE_URL}>
             <AuthProvider>
               <SubjectProvider>
-                <Layout />
+                <LocaleProvider>
+                  <Layout />
+                </LocaleProvider>
               </SubjectProvider>
             </AuthProvider>
           </BrowserRouter>
