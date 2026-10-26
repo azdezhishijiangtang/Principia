@@ -1030,7 +1030,815 @@ Key points:
 
 `,
   },
-  // __NEXT__
+  'renewal-process': {
+    chapter: 'Chapter 4 Renewal Processes',
+    title: 'Renewal Processes and Renewal Theorems',
+    summary:
+      'A renewal process generalizes the Poisson process to arbitrary interarrival distributions: a component fails and is replaced, with i.i.d. intervals. The renewal theorem says the long-run renewal rate tends to 1/E[T], and gives limiting distributions for the age and the residual life.',
+    keyPoints: [
+      'Renewal process: intervals X_n i.i.d., S_n = X_1+...+X_n the time of the n-th renewal',
+      'Renewal function m(t)=E[N(t)] satisfies m(t)=F(t)+∫_0^t m(t-x)dF(x)',
+      'Basic renewal theorem: m(t)/t → 1/μ (μ=E[X])',
+      'Key renewal theorem: for directly Riemann integrable h, ∫_0^t h(t-x)dm(x) → (1/μ)∫_0^∞ h',
+      'The age A(t) and residual life R(t) have limiting distribution (1/μ)∫_0^x (1-F(s))ds',
+    ],
+    content: String.raw`
+
+The Poisson process assumes that consecutive event intervals are exponentially distributed. But in reality the intervals are often not exponential: the lifetimes of light bulbs cluster between hundreds and thousands of hours, the maintenance intervals of machines vary with age, the interarrival times of customers have clear peaks and troughs. The renewal process replaces the "exponential intervals" of the Poisson process with "arbitrary i.i.d. intervals" while keeping the rest of the structure: a component fails, is immediately replaced by a brand-new one of the same model, and so on; each replacement is called a renewal.
+
+This model answers three very practical questions: how many replacements by time $t$? How often on average in the long run? A component that has already been used for $x$ hours—how much longer will it last on average? The last question is especially counterintuitive: pick a time at random and look, and the mean lifetime of the current component is often longer than "the mean lifetime"—because you are more likely to run into long-lived components. This is the waiting-time paradox, also called the inspection paradox.
+
+The heart of this lecture is "regeneration": after each replacement the system is statistically as good as new, as if time had restarted. Precisely this makes the renewal process describable by a convolution-type integral equation (the renewal equation) and yields the long-run average rate $1/\mu$.
+
+## II. Rigorous Definitions
+
+Let $X_1,X_2,\dots$ be i.i.d. non-negative random variables with $P(X_i=0)<1$ and mean
+
+$$0<\mu=E[X_1]<\infty$$
+
+**Renewal times**:
+
+$$S_0=0,\qquad S_n=X_1+\cdots+X_n\quad(n\ge1)$$
+
+$S_n$ is the time of the $n$-th replacement.
+
+**Renewal counting process**:
+
+$$N(t)=\max\{n:S_n\le t\}=\sum_{n=1}^{\infty}\mathbf{1}_{\{S_n\le t\}}$$
+
+the number of renewals in $[0,t]$.
+
+**Renewal function**:
+
+$$m(t)=E[N(t)]$$
+
+**Renewal equation**:
+
+$$m(t)=F(t)+\int_0^t m(t-x)\,dF(x)$$
+
+where $F(x)=P(X\le x)$ is the distribution function of the interval. If $F$ has density $f$, then $dF(x)=f(x)dx$ and the integral becomes an ordinary convolution.
+
+**Age and residual life**:
+
+$$A(t)=t-S_{N(t)}\quad(\text{age of the current component}),\qquad R(t)=S_{N(t)+1}-t\quad(\text{residual life of the current component})$$
+
+Clearly
+
+$$A(t)+R(t)=X_{N(t)+1}\quad(\text{total lifetime of the current component})$$
+
+**Delayed renewal process**: the first interval $X_1$ has a different distribution from the subsequent $X_2,X_3,\dots$ (for example the system has already been running for some time at $t=0$), while the rest remain i.i.d.
+
+**Renewal reward process**: each renewal earns a reward $R_n$ (i.i.d., possibly correlated with $X_n$), and $R(t)=\sum_{n=1}^{N(t)}R_n$ is the cumulative reward up to $t$.
+
+**Basic renewal theorem**:
+
+$$\lim_{t\to\infty}\frac{N(t)}{t}=\frac{1}{\mu}\ \text{a.s.},\qquad \lim_{t\to\infty}\frac{m(t)}{t}=\frac{1}{\mu}$$
+
+**Key renewal theorem**: if $F$ is non-arithmetic (the intervals do not lie on a lattice) and $h$ is directly Riemann integrable, then
+
+$$\lim_{t\to\infty}\int_0^t h(t-x)\,dm(x)=\frac{1}{\mu}\int_0^{\infty}h(x)\,dx$$
+
+**Renewal reward theorem**:
+
+$$\lim_{t\to\infty}\frac{E[R(t)]}{t}=\frac{E[R_1]}{\mu}$$
+
+## III. Why These Definitions
+
+**Why "renewal"?** After each replacement the lifetime of the new component is independent of the old one and identically distributed, so from the moment of replacement the future statistical law is exactly the same as from $0$. This "statistical rebirth" is called regeneration. It allows us to "restart the clock" at every renewal time and decompose a long-run problem into independent identically distributed pieces.
+
+**Where does the renewal equation come from?** Condition $N(t)$ on the time $X_1$ of the first renewal. If $X_1>t$ there is no renewal in $[0,t]$ and $N(t)=0$; if $X_1=x\le t$, then after the first renewal the counting restarts at $x$ and the expected number of renewals in the remaining time $t-x$ is $m(t-x)$. Hence
+
+$$m(t)=P(X_1\le t)+\int_0^t m(t-x)\,dF(x)=F(t)+\int_0^t m(t-x)\,dF(x)$$
+
+The first term $F(t)$ is the probability of "at least one renewal" (one renewal contributes one to the count), and the integral is "the expected number in the remaining time after the first one at $x$". This is a direct consequence of the law of total expectation plus regeneration.
+
+**Why does the basic renewal theorem hold?** By the strong law of large numbers, $S_n/n\to\mu$ a.s. And $S_{N(t)}\le t<S_{N(t)+1}$; dividing by $N(t)$:
+
+$$\frac{S_{N(t)}}{N(t)}\le\frac{t}{N(t)}<\frac{S_{N(t)+1}}{N(t)}$$
+
+As $t\to\infty$, $N(t)\to\infty$, and $S_{N(t)}/N(t)\to\mu$, $S_{N(t)+1}/N(t)\to\mu$ (since $(N(t)+1)/N(t)\to1$); the squeeze gives $t/N(t)\to\mu$, i.e. $N(t)/t\to1/\mu$. Taking expectations (which requires uniform integrability) gives $m(t)/t\to1/\mu$.
+
+Intuitively: each interval has mean length $\mu$, so on average $1/\mu$ renewals occur per unit time. Note that this limit depends only on the mean, not on the shape of the interval distribution—the shape affects only the transient $m(t)$ and the rate of convergence.
+
+**Why is the limiting distribution of the residual life not $F$?** Pick a time $t$ at random and look: the current component is "the interval hit by that instant". Long intervals occupy more time, so the probability of being hit is proportional to their length—this is length bias. Formally, the limiting distribution of the total lifetime of the current component has density
+
+$$f_L(x)=\frac{x\,f(x)}{\mu}$$
+
+(because an interval of length $x$ is hit with probability proportional to $x$, and the normalizing constant is $\mu=E[X]$). Conditional on this, the residual life is uniform on $[0,x]$, so
+
+$$P(R(t)>y)\to\frac{1}{\mu}\int_y^{\infty}(1-F(x))\,dx$$
+
+Differentiating with respect to $y$ gives the limiting density
+
+$$f_R(y)=\frac{1-F(y)}{\mu}$$
+
+It is not $f(y)$ but a version flattened by the survival function: long lifetimes carry more weight. The mean residual life is
+
+$$E[R]=\int_0^{\infty}y\frac{1-F(y)}{\mu}dy=\frac{E[X^2]}{2\mu}$$
+
+(obtainable by integration by parts). Since $E[X^2]=\mu^2+\sigma^2$,
+
+$$E[R]=\frac{\mu}{2}+\frac{\sigma^2}{2\mu}\ge\frac{\mu}{2}$$
+
+with equality only for a degenerate distribution (no randomness). In other words, a randomly arriving observer waits on average more than half a lifetime—this is the inspection paradox.
+
+**Why does the key renewal theorem look like that?** It converts the discrete average "sum over renewal times" into the continuous average "integral of $h$":
+
+$$\sum_{n}S_n\le t\text{ near}\ \approx\ \frac{1}{\mu}\int_0^{\infty}h(x)dx$$
+
+because in the long run the density of renewal times tends to $1/\mu$ ($1/\mu$ per unit time). For $h=\mathbf{1}_{[0,y]}$ the left side is the limit of $P(R(t)\le y)$ and the right side is $\frac1\mu\int_0^y(1-F(x))dx$, exactly the residual-life formula above.
+
+## IV. Intuition and Pictures
+
+Draw the time axis as segments of random length whose junctions are the renewal times. The renewal process studies the statistics of these segments:
+
+| Quantity | Meaning | Key result |
+|---|---|---|
+| $N(t)$ | number of renewals in $[0,t]$ | $N(t)/t\to1/\mu$ |
+| $m(t)=E[N(t)]$ | expected count | satisfies the renewal equation |
+| $A(t)$ | age of the current component | limiting density $(1-F)/\mu$ |
+| $R(t)$ | residual life of the current component | limiting density $(1-F)/\mu$ |
+| $A(t)+R(t)$ | total lifetime of the current component | length biased, mean $E[X^2]/\mu$ |
+
+> Intuition: imagine walking into a factory at a random moment and seeing a machine running. You are more likely to see a long-lived machine, because it runs for a longer time—this is length bias. You ask "how much longer will it last", and the answer's distribution naturally favours long lifetimes. Conversely, if you track every machine from the moment it is installed, the residual-life distribution you see is the original $F$.
+
+Right versus wrong:
+
+- Wrong: the intervals of a renewal process must be exponential. Right: the exponential is only a special case; the intervals are arbitrary i.i.d., and the exponential case degenerates to the Poisson process.
+- Wrong: the long-run renewal rate depends on the variance of the intervals. Right: the first-order limit $1/\mu$ depends only on the mean; the variance affects $O(1)$ corrections and the residual life.
+- Wrong: $E[R(t)]\to\mu/2$. Right: $E[R]\to E[X^2]/(2\mu)=\mu/2+\sigma^2/(2\mu)$, which exceeds $\mu/2$ when there is randomness.
+
+## V. Worked Examples
+
+### Example 1 (Basic: Poisson as a special renewal process)
+
+Problem: if $X_i\sim\operatorname{Exp}(\lambda)$, verify that $N(t)$ is a Poisson process of intensity $\lambda$ and find $m(t)$ and the residual-life distribution.
+
+Approach: exponential intervals are i.i.d., and by memorylessness the counting process has independent and stationary increments.
+
+Solution: the renewal process with exponential intervals is the Poisson process, so $N(t)\sim\operatorname{Poisson}(\lambda t)$ and
+
+$$m(t)=E[N(t)]=\lambda t$$
+
+The basic renewal theorem gives $\dfrac{m(t)}{t}=\lambda=\dfrac{1}{\mu}$ with $\mu=1/\lambda$, consistent.
+
+Residual life: by memorylessness, $R(t)\sim\operatorname{Exp}(\lambda)$ for all $t$ (not only in the limit). Checking with the formula:
+
+$$P(R>y)=\frac{1}{\mu}\int_y^{\infty}(1-F(x))dx=\lambda\int_y^{\infty}e^{-\lambda x}dx=e^{-\lambda y}$$
+
+which is exactly the survival function of $\operatorname{Exp}(\lambda)$. The mean residual life is $E[R]=1/\lambda=\mu$; and $E[X^2]/(2\mu)=\dfrac{2/\lambda^2}{2/\lambda}=\dfrac1\lambda$, consistent.
+
+> Comment: the exponential is the only "memoryless" interval distribution, so only for the Poisson process does $R(t)$ follow the original distribution for all $t$. For a general renewal process a limiting distribution exists only as $t\to\infty$, and that limit is flattened by length bias.
+
+### Example 2 (Intermediate: renewal function for uniform intervals)
+
+Problem: for $X_i\sim U(0,1)$, find $m(t)$ on $0\le t\le1$.
+
+Approach: for $t\le1$, $F(t)=t$ and $dF(x)=dx$ ($0\le x\le t$), so the renewal equation becomes
+
+$$m(t)=t+\int_0^t m(t-x)\,dx$$
+
+Solution: substituting $u=t-x$,
+
+$$m(t)=t+\int_0^t m(u)\,du$$
+
+Differentiating with respect to $t$:
+
+$$m'(t)=1+m(t),\qquad m(0)=0$$
+
+This first-order linear equation has the solution
+
+$$m(t)=e^t-1$$
+
+Check: substituting back,
+
+$$t+\int_0^t(e^{t-x}-1)dx=t+\big[-e^{t-x}-x\big]_0^t=t+(-1-t)-(-e^t)=e^t-1$$
+
+correct. For small $t$, $m(t)\approx t+\dfrac{t^2}{2}$: the first term is the linear main term "one renewal per hour on average", and the second is the correction from "possibly two renewals".
+
+> Comment: this problem shows the power of the renewal equation—a convolution integral equation becomes a simple ODE after differentiation. Note that Leibniz's rule was used and that $m(0)=0$. If the interval distribution has a density, the renewal equation can usually be turned into a differential equation; if the distribution is discrete, use a recursion.
+
+### Example 3 (Advanced: limiting residual life and the inspection paradox)
+
+Problem: for intervals $U(0,1)$, find the limiting distribution of $R(t)$ as $t\to\infty$ and $E[R]$, and compare with $E[X]=1/2$.
+
+Approach: use the key renewal theorem, or the length-bias formula directly.
+
+Solution: $F(x)=x$ for $0\le x\le1$, $1-F(x)=1-x$, $\mu=\dfrac12$. For $0\le y\le1$,
+
+$$P(R>y)=\frac{1}{\mu}\int_y^1(1-x)dx=2\cdot\frac{(1-y)^2}{2}=(1-y)^2$$
+
+so the limiting distribution function is
+
+$$F_R(y)=1-(1-y)^2=2y-y^2,\qquad 0\le y\le1$$
+
+with density $f_R(y)=2(1-y)$, a triangular distribution skewed towards $0$. The mean is
+
+$$E[R]=\int_0^1y\cdot2(1-y)dy=2\left(\frac12-\frac13\right)=2\cdot\frac16=\frac13$$
+
+Checking with $E[R]=\dfrac{E[X^2]}{2\mu}$: $E[X^2]=\dfrac13$, $2\mu=1$, so $E[R]=\dfrac13$, consistent.
+
+Yet the original interval mean is $E[X]=\dfrac12$. The residual life seen at a random instant averages $\dfrac13$, less than $\dfrac12$—does this contradict the "inspection paradox"? Note that $E[R]=\dfrac13$ is the residual life; the mean total lifetime of the current component is
+
+$$E[L]=\frac{E[X^2]}{\mu}=\frac{1/3}{1/2}=\frac23>\frac12$$
+
+The total lifetime is lengthened, but the residual life is only part of it. The mean age is also $\dfrac13$, and the two add up to $\dfrac23$, exactly the mean total lifetime of the current component.
+
+> Comment: the correct statement of the inspection paradox is "the total lifetime of the current component is on average longer than that of a typical component", not "the residual life necessarily exceeds half the mean lifetime". The uniform example makes this crystal clear: total lifetime $2/3>1/2$, but residual life $1/3<1/2$. Many people conflate the two quantities.
+
+## VI. Common Errors and Pitfalls
+
+1. **Assuming the intervals must be exponential**: wrong—treating the renewal process as a Poisson process and using $N(t)\sim\operatorname{Poisson}(\lambda t)$. Why wrong—the exponential is only a special case; for general intervals $N(t)$ is not Poisson and its variance does not equal its mean. Right—use the renewal equation or the renewal theorems.
+2. **Taking the limiting residual-life distribution to be the original $F$**: wrong—writing $P(R\le y)=F(y)$. Why wrong—the interval hit at a random instant is length biased, with long intervals weighted more. Right—the limiting density is $(1-F(y))/\mu$.
+3. **Wrong integration limits in the renewal equation**: wrong—writing $\int_0^{\infty}m(t-x)dF(x)$ without restricting $x\le t$. Why wrong—the first renewal cannot occur after $t$. Right—the upper limit is $t$ (or let the support of $F$ truncate it naturally).
+4. **Ignoring $\mu<\infty$ in the basic theorem**: wrong—applying $m(t)/t\to1/\mu$ to a heavy-tailed distribution (say $\mu=\infty$). Why wrong—then $1/\mu=0$, yet the actual renewals may be extremely slow, and the hypotheses are not satisfied. Right—verify $0<\mu<\infty$ first.
+5. **Confusing age with residual life**: wrong—assuming $A(t)=R(t)$. Why wrong—they generally differ, though they share a limiting distribution (the same $(1-F)/\mu$). Right—distinguish "already used" from "still to come".
+6. **Computing the mean residual life as $\mu/2$**: wrong—forgetting the variance correction. Why wrong—$E[R]=\mu/2+\sigma^2/(2\mu)$; the larger the randomness, the longer the mean residual. Right—use $E[X^2]/(2\mu)$.
+7. **Omitting the "period" in the renewal reward theorem**: wrong—writing $R(t)/t\to E[R_1]$. Why wrong—the reward per unit time must be divided by the mean period $\mu$. Right—$R(t)/t\to E[R_1]/\mu$.
+
+## VII. Summary and Mnemonics
+
+Key points:
+
+- Renewal process: intervals $X_i$ i.i.d., $S_n$ the time of the $n$-th renewal, $N(t)=\max\{n:S_n\le t\}$.
+- Regeneration: the statistical law resets after each renewal, which is the source of the renewal equation.
+- Renewal equation $m(t)=F(t)+\int_0^t m(t-x)dF(x)$; with a density it becomes a differential equation.
+- Basic renewal theorem: $N(t)/t\to1/\mu$, $m(t)/t\to1/\mu$, depending only on the mean.
+- The limiting densities of the residual life and the age are both $(1-F)/\mu$; the mean residual life is $E[X^2]/(2\mu)$.
+- Inspection paradox: the mean total lifetime seen at a random instant is $E[X^2]/\mu$, larger than the $\mu$ of a typical component.
+- The Poisson process is the special case of exponential intervals; the renewal reward theorem gives the long-run average reward rate $E[R_1]/\mu$.
+
+**Mnemonic: replace on failure—that is renewal; intervals i.i.d.; long-run rate one over μ; residual life flattened out.**
+
+`,
+  },
+
+  'stationary-processes': {
+    chapter: 'Chapter 6 Stationary Processes',
+    title: 'Stationary Processes and Ergodicity',
+    summary:
+      'The statistical properties of a stationary process do not change under time shifts. A wide-sense stationary process is fully described by its mean and correlation function, and ergodicity guarantees that a single sufficiently long sample path can estimate the ensemble mean.',
+    keyPoints: [
+      'Strict stationarity: finite-dimensional distributions invariant under shifts; wide-sense stationarity: constant mean, autocovariance depending only on the time lag',
+      'A wide-sense stationary process is characterized by its mean function and autocorrelation R(τ)',
+      'Ergodicity: time average = ensemble average (a long enough sample represents the whole)',
+      'Spectral decomposition: the correlation function is the Fourier transform of the spectral distribution',
+      'Applications: prediction and filtering in signal processing and time series',
+    ],
+    content: String.raw`
+
+A piece of audio, a series of temperature observations, the returns of a stock—their statistical properties often do not change with "from which second you start listening". The white noise of this afternoon and of tomorrow afternoon sound statistically the same; a steady machine vibration has roughly the same spectral shape whichever instant you cut it at. This "shift invariance" is stationarity.
+
+Stationarity has two levels. **Strict stationarity** requires all finite-dimensional distributions to be invariant under time shifts—a very strong requirement, almost impossible to verify from data. **Wide-sense stationarity** requires only second moments: the mean is constant and the autocovariance depends only on the time lag. Engineering almost always uses wide-sense stationarity, because it needs only the mean and the autocorrelation function, and the whole theory of linear filtering, prediction and spectral analysis depends only on second moments.
+
+Paired with stationarity is **ergodicity**: if the process is sufficiently "mixing", then taking one sufficiently long sample path and averaging over time can replace averaging over all possible samples. This lets us estimate the statistics of a whole piece of music from a short recording. But ergodicity is not an automatic consequence of stationarity—there exist stationary but non-ergodic processes, for example $X_t=Y$ ($Y$ a random constant), whose time average is always $Y$ and never equals the ensemble mean.
+
+This lecture answers: how do strict and wide-sense stationarity differ? Why does the autocorrelation function depend only on the lag? And when can one sample path represent the whole?
+
+## II. Rigorous Definitions
+
+Let $\{X_t\}$ be a stochastic process, with $t$ either integer (discrete time) or real (continuous time).
+
+**Strict stationarity**: for any $n$, any times $t_1,\dots,t_n$ and any shift $h$,
+
+$$(X_{t_1},\dots,X_{t_n})\overset{d}{=}(X_{t_1+h},\dots,X_{t_n+h})$$
+
+that is, all finite-dimensional joint distributions are invariant under shifts.
+
+**Wide-sense (weak) stationarity**: the following hold
+
+1. $E[X_t^2]<\infty$;
+2. $E[X_t]=m$ is a constant independent of $t$;
+3. the autocovariance
+
+$$\gamma(s,t)=\operatorname{Cov}(X_s,X_t)=E[(X_s-m)(X_t-m)]$$
+
+depends only on the lag $\tau=t-s$, written $\gamma(\tau)$.
+
+$\gamma(\tau)$ is called the **autocovariance function**; dividing by the variance gives the **autocorrelation function**
+
+$$\rho(\tau)=\frac{\gamma(\tau)}{\gamma(0)}$$
+
+**Properties of the autocovariance**:
+
+- symmetry: $\gamma(\tau)=\gamma(-\tau)$;
+- non-negative definiteness: for any $n$, any $t_i$ and any complex numbers $c_i$, $\sum_{i,j}c_i\bar c_j\gamma(t_i-t_j)\ge0$;
+- $|\gamma(\tau)|\le\gamma(0)$.
+
+**Mean ergodicity**: if
+
+$$\lim_{T\to\infty}\frac{1}{T}\int_0^T X_t\,dt=E[X_0]\quad\text{(a.s. or in mean square)}$$
+
+the process is called mean ergodic. In discrete time the corresponding statement is $\dfrac1n\sum_{k=1}^nX_k\to E[X_0]$.
+
+**Spectral density**: if $\sum_{\tau}|\gamma(\tau)|<\infty$ (discrete) or $\int|\gamma(\tau)|d\tau<\infty$ (continuous), define
+
+$$f(\omega)=\frac{1}{2\pi}\sum_{\tau=-\infty}^{\infty}\gamma(\tau)e^{-i\omega\tau}\quad(\text{discrete})$$
+
+or
+
+$$f(\omega)=\frac{1}{2\pi}\int_{-\infty}^{\infty}\gamma(\tau)e^{-i\omega\tau}d\tau\quad(\text{continuous})$$
+
+**Wiener–Khinchin theorem**:
+
+$$\gamma(\tau)=\int_{-\infty}^{\infty}e^{i\omega\tau}f(\omega)\,d\omega$$
+
+that is, the autocovariance and the spectral density are a Fourier transform pair.
+
+**White noise**: $\gamma(0)=\sigma^2$, $\gamma(\tau)=0$ for $\tau\ne0$. Its spectral density is the constant $f(\omega)=\dfrac{\sigma^2}{2\pi}$—equal energy at all frequencies.
+
+## III. Why These Definitions
+
+**Why does wide-sense stationarity capture only second moments?** For a **Gaussian process**, the mean function and the covariance function completely determine all finite-dimensional distributions. Hence a Gaussian process is wide-sense stationary ⟺ strictly stationary. For general processes, wide-sense stationarity is weaker and easier to verify, and linear prediction, filtering and spectral analysis use only second moments, so it suffices in engineering. In other words, wide-sense stationarity is "stationarity that is good enough".
+
+**Why does the autocovariance depend only on the lag?** Stationarity means "how correlated two instants $\tau$ apart are" should not depend on which day one starts counting. If $\gamma(s,t)$ still depended on $s$, the statistical law of the process would drift with time and it would not be stationary. Writing $\gamma$ as a one-variable function $\gamma(\tau)$ is what makes the Fourier analysis below possible.
+
+**Why must the autocovariance be non-negative definite?** For any linear combination $Y=\sum c_iX_{t_i}$, the variance is
+
+$$\operatorname{Var}(Y)=\sum_{i,j}c_i\bar c_j\gamma(t_i-t_j)\ge0$$
+
+a direct requirement of non-negative variance. Conversely, any non-negative definite function can serve as the autocovariance of some wide-sense stationary process (an existence theorem). So "non-negative definite" is not an extra condition but the essential feature of an autocovariance.
+
+**Why is the spectral density non-negative?** By the Wiener–Khinchin theorem $f(\omega)$ is the Fourier transform of $\gamma$. Energy cannot be negative in any frequency window, and one can prove $f(\omega)\ge0$. This is also the frequency-domain equivalent of "the autocovariance is non-negative definite".
+
+**What is the criterion for mean ergodicity?** In continuous time the time average
+
+$$\bar X_T=\frac1T\int_0^TX_t\,dt$$
+
+has variance
+
+$$\operatorname{Var}(\bar X_T)=\frac{1}{T^2}\int_0^T\int_0^T\gamma(s-t)\,ds\,dt=\frac{2}{T}\int_0^T\left(1-\frac{\tau}{T}\right)\gamma(\tau)\,d\tau$$
+
+If $\dfrac1T\int_0^T\gamma(\tau)d\tau\to0$, the variance tends to zero and $\bar X_T$ converges in mean square to $m$, i.e. the process is mean ergodic. Intuitively: only if the autocovariance decays fast enough (short memory) does the time average contain enough "independent information" to approach the ensemble mean.
+
+> Counterexample (the conditions are indispensable): let $X_t=Y$ with $Y$ a random variable, $E[Y]=\mu$ and $\operatorname{Var}(Y)>0$. Then $E[X_t]=\mu$ is constant and $\gamma(\tau)=\operatorname{Var}(Y)$ is independent of $t$, so the process is wide-sense stationary. But the time average $\dfrac1T\int_0^TX_tdt=Y$ varies from sample to sample and does not equal $\mu$. Here $\gamma(\tau)$ does not decay (it is constant) and the ergodicity criterion fails. Evidently "stationary" and "ergodic" are independent concepts.
+
+**Why can a periodic process be ergodic?** Take $X_t=A\cos(\omega t+\Theta)$ with $\Theta\sim U(0,2\pi)$. Its autocovariance $\gamma(\tau)=\dfrac{A^2}{2}\cos\omega\tau$ does not decay, so by the criterion above it is not mean ergodic. Yet the time average
+
+$$\frac1T\int_0^TX_tdt\to0=E[X_t]$$
+
+holds almost surely (because the integral of a cosine over whole periods vanishes). This shows that "covariance decay" is only a sufficient condition, not a necessary one. The time average of a periodic process can be ergodic because a single sample path already sweeps through all phases. This example reminds us that ergodicity must be analysed case by case, not judged solely by whether the autocovariance decays.
+
+## IV. Intuition and Pictures
+
+| Concept | Intuition | Mathematical description |
+|---|---|---|
+| Strict stationarity | the whole statistics are shift invariant | finite-dimensional distributions shift invariant |
+| Wide-sense stationarity | flat mean, correlation depends only on spacing | $E[X_t]=m$, $\gamma$ depends only on $\tau$ |
+| Ergodicity | one long sample equals the whole | time average = ensemble average |
+| Spectral density | decompose correlation into frequencies | the Fourier transform of $\gamma$ |
+| White noise | equal energy at all frequencies, no memory | $\gamma(\tau)=\sigma^2\delta_{\tau0}$ |
+
+> Intuition: a stationary process is like a statistically uniform tape—played from whatever second, it sounds (statistically) the same; ergodicity is like listening to the whole tape to learn its average loudness. The autocorrelation $\gamma(\tau)$ measures whether two points $\tau$ apart still remember each other: the larger $\tau$ is, the closer to $0$, the shorter the memory; if $\gamma(\tau)$ decays very slowly, the process has long memory and a single sample can hardly represent the whole.
+
+Three typical shapes of the autocorrelation plot:
+
+- **fast decay** (such as $\rho^h$ for AR(1)): short memory, a broad and flat spectral density;
+- **slow decay** (long memory): the spectral density concentrates at low frequencies;
+- **periodicity** (such as $\cos\omega\tau$): sharp peaks at $\pm\omega$, corresponding to a deterministic periodic component.
+
+Right versus wrong:
+
+- Wrong: wide-sense stationarity implies strict stationarity. Right: it holds only for special processes such as Gaussian ones; in general wide-sense stationarity is weaker.
+- Wrong: a stationary process is necessarily ergodic. Right: $X_t=Y$ is a counterexample; ergodicity needs an extra mixing condition.
+- Wrong: the spectral density is the autocorrelation function. Right: the two are a Fourier transform pair, with different dimensions and meanings.
+
+## V. Worked Examples
+
+### Example 1 (Basic: verifying wide-sense stationarity)
+
+Problem: let $X_t=A\cos\omega t+B\sin\omega t$ with $A,B$ independent, $E[A]=E[B]=0$, $\operatorname{Var}(A)=\operatorname{Var}(B)=\sigma^2$ and $\omega$ constant. Verify that $X_t$ is wide-sense stationary and find its autocovariance.
+
+Approach: compute the mean and $\operatorname{Cov}(X_s,X_t)$ directly.
+
+Solution: the mean is
+
+$$E[X_t]=E[A]\cos\omega t+E[B]\sin\omega t=0$$
+
+a constant. Autocovariance: for $s,t$,
+
+$$\operatorname{Cov}(X_s,X_t)=E[X_sX_t]$$
+
+$$=E\big[(A\cos\omega s+B\sin\omega s)(A\cos\omega t+B\sin\omega t)\big]$$
+
+Expand into four terms. Since $A,B$ are independent with zero means, $E[AB]=E[A]E[B]=0$ and the cross terms vanish:
+
+$$=\sigma^2\cos\omega s\cos\omega t+\sigma^2\sin\omega s\sin\omega t=\sigma^2\cos\omega(t-s)$$
+
+Writing $\tau=t-s$ gives $\gamma(\tau)=\sigma^2\cos\omega\tau$, depending only on $\tau$. Hence the process is wide-sense stationary.
+
+Mean ergodicity: the time average is
+
+$$\frac1T\int_0^TX_tdt=\frac{A}{T}\frac{\sin\omega T}{\omega}+\frac{B}{T}\frac{1-\cos\omega T}{\omega}\to0$$
+
+because the numerators are bounded while $T\to\infty$. So the time average converges to $E[X_t]=0$ and the process is mean ergodic.
+
+> Comment: the key is the cross term $E[AB]=0$. If $A$ and $B$ were correlated, the covariance would contain mixed $\sin$ and $\cos$ terms and generally would no longer depend only on $\tau$. Also, although $\gamma(\tau)$ does not decay, the process is still mean ergodic—confirming that "covariance decay" is only a sufficient condition.
+
+### Example 2 (Intermediate: stationary solution and autocovariance of AR(1))
+
+Problem: let $X_t=\varphi X_{t-1}+\varepsilon_t$ with $|\varphi|<1$, where $\varepsilon_t$ is i.i.d. white noise with $E[\varepsilon_t]=0$, $\operatorname{Var}(\varepsilon_t)=\sigma^2$, independent of past $X_{t-k}$. Find the variance and autocovariance of the stationary solution.
+
+Approach: expand the recursion backwards to express $X_t$ as a geometrically weighted sum of past noise.
+
+Solution: substituting repeatedly,
+
+$$X_t=\varphi(\varphi X_{t-2}+\varepsilon_{t-1})+\varepsilon_t=\cdots=\sum_{k=0}^{\infty}\varphi^k\varepsilon_{t-k}$$
+
+(the series converges in mean square for $|\varphi|<1$). Hence
+
+$$E[X_t]=\sum_{k=0}^{\infty}\varphi^kE[\varepsilon_{t-k}]=0$$
+
+Variance:
+
+$$\gamma(0)=\operatorname{Var}(X_t)=\sum_{k=0}^{\infty}\varphi^{2k}\operatorname{Var}(\varepsilon_{t-k})=\sigma^2\sum_{k=0}^{\infty}\varphi^{2k}=\frac{\sigma^2}{1-\varphi^2}$$
+
+Autocovariance: for $h\ge0$,
+
+$$\gamma(h)=\operatorname{Cov}(X_t,X_{t+h})=\operatorname{Cov}\left(\sum_{k=0}^{\infty}\varphi^k\varepsilon_{t-k},\ \sum_{j=0}^{\infty}\varphi^j\varepsilon_{t+h-j}\right)$$
+
+The noise terms shared by the two sums are $\varepsilon_{t-k}$ with $t+h-j=t-k$, i.e. $j=h+k\ge h$. By independence only these shared terms contribute:
+
+$$\gamma(h)=\sum_{k=0}^{\infty}\varphi^k\varphi^{h+k}\sigma^2=\varphi^h\sigma^2\sum_{k=0}^{\infty}\varphi^{2k}=\varphi^h\frac{\sigma^2}{1-\varphi^2}=\varphi^h\gamma(0)$$
+
+So the autocorrelation is $\rho(h)=\varphi^h$, decaying geometrically. The closer $|\varphi|$ is to $1$, the longer the memory.
+
+> Comment: this problem shows what "stationary solution" means: the recursion itself generates a sequence from any initial value, but the sequence is stationary only if it starts in the infinitely distant past and $|\varphi|<1$. If $|\varphi|\ge1$ the variance diverges and no wide-sense stationary solution exists. $\varphi=1$ is the random walk, which is non-stationary.
+
+### Example 3 (Advanced: spectral density of AR(1))
+
+Problem: find the spectral density of the AR(1) process above and discuss the limits $\varphi=0$ and $\varphi\to1^-$.
+
+Approach: use the Wiener–Khinchin theorem and take the discrete Fourier transform of $\gamma(h)=\varphi^{|h|}\gamma(0)$.
+
+Solution:
+
+$$f(\omega)=\frac{1}{2\pi}\sum_{h=-\infty}^{\infty}\varphi^{|h|}\gamma(0)e^{-i\omega h}$$
+
+First compute the geometric sum. Let $S=\sum_{h=-\infty}^{\infty}\varphi^{|h|}e^{-i\omega h}$; then
+
+$$S=1+\sum_{h=1}^{\infty}\varphi^h\left(e^{-i\omega h}+e^{i\omega h}\right)=1+\frac{\varphi e^{-i\omega}}{1-\varphi e^{-i\omega}}+\frac{\varphi e^{i\omega}}{1-\varphi e^{i\omega}}$$
+
+Putting over a common denominator, the denominator is
+
+$$(1-\varphi e^{-i\omega})(1-\varphi e^{i\omega})=1-2\varphi\cos\omega+\varphi^2$$
+
+and the numerator is
+
+$$(1-2\varphi\cos\omega+\varphi^2)+\varphi e^{-i\omega}(1-\varphi e^{i\omega})+\varphi e^{i\omega}(1-\varphi e^{-i\omega})$$
+
+$$=1-2\varphi\cos\omega+\varphi^2+2\varphi\cos\omega-2\varphi^2=1-\varphi^2$$
+
+Hence
+
+$$S=\frac{1-\varphi^2}{1-2\varphi\cos\omega+\varphi^2}$$
+
+so
+
+$$f(\omega)=\frac{1}{2\pi}\cdot\frac{\sigma^2}{1-\varphi^2}\cdot\frac{1-\varphi^2}{1-2\varphi\cos\omega+\varphi^2}=\frac{\sigma^2}{2\pi(1-2\varphi\cos\omega+\varphi^2)}$$
+
+**Discussion**:
+
+- $\varphi=0$: $f(\omega)=\dfrac{\sigma^2}{2\pi}$, a constant—exactly the white-noise spectrum with equal energy at all frequencies.
+- $\varphi\to1^-$: at $\omega=0$ the denominator is $1-2\varphi+\varphi^2=(1-\varphi)^2\to0$, so $f(0)\to\infty$ and the spectrum has a spike at zero frequency. This corresponds to "long memory, strong low-frequency content", approaching the $1/f^2$-type spectrum of a random walk.
+- $\varphi<0$: the denominator is smallest at $\omega=\pi$ and the spectrum peaks at high frequency; the series tends to alternate in sign.
+
+> Comment: the spectral density translates "memory in the time domain" into "energy distribution in the frequency domain". AR(1) has only one parameter $\varphi$, yet it determines both the decay rate and the position of the spectral peak. The easiest place to err is the numerator of the geometric sum: it is $1-\varphi^2$, not $1+\varphi^2$; a quick check is to insert the special value $\omega=0$.
+
+## VI. Common Errors and Pitfalls
+
+1. **Taking wide-sense stationarity for strict stationarity**: wrong—inferring that all distributions are shift invariant from "constant mean and lag-only autocovariance". Why wrong—wide-sense stationarity constrains only second moments, and higher-order distributions may change. Right—the two are equivalent only for special processes such as Gaussian ones; in general state them separately.
+2. **Forgetting that the mean must be constant**: wrong—saying "it is stationary after removing the trend" for a trending series $X_t=t+Z_t$ while still applying spectral analysis to the original series. Why wrong—the mean varies with time and the autocovariance generally depends on $t$. Right—difference or detrend first, then test stationarity.
+3. **Assuming stationarity implies ergodicity**: wrong—using the time average of one sample to estimate the ensemble mean directly. Why wrong—$X_t=Y$ is a stationary, non-ergodic counterexample. Right—verify the ergodicity condition, or state it as an explicit assumption.
+4. **Computing the autocovariance as $E[X_tX_{t+\tau}]$ and forgetting to subtract the mean**: wrong—using the second moment when the mean is non-zero. Why wrong—the covariance must subtract $m^2$, otherwise a constant mean is mistaken for correlation. Right—$\gamma(\tau)=E[X_tX_{t+\tau}]-m^2$.
+5. **Confusing the spectral density with the autocorrelation**: wrong—taking $\gamma(\tau)$ for the spectral density, or forgetting the $1/(2\pi)$ factor. Why wrong—they are a Fourier transform pair with different dimensions. Right—use the Wiener–Khinchin theorem and mind the constants of the forward and inverse transforms.
+6. **Judging ergodicity of a periodic process by the covariance alone**: wrong—declaring it non-ergodic because $\gamma(\tau)=\cos\omega\tau$ does not decay. Why wrong—covariance decay is only a sufficient condition; the time average of a random-phase cosine does converge to the mean. Right—compute the time average explicitly, or use a finer ergodic theorem.
+7. **Writing a stationary solution for AR(1) when $|\varphi|\ge1$**: wrong—applying $\sigma^2/(1-\varphi^2)$. Why wrong—the variance is negative or meaningless and the series diverges. Right—a stationary solution exists only for $|\varphi|<1$.
+
+## VII. Summary and Mnemonics
+
+Key points:
+
+- Strict stationarity: all finite-dimensional distributions are shift invariant; wide-sense stationarity: constant mean, autocovariance depending only on the lag.
+- Wide-sense stationarity is fully described by the mean $m$ and the autocovariance $\gamma(\tau)$; for Gaussian processes it is equivalent to strict stationarity.
+- The autocovariance is symmetric, non-negative definite and satisfies $|\gamma(\tau)|\le\gamma(0)$.
+- Ergodicity: the time average equals the ensemble average; extra conditions are needed and stationarity does not imply it.
+- Wiener–Khinchin: $\gamma$ and the spectral density $f$ are a Fourier transform pair; white noise has a constant spectrum.
+- AR(1): $\gamma(h)=\varphi^{|h|}\sigma^2/(1-\varphi^2)$ and spectral density $\sigma^2/[2\pi(1-2\varphi\cos\omega+\varphi^2)]$.
+
+**Mnemonic: stationary means shift-invariant shape; wide sense looks at second-order; one long sample stands for all; ergodic means time average equals ensemble.**
+
+`,
+  },
+  'stochastic-calculus': {
+    chapter: 'Chapter 7 Introduction to Stochastic Analysis',
+    title: 'The Itô Integral and Itô’s Lemma',
+    summary:
+      'Brownian paths are nowhere differentiable, so ordinary calculus fails. The Itô integral values each interval at its left endpoint and, together with Itô’s lemma (the stochastic chain rule), becomes the mathematical engine of derivative pricing.',
+    keyPoints: [
+      'The Brownian increment dW_t satisfies (dW_t)^2 = dt (the source of the Itô correction)',
+      'The Itô integral ∫ H_t dW_t is a mean-square limit and requires predictability',
+      'Itô’s lemma: df = f_t dt + f_x dX + ½ f_{xx} σ^2 dt (an extra second-order correction)',
+      'Geometric Brownian motion dS_t = μ S_t dt + σ S_t dW_t is solved with Itô’s lemma',
+      'Application: the Black–Scholes option pricing equation',
+    ],
+    content: String.raw`
+
+In the previous lecture we learned that Brownian paths are continuous yet almost surely nowhere differentiable. The difference quotient $(B_{t+h}-B_t)/h$ has standard deviation $1/\sqrt h$, which grows as $h$ shrinks, so there is no limit at all. Traditional calculus is thus paralysed at once: $dB_t/dt$ does not exist, and the chain rule $df=f'\,dx$ loses its footing.
+
+But reality does not allow us to stop. Finance must price options, physics must write dynamical equations with noise, biology must model random fluctuations in populations—all of these require integrating and differentiating stochastic processes. Kiyoshi Itô gave the answer in the 1940s: define the integral by evaluating at the **left endpoint** of each interval and accept a counterintuitive correction $(dB_t)^2=dt$, and a self-consistent and powerful stochastic calculus emerges.
+
+The most famous product of this theory is the Black–Scholes option pricing formula. Its core is not financial intuition but **Itô's lemma**, which has one extra second-order term compared with the ordinary chain rule. This lecture answers: why must the Itô integral use the left endpoint? What exactly does $(dB)^2=dt$ mean? And why is the extra term not decoration but necessity?
+
+## II. Rigorous Definitions
+
+**Information flow and adapted processes**: $\{\mathcal{F}_t\}$ is the information up to time $t$; $H_t$ is called adapted if $H_t$ is determined by $\mathcal{F}_t$ (no peeking at the future). If in addition $H_t$ depends only on the discrete information before $t$ (left continuity), it is called **predictable**.
+
+**Itô integral of a simple predictable process**: let
+
+$$H_t=\sum_{i=0}^{n-1}H_{t_i}\mathbf{1}_{(t_i,t_{i+1}]}(t)$$
+
+with $0=t_0<t_1<\cdots<t_n=t$ and $H_{t_i}$ a bounded $\mathcal{F}_{t_i}$-measurable random variable. Define
+
+$$\int_0^tH_s\,dB_s=\sum_{i=0}^{n-1}H_{t_i}\big(B_{t_{i+1}}-B_{t_i}\big)$$
+
+Note that the left endpoint $H_{t_i}$ is used; it depends only on information before $t_i$ and is independent of the increment $B_{t_{i+1}}-B_{t_i}$.
+
+**General Itô integral**: for an adapted process $H$ with
+
+$$E\left[\int_0^tH_s^2\,ds\right]<\infty$$
+
+take a sequence of simple predictable processes $H^{(n)}$ converging to $H$ in $L^2$ and define
+
+$$\int_0^tH_s\,dB_s=L^2\text{-}\lim_{n\to\infty}\int_0^tH_s^{(n)}\,dB_s$$
+
+**Itô isometry**:
+
+$$E\left[\left(\int_0^tH_s\,dB_s\right)^2\right]=E\left[\int_0^tH_s^2\,ds\right]$$
+
+It follows at once that $E\left[\int_0^tH_sdB_s\right]=0$ and that $\int_0^tH_sdB_s$ is a martingale in $t$.
+
+**Quadratic variation**: for $0=t_0<t_1<\cdots<t_n=t$,
+
+$$[X]_t=\lim_{\|\Delta\|\to0}\sum_{i=0}^{n-1}(X_{t_{i+1}}-X_{t_i})^2$$
+
+For $X=B$ this gives $[B]_t=t$; more generally, for $X_t=\int_0^tH_sdB_s$ the quadratic variation is $[X]_t=\int_0^tH_s^2ds$.
+
+**Itô process**:
+
+$$X_t=X_0+\int_0^t\mu_s\,ds+\int_0^t\sigma_s\,dB_s$$
+
+written in differential form as
+
+$$dX_t=\mu_t\,dt+\sigma_t\,dB_t$$
+
+**Itô's lemma (one-dimensional)**: let $f(t,x)$ have continuous partial derivatives $f_t,f_x,f_{xx}$ and let $X_t$ be the Itô process above; then $Y_t=f(t,X_t)$ satisfies
+
+$$dY_t=\left(f_t+\mu_tf_x+\frac12\sigma_t^2f_{xx}\right)dt+\sigma_tf_x\,dB_t$$
+
+Equivalently,
+
+$$df(t,X_t)=f_t\,dt+f_x\,dX_t+\frac12f_{xx}(dX_t)^2$$
+
+with the conventions $dt\cdot dt=0$, $dt\cdot dB_t=0$, $dB_t\cdot dB_t=dt$.
+
+**Stochastic differential equation (SDE)**:
+
+$$dX_t=b(t,X_t)\,dt+\sigma(t,X_t)\,dB_t,\qquad X_0=x_0$$
+
+**Geometric Brownian motion**:
+
+$$dS_t=\mu S_t\,dt+\sigma S_t\,dB_t$$
+
+**Stratonovich integral**: evaluates at the midpoint of each interval, written $\int H\circ dB$. Its relation to the Itô integral is
+
+$$\int_0^tH_s\circ dB_s=\int_0^tH_s\,dB_s+\frac12[H,B]_t$$
+
+When $H_t=\sigma(X_t)$, the Stratonovich SDE $dX=b\,dt+\sigma\circ dB$ is equivalent to the Itô SDE
+
+$$dX=\left(b+\frac12\sigma\sigma'\right)dt+\sigma\,dB$$
+
+## III. Why These Definitions
+
+**Why must the left endpoint be used?** If the right endpoint $H_{t_{i+1}}$ were used, it would depend on the endpoint of the increment $B_{t_{i+1}}-B_{t_i}$, which amounts to "betting with knowledge of the future"—this is anticipative. Mathematically, $H_{t_{i+1}}$ is not independent of the increment, $E[H_{t_{i+1}}(B_{t_{i+1}}-B_{t_i})]$ is generally non-zero, and the integral is no longer a martingale. The left endpoint ensures that $H_{t_i}$ is independent of the increment, so
+
+$$E\left[H_{t_i}(B_{t_{i+1}}-B_{t_i})\mid\mathcal{F}_{t_i}\right]=H_{t_i}E[B_{t_{i+1}}-B_{t_i}]=0$$
+
+the whole sum has zero expectation, and the integral is fair. In finance this corresponds exactly to "one cannot trade at future prices".
+
+**Why $(dB)^2=dt$?** In ordinary calculus $(dx)^2$ is a higher-order infinitesimal that can be neglected. But a Brownian increment $\Delta B\sim N(0,\Delta t)$ has squared expectation $\Delta t$ and standard deviation $\sqrt2\Delta t$. Dividing $[0,t]$ into $n$ pieces and summing:
+
+$$E\left[\sum(\Delta B_i)^2\right]=t,\qquad \operatorname{Var}\left[\sum(\Delta B_i)^2\right]=\frac{2t^2}{n}\to0$$
+
+The sum of squares converges in probability to $t$. So $(dB)^2$ is of the same order as $dt$ and cannot be dropped. This is the source of the extra second-order term in Itô's lemma.
+
+**How is Itô's lemma derived?** Take the second-order Taylor expansion of $f(t,x)$:
+
+$$df=f_t\,dt+f_x\,dX+\frac12f_{xx}(dX)^2+\cdots$$
+
+where $dX=\mu\,dt+\sigma\,dB$. Substituting and using the multiplication rules:
+
+$$(dX)^2=\mu^2(dt)^2+2\mu\sigma\,dt\,dB+\sigma^2(dB)^2=\sigma^2\,dt$$
+
+hence
+
+$$df=\left(f_t+\mu f_x+\frac12\sigma^2f_{xx}\right)dt+\sigma f_x\,dB$$
+
+The ordinary chain rule has only the first two terms; the extra $\frac12\sigma^2f_{xx}dt$ in Itô's lemma is exactly the contribution of $(dX)^2$.
+
+**What goes wrong if the correction is dropped?** Take $f(x)=x^2$ and $X_t=B_t$. The ordinary chain rule gives $d(B_t^2)=2B_t\,dB_t$, which integrates to $B_t^2=2\int_0^tB_sdB_s$, i.e. $\int B\,dB=B_t^2/2$. But this integral should have zero expectation (martingale), whereas $E[B_t^2/2]=t/2\ne0$, a contradiction. The correct result is
+
+$$d(B_t^2)=2B_t\,dB_t+dt\quad\Longrightarrow\quad\int_0^tB_s\,dB_s=\frac12B_t^2-\frac12t$$
+
+whose expectation is zero, and the contradiction disappears. Evidently the correction term is not optional; it is required to keep the identity consistent with the martingale property.
+
+**Why is the Itô integral a martingale?** For a simple process each term of the sum has zero conditional expectation given $\mathcal{F}_{t_i}$, so the whole is a martingale; the martingale property survives the $L^2$ limit (under suitable integrability). The isometry comes from the vanishing of the cross terms:
+
+$$E\left[\left(\sum H_{t_i}\Delta B_i\right)^2\right]=\sum E[H_{t_i}^2]E[(\Delta B_i)^2]=E\left[\sum H_{t_i}^2\Delta t_i\right]$$
+
+Taking the limit gives $E[(\int H\,dB)^2]=E\int H^2dt$.
+
+**What is the difference between Itô and Stratonovich?** Itô uses the left endpoint; the integral is a martingale but the chain rule gains an extra term. Stratonovich uses the midpoint; the chain rule agrees with ordinary calculus but the integral is not a martingale and "peeks" at information inside the interval. Physicists like Stratonovich (because it preserves covariance under coordinate changes) and financiers like Itô (because non-anticipativity and the martingale property correspond to no arbitrage). The two can be converted into each other, the correction being $\frac12$ times the quadratic covariation.
+
+## IV. Intuition and Pictures
+
+| Ordinary calculus | Itô calculus |
+|---|---|
+| $(dx)^2\approx0$ | $(dB)^2=dt$ |
+| $df=f'\,dx$ | $df=f'\,dX+\frac12f''\sigma^2dt$ |
+| the integral may be evaluated at any point | the left endpoint is required (non-anticipative) |
+| paths are differentiable | paths are nowhere differentiable |
+
+> Intuition: the amplitude of a Brownian wobble is of order $\sqrt{dt}$, and its square is exactly of order $dt$. Ordinary calculus treats the square of an infinitesimal as zero, whereas stochastic calculus must keep it—and that retention gives the stochastic world its own "quadratic variation". You can think of $(dB)^2=dt$ as "the energy of the wobble": the variances of the individual steps add up to exactly the elapsed time.
+
+A crude but useful analogy: an ordinary function is like a smooth highway where the tangent predicts the road ahead; Brownian motion is like a road covered in gravel, where the "squared jolts" of each step do not disappear but accumulate into the distance travelled. Itô's lemma is the "chain rule with jolts".
+
+Right versus wrong:
+
+- Wrong: the expectation of the Itô integral $\int H\,dB$ is generally non-zero. Right: under $E\int H^2dt<\infty$ it is a martingale with zero mean.
+- Wrong: Itô's lemma is just the ordinary chain rule. Right: it has an extra $\frac12f_{xx}\sigma^2dt$.
+- Wrong: $(dB)^2$ is a higher-order infinitesimal that can be neglected. Right: it equals $dt$, of the same order as the first-order term.
+
+## V. Worked Examples
+
+### Example 1 (Basic: computing $\int B\,dB$ and its moments)
+
+Problem: find the expression, expectation and variance of $I_t=\int_0^tB_s\,dB_s$.
+
+Approach: apply Itô's lemma to $f(x)=x^2$.
+
+Solution: $f_t=0$, $f_x=2x$, $f_{xx}=2$, $\mu=0$, $\sigma=1$. By Itô's lemma
+
+$$d(B_t^2)=2B_t\,dB_t+\frac12\cdot2\cdot1^2\,dt=2B_t\,dB_t+dt$$
+
+Rearranging and integrating:
+
+$$\int_0^tB_s\,dB_s=\frac12B_t^2-\frac12t$$
+
+Expectation: $E[B_t^2]=t$, so $E[I_t]=\dfrac12t-\dfrac12t=0$, consistent with the martingale property.
+
+Variance:
+
+$$\operatorname{Var}(I_t)=E[I_t^2]=E\left[\left(\frac12B_t^2-\frac12t\right)^2\right]=\frac14\left(E[B_t^4]-2tE[B_t^2]+t^2\right)$$
+
+With $B_t\sim N(0,t)$, $E[B_t^4]=3t^2$ and $E[B_t^2]=t$, so
+
+$$=\frac14(3t^2-2t^2+t^2)=\frac14\cdot2t^2=\frac12t^2$$
+
+The Itô isometry gives the same: $E[I_t^2]=E\int_0^tB_s^2ds=\int_0^ts\,ds=\dfrac12t^2$.
+
+> Comment: this is the "multiplication table" of stochastic calculus. Remember two things: the result is $B_t^2/2-t/2$, not $B_t^2/2$; and the mean is zero while the variance is not. Dropping $-t/2$ would give the wrong expectation $t/2$, directly violating the martingale property.
+
+### Example 2 (Intermediate: geometric Brownian motion)
+
+Problem: solve $dS_t=\mu S_t\,dt+\sigma S_t\,dB_t$ with $S_0>0$, and find $E[S_t]$ and $\operatorname{Var}(S_t)$.
+
+Approach: $S_t>0$, so take logarithms to turn multiplication into addition. Apply Itô's lemma to $f(x)=\ln x$.
+
+Solution: $f_x=1/x$, $f_{xx}=-1/x^2$, $f_t=0$. By Itô's lemma
+
+$$d(\ln S_t)=\frac1{S_t}dS_t-\frac12\frac1{S_t^2}(dS_t)^2$$
+
+$$=\frac1{S_t}\big(\mu S_tdt+\sigma S_tdB_t\big)-\frac12\frac1{S_t^2}\sigma^2S_t^2dt$$
+
+$$=\left(\mu-\frac{\sigma^2}{2}\right)dt+\sigma\,dB_t$$
+
+Integrating:
+
+$$\ln S_t=\ln S_0+\left(\mu-\frac{\sigma^2}{2}\right)t+\sigma B_t$$
+
+so
+
+$$S_t=S_0\exp\left(\left(\mu-\frac{\sigma^2}{2}\right)t+\sigma B_t\right)$$
+
+Expectation: $\sigma B_t\sim N(0,\sigma^2t)$, and using the moment generating function of the normal, $E[e^{\sigma B_t}]=e^{\sigma^2t/2}$,
+
+$$E[S_t]=S_0e^{(\mu-\sigma^2/2)t}e^{\sigma^2t/2}=S_0e^{\mu t}$$
+
+Variance: first the second moment,
+
+$$E[S_t^2]=S_0^2e^{2(\mu-\sigma^2/2)t}E[e^{2\sigma B_t}]=S_0^2e^{(2\mu-\sigma^2)t}e^{2\sigma^2t}=S_0^2e^{(2\mu+\sigma^2)t}$$
+
+so
+
+$$\operatorname{Var}(S_t)=S_0^2e^{2\mu t}\left(e^{\sigma^2t}-1\right)$$
+
+> Comment: the drift is corrected to $\mu-\sigma^2/2$, the most famous by-product of Itô's lemma. Many people intuitively write $S_t=S_0e^{\mu t+\sigma B_t}$, which would give $E[S_t]=S_0e^{(\mu+\sigma^2/2)t}$, inconsistent with $S_0e^{\mu t}$. The larger the volatility, the more the logarithmic drift is pushed down, yet the expected price still grows at rate $\mu$—the two facts are not contradictory.
+
+### Example 3 (Advanced: the Ornstein–Uhlenbeck process)
+
+Problem: solve $dX_t=-\theta X_t\,dt+\sigma\,dB_t$ with $X_0=x_0$ and $\theta>0$. Find $E[X_t]$, $\operatorname{Var}(X_t)$ and the limiting distribution as $t\to\infty$.
+
+Approach: this is a first-order linear SDE; use the integrating factor $e^{\theta t}$.
+
+Solution: by the product rule ($e^{\theta t}$ is an ordinary differentiable function, and multiplying it by the Itô differential of $X_t$ produces no extra second-order term, because the cross term of $d(e^{\theta t})=\theta e^{\theta t}dt$ with $dB$ is $dt\cdot dB=0$):
+
+$$d\left(e^{\theta t}X_t\right)=e^{\theta t}dX_t+\theta e^{\theta t}X_tdt=e^{\theta t}\big(-\theta X_tdt+\sigma dB_t\big)+\theta e^{\theta t}X_tdt=\sigma e^{\theta t}dB_t$$
+
+Integrating:
+
+$$e^{\theta t}X_t=x_0+\sigma\int_0^te^{\theta s}dB_s$$
+
+so
+
+$$X_t=x_0e^{-\theta t}+\sigma\int_0^te^{-\theta(t-s)}dB_s$$
+
+Expectation: the Itô integral has zero mean,
+
+$$E[X_t]=x_0e^{-\theta t}\to0$$
+
+Variance: by the Itô isometry,
+
+$$\operatorname{Var}(X_t)=\sigma^2E\left[\left(\int_0^te^{-\theta(t-s)}dB_s\right)^2\right]=\sigma^2\int_0^te^{-2\theta(t-s)}ds$$
+
+$$=\sigma^2\left[\frac{e^{-2\theta(t-s)}}{2\theta}\right]_{s=0}^{s=t}=\frac{\sigma^2}{2\theta}\left(1-e^{-2\theta t}\right)$$
+
+As $t\to\infty$ the mean tends to $0$ and the variance to $\dfrac{\sigma^2}{2\theta}$. Since $X_t$ is Gaussian (a deterministic function plus an Itô integral with a deterministic integrand), the limiting distribution is
+
+$$X_\infty\sim N\left(0,\frac{\sigma^2}{2\theta}\right)$$
+
+> Comment: the OU process is "Brownian motion with reversion": the larger $\theta$, the faster the reversion and the smaller the stationary variance. It is also the solution of the Vasicek interest rate model and of the Langevin equation. Note that the exponent of the integrating factor is $+\theta t$ while that of the solution is $-\theta t$; in the variance integral the exponent is $-2\theta(t-s)$, so do not lose the factor $2$.
+
+### Example 4 (Advanced: the Black–Scholes equation)
+
+Problem: let the stock price be $dS_t=\mu S_tdt+\sigma S_tdB_t$ and the option price $V(t,S_t)$ be smooth. Construct a riskless portfolio and derive the PDE satisfied by $V$.
+
+Approach: write $dV$ with Itô's lemma, then hedge away the $dB$ term with $\Delta=V_S$ shares of the stock.
+
+Solution: by Itô's lemma,
+
+$$dV=\left(V_t+\mu SV_S+\frac12\sigma^2S^2V_{SS}\right)dt+\sigma SV_S\,dB$$
+
+Construct the portfolio $\Pi=V-\Delta S$ with $\Delta=V_S$ (adjusted continuously). Then
+
+$$d\Pi=dV-V_S\,dS$$
+
+$$=\left(V_t+\mu SV_S+\frac12\sigma^2S^2V_{SS}\right)dt+\sigma SV_SdB-V_S\big(\mu Sdt+\sigma SdB\big)$$
+
+The $dB$ terms cancel, and so do the $\mu SV_S$ terms:
+
+$$d\Pi=\left(V_t+\frac12\sigma^2S^2V_{SS}\right)dt$$
+
+The portfolio is instantaneously riskless, so by no arbitrage it must earn the risk-free rate $r$:
+
+$$d\Pi=r\Pi\,dt=r(V-SV_S)\,dt$$
+
+Comparing the two expressions:
+
+$$V_t+\frac12\sigma^2S^2V_{SS}=r(V-SV_S)$$
+
+Rearranging gives the Black–Scholes equation
+
+$$\frac{\partial V}{\partial t}+\frac12\sigma^2S^2\frac{\partial^2V}{\partial S^2}+rS\frac{\partial V}{\partial S}-rV=0$$
+
+> Comment: the key to the derivation is "eliminating $dB$" and "eliminating $\mu$". The former uses the $\Delta$ hedge, and the latter is an algebraic consequence of Itô's lemma—which is why the option price does not depend on the stock's expected return $\mu$ but only on the volatility $\sigma$ and the risk-free rate $r$. The equation is parabolic and needs a terminal condition (such as $V(T,S)=(S-K)^+$ for a European call) and boundary conditions to be well posed.
+
+## VI. Common Errors and Pitfalls
+
+1. **Omitting the Itô correction**: wrong—using the ordinary chain rule $df=f'dX$. Why wrong—$(dX)^2$ contains $\sigma^2dt$ and cannot be neglected. Right—$df=f_tdt+f_xdX+\frac12f_{xx}(dX)^2$.
+2. **Treating $(dB)^2$ as zero**: wrong—discarding second-order terms in expansions. Why wrong—$dB\sim\sqrt{dt}$, so its square is of order $dt$, the same order as the first-order terms. Right—remember the multiplication rules $dB\cdot dB=dt$, $dt\cdot dB=0$, $dt\cdot dt=0$.
+3. **Mixing Itô and Stratonovich**: wrong—computing with Itô's formula and then interpreting the result in the Stratonovich sense, or vice versa. Why wrong—the two differ by $\frac12$ times the quadratic covariation, giving different numbers. Right—declare which integral is used and stay consistent.
+4. **Evaluating the integral at the right endpoint**: wrong—using $H_{t_{i+1}}$. Why wrong—it introduces future information and destroys the martingale property and the isometry. Right—the Itô integral uses the left endpoint.
+5. **Getting the drift of geometric Brownian motion wrong**: wrong—writing $S_t=S_0e^{\mu t+\sigma B_t}$. Why wrong—the $-\sigma^2/2$ correction is missing. Right—$S_t=S_0\exp((\mu-\sigma^2/2)t+\sigma B_t)$.
+6. **Computing the expectation of an Itô integral wrongly**: wrong—believing $E[\int HdB]\ne0$. Why wrong—under $E\int H^2dt<\infty$ it is a martingale with zero mean. Right—use the isometry or the martingale property.
+7. **Losing the factor 2 in the OU variance**: wrong—writing $\sigma^2(1-e^{-\theta t})/\theta$. Why wrong—the integrand is $e^{-2\theta(t-s)}$, whose integral gives a denominator $2\theta$. Right—$\sigma^2(1-e^{-2\theta t})/(2\theta)$.
+
+## VII. Summary and Mnemonics
+
+Key points:
+
+- Brownian paths are non-differentiable and ordinary calculus fails; the Itô integral is defined at the left endpoint, ensuring non-anticipativity and the martingale property.
+- The core identity $(dB_t)^2=dt$, i.e. the quadratic variation $[B]_t=t$; the multiplication rules $dt\cdot dB=0$, $dt\cdot dt=0$.
+- Itô isometry: $E[(\int HdB)^2]=E\int H^2dt$; the Itô integral is a martingale.
+- Itô's lemma: $df=f_tdt+f_xdX+\frac12f_{xx}\sigma^2dt$, with a second-order correction beyond the ordinary chain rule.
+- Geometric Brownian motion: $S_t=S_0\exp((\mu-\sigma^2/2)t+\sigma B_t)$ and $E[S_t]=S_0e^{\mu t}$.
+- OU process: the mean reverts exponentially and the stationary variance is $\sigma^2/(2\theta)$.
+- The Black–Scholes equation follows from "eliminating $dB$ by $\Delta$ hedging" and does not depend on $\mu$.
+
+**Mnemonic: Itô evaluates on the left; dB squared equals dt; the lemma adds a second-order term; option pricing is born from it.**
+
+`,
+  },
 };
 
 export default map;

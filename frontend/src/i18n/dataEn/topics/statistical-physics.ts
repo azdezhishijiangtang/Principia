@@ -508,7 +508,7 @@ $$\bar a_l = \frac{\omega_l}{e^{\alpha+\beta\varepsilon_l} \mp 1}$$
 
 with $-1$ in the denominator for Bose–Einstein and $+1$ for Fermi–Dirac. Rewriting with $\alpha = -\mu/kT$, $\beta = 1/kT$, the mean occupation of a one-particle state (the occupation function) is
 
-$$\bar n(\varepsilon) = \frac{1}{e^{(\varepsilon-\mu)/kT} - 1}\quad(\text{Bose})，\qquad \bar n(\varepsilon) = \frac{1}{e^{(\varepsilon-\mu)/kT} + 1}\quad(\text{Fermi})$$
+$$\bar n(\varepsilon) = \frac{1}{e^{(\varepsilon-\mu)/kT} - 1}\quad(\text{Bose}),\qquad \bar n(\varepsilon) = \frac{1}{e^{(\varepsilon-\mu)/kT} + 1}\quad(\text{Fermi})$$
 
 where $\mu$ is the chemical potential; for a Bose system $\mu$ must not exceed the lowest one-particle level (otherwise the denominator is zero or negative and the distribution is meaningless).
 

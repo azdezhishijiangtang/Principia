@@ -29,7 +29,17 @@ export function localizeProblem(p: Problem): Problem {
 export function localizeFormulaGroup(g: FormulaGroup): FormulaGroup {
   if (!isEn()) return g;
   const e = formulaGroupEn[g.id];
-  return e ? { ...g, ...e } : g;
+  if (!e) return g;
+  const merged: FormulaGroup = { ...g, ...e };
+  // formulas 覆盖数组只含 name/group/note，按 id 与中文源逐条合并，latex 始终取自源数据
+  if (e.formulas) {
+    const patch = new Map(e.formulas.map((f) => [f.id, f]));
+    merged.formulas = g.formulas.map((f) => {
+      const p = patch.get(f.id);
+      return p ? { ...f, ...p } : f;
+    });
+  }
+  return merged;
 }
 
 // ── 语言感知的数据访问 hooks（消费 LocaleContext，语言切换时自动重渲染）──

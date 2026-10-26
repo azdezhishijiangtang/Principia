@@ -493,7 +493,7 @@ Comment: The trap here is the sign: the fundamental solutions of $\Delta u = f$ 
 
 2. **Forgetting the boundary correction $H$.** Writing $G = \Phi$ and thinking the job is done. The fundamental solution is generally nonzero on the boundary; a harmonic correction must be added so that $G|_{\partial\Omega} = 0$, otherwise the representation formula loses the boundary data or couples in unknown quantities.
 
-3. **Reversing the pieces of the one-dimensional Green's function.** Mixing up the ranges of $\dfrac{x(L-\xi)}{L}$ and $\dfrac{\xi(L-x)}{L}$. Memory aid: $x$ and $\xi$ are symmetric, each piece is "the smaller times ($L$ minus the larger)" divided by $L$, and the two expressions agree (are continuous) at $x = \xi$.
+3. **Reversing the pieces of the one-dimensional Green's function.** Mixing up the ranges of $\dfrac{x(L-\xi)}{L}$ and $\dfrac{\xi(L-x)}{L}$. Memory aid: $x$ and $\xi$ are symmetric, each piece is "the smaller $\times$ ($L$ minus the larger)" divided by $L$, and the two expressions agree (are continuous) at $x = \xi$.
 
 4. **Treating the Green's function as harmonic everywhere in the domain.** It has a singularity at the source and is harmonic only in the domain with the source removed. When verifying harmonicity, say "away from the source point".
 
@@ -605,7 +605,7 @@ Complete the square: $\dfrac{(x-\xi)^2}{4a^2 t} + \xi^2 = \dfrac{\big(\xi - \fra
 
 $$u(x,t) = \frac{1}{2a\sqrt{\pi t}} \cdot e^{-\frac{x^2}{1 + 4a^2 t}} \cdot \frac{2a\sqrt{t}}{\sqrt{1 + 4a^2 t}}\cdot\sqrt{\pi} = \sqrt{\frac{1}{1 + 4a^2 t}}\,e^{-\frac{x^2}{1 + 4a^2 t}}$$
 
-Check $t = 0$: $u(x,0) = e^{-x^2}$ ✓. Long-time behaviour: the $1 + 4a^2 t$ in the exponent tends to $\infty$, so $u \to 0$ (the total heat over all space, $\displaystyle\int u\,dx = \sqrt{\pi}$, is conserved, but it is spread over an ever wider region and the peak tends to zero).
+Check $t = 0$: $u(x,0) = e^{-x^2}$ ✓. Long-time behaviour: the $1 + 4a^2 t \to \infty$ in the exponent, so $u \to 0$ (the total heat over all space, $\displaystyle\int u\,dx = \sqrt{\pi}$, is conserved, but it is spread over an ever wider region and the peak tends to zero).
 
 Comment: A Gaussian convolved with a Gaussian is still a Gaussian, and the variances add (here $1/2$ and $2a^2 t$). This explains the "spreading" of the heat kernel: the variance of the solution = variance of the initial data + $2a^2 t$, growing linearly in time, with standard deviation growing like $\sqrt{t}$.
 
@@ -792,7 +792,7 @@ Comment: When the initial velocity is zero the formula reduces to the two $\varp
 
 Problem: Semi-infinite string $x > 0$, $u_{tt} = u_{xx}$, fixed end $u(0,t) = 0$, initial values $u(x,0) = x^2$ ($x \ge 0$), $u_t(x,0) = 0$. Solve.
 
-Analysis: Fixed end ⇒ odd extension: $\varphi_{\text{odd}}(s) = s^2$ for $s \ge 0$ and $-s^2$ for $s < 0$. Then apply the whole-line formula.
+Analysis: Fixed end ⇒ odd extension: $\varphi_{\text{odd}}(s) = s^2$ for $s \ge 0$ and $\varphi_{\text{odd}}(s) = -s^2$ for $s < 0$. Then apply the whole-line formula.
 
 Solution: $u(x,t) = \dfrac{1}{2}\big[\varphi_{\text{odd}}(x - t) + \varphi_{\text{odd}}(x + t)\big]$. For $x > 0$ there are two cases:
 
@@ -828,7 +828,7 @@ $$v(r,t) = \frac{1}{2}\big[(r - at)\varphi(r - at) + (r + at)\varphi(r + at)\big
 
 Then substitute back $u = v/r$. For a concentrated initial disturbance near the origin ($\varphi, \psi$ supported in a small interval) the solution consists of two terms: the **incoming wave** $\dfrac{(r - at)\varphi(r - at)}{2r}$ and the **outgoing wave** $\dfrac{(r + at)\varphi(r + at)}{2r}$. The outgoing wave decays like $1/r$ (spherical geometry spreads the energy) and expands outward at speed $a$; at the radius $r = at$ it forms a sharp **spherical wavefront** — this is precisely Huygens' principle: waves in three-dimensional space "pass without lingering", and after the front has gone the scene returns to calm. Two dimensions are different (the solution carries a logarithmic tail), and a "reverberation" is left behind the wave.
 
-Comment: The substitution $v = ru$ is a model of dimensional reduction: it turns the three-dimensional radial equation with its $\dfrac{2}{r}$ term into a standard one-dimensional form. The sharp wavefront of Huygens' principle is a privilege of three dimensions, and it is why "sound" (three-dimensional acoustic waves) is much crisper than "ripples" (two-dimensional surface waves). A common error is forgetting to convert the solution for $v$ back to the solution for $u$.
+Comment: The substitution $v = ru$ is a model of dimensional reduction: it turns the three-dimensional radial equation with its $\dfrac{2}{r}$ term into a standard one-dimensional form. The sharp wavefront of Huygens' principle is a privilege of three dimensions, and it is why "sound" (three-dimensional acoustic waves) is much crisper than "ripples" (two-dimensional surface waves). A common error is forgetting to convert the solution for $v$ back to $r$ and obtain $u$.
 
 ## 6. Common Mistakes and Pitfalls
 
@@ -947,7 +947,7 @@ For a general point $(r,\theta)$, use Poisson's formula:
 
 $$u(r,\theta) = \frac{1}{2\pi}\int_0^{2\pi} \frac{1 - r^2}{1 - 2r\cos(\theta-\varphi) + r^2}\cos\varphi\,d\varphi$$
 
-Taking $\theta = 0$, the kernel is even about $\varphi = 0$ and $\cos\varphi$ is even too, so $u(r,0) = r\cos 0 = r$. Check: $u = \operatorname{Re}(z) = x$ is plainly harmonic in the unit disk and equals $\cos\theta$ on the boundary, so by uniqueness this is the solution. Hence $u(1/2, 0) = 1/2$.
+Taking $\theta = 0$, the kernel is even about $\varphi = 0$ and $\cos\varphi$ is even too, so $u(r,0) = r\cos 0 = r$. Check: $u = \operatorname{Re}(z) = x$ is plainly harmonic in the unit disk and equals $x = \cos\theta$ on the boundary, so by uniqueness this is the solution. Hence $u(1/2, 0) = 1/2$.
 
 Comment: This problem shows the usual "guess then verify" pattern: observe that the boundary value $\cos\theta$ is exactly the boundary value of the harmonic function $\operatorname{Re}(z)$, and uniqueness gives the interior solution immediately. The mean value property gives a quick computation at the centre.
 
