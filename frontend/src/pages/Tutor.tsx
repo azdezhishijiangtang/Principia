@@ -23,7 +23,7 @@ import { FadeIn } from '@/components/MotionPrimitives';
 import AiSettingsCard from '@/components/AiSettingsCard';
 import DocLibraryPanel from '@/components/DocLibraryPanel';
 import { useAuth } from '@/lib/AuthContext';
-import { readAiConfig, saveAiConfig } from '@/lib/ai';
+import { readAiConfig, saveAiConfig, THINKING_LABELS } from '@/lib/ai';
 import {
   getCatalog,
   describeCatalogAge,
@@ -271,11 +271,11 @@ const Tutor = () => {
                         {m.mode && (
                           <span
                             className={`text-[10px] px-1.5 py-0.5 ${
-                              m.mode === 'deep' ? 'bg-warning/15 text-warning' : 'bg-info/10 text-info'
+                              m.mode === 'medium' || m.mode === 'high' ? 'bg-warning/15 text-warning' : 'bg-info/10 text-info'
                             }`}
                           >
                             {m.auto && '自动·'}
-                            {m.mode === 'deep' ? '深度思考' : '快速回答'}
+                            {`思考 · ${THINKING_LABELS[m.mode]}`}
                           </span>
                         )}
                         {m.multiPath && (

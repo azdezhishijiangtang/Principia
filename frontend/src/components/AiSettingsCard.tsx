@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { KeyRound, Check, Eye, EyeOff, AlertCircle, Save, Trash2, Zap, Brain, Sparkles, RefreshCw, ListTree, CloudDownload, Database } from 'lucide-react';
+import { KeyRound, Check, Eye, EyeOff, AlertCircle, Save, Trash2, Zap, Sparkles, RefreshCw, ListTree, CloudDownload, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,8 @@ import {
   getActiveProfile,
   setActiveProfile,
   thinkingModePref,
+  THINKING_LEVELS,
+  THINKING_LABELS,
   readAutoModel,
   writeAutoModel,
   readSelfCheck,
@@ -50,7 +52,7 @@ const emptyForm = (): AiProfile => ({
   baseUrl: AI_PRESETS[0].baseUrl,
   apiKey: '',
   model: AI_PRESETS[0].model,
-  thinkingMode: 'quick',
+  reasoningEffort: 'off',
 });
 
 /**
@@ -78,7 +80,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const [selfCheck, setSelfCheck] = useState<boolean>(() => readSelfCheck());
   /** 智能容错开关（全局，默认开启）：失败时自动切换其他模型重试 */
   const [fallback, setFallback] = useState<boolean>(() => readFallback());
-  /** 多路径自洽开关（全局，默认关闭）：深度/难题时并发生成多条思路再仲裁 */
+  /** 多路径自洽开关（全局，默认关闭）：中高强度/难题时并发生成多条思路再仲裁 */
   const [multiPath, setMultiPath] = useState<boolean>(() => readMultiPath());
   /** 多路径并发求解路数（2/3/4，默认 3） */
   const [multiPathCount, setMultiPathCount] = useState<number>(() => readMultiPathCount());
@@ -178,8 +180,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
       baseUrl: form.baseUrl.trim(),
       apiKey: form.apiKey.trim(),
       model: form.model.trim(),
-      // 统一按新字段保存：旧存档的 reasoningEffort 会被解析成 thinkingMode
-      thinkingMode: form.thinkingMode ?? thinkingModePref(form),
+      reasoningEffort: thinkingModePref(form),
     };
     saveAiProfile(slot, next);
     setProfiles(readAiProfiles());
@@ -415,43 +416,42 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
       </div>
 
       <div className="space-y-2">
-        <Label>思考模式（手动选择）</Label>
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => setForm((f) => ({ ...f, thinkingMode: 'quick' }))}
-            aria-pressed={mode === 'quick'}
-            className={`border px-2 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
-              mode === 'quick' ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
-            }`}
-          >
-            <span className="flex items-center gap-1 text-sm font-medium">
-              <Zap className="h-3.5 w-3.5" />
-              快速回答
-            </span>
-            <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">
-              直接给答案，不展示思考过程
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setForm((f) => ({ ...f, thinkingMode: 'deep' }))}
-            aria-pressed={mode === 'deep'}
-            className={`border px-2 py-2 text-left transition-colors duration-[var(--duration-fast)] ${
-              mode === 'deep' ? 'border-info bg-info/10' : 'border-input hover:border-info/50'
-            }`}
-          >
-            <span className="flex items-center gap-1 text-sm font-medium">
-              <Brain className="h-3.5 w-3.5" />
-              深度思考
-            </span>
-            <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">
-              先思考再作答，展示过程
-            </span>
-          </button>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="thinking-intensity">思考强度</Label>
+          <span className="text-xs font-medium text-info">{THINKING_LABELS[mode]}</span>
+        </div>
+        <div className="border border-input bg-muted/20 px-3 py-3 space-y-2">
+          <input
+            id="thinking-intensity"
+            type="range"
+            min={0}
+            max={3}
+            step={1}
+            value={THINKING_LEVELS.indexOf(mode)}
+            aria-valuetext={THINKING_LABELS[mode]}
+            aria-describedby="thinking-intensity-help"
+            onChange={(e) => setForm((f) => ({ ...f, reasoningEffort: THINKING_LEVELS[Number(e.target.value)] }))}
+            className="w-full cursor-pointer accent-[var(--info)]"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            {THINKING_LEVELS.map((level) => (
+              <button
+                key={level}
+                type="button"
+                aria-pressed={mode === level}
+                onClick={() => setForm((f) => ({ ...f, reasoningEffort: level }))}
+                className={`min-h-8 min-w-8 rounded px-1 focus-visible:outline-2 focus-visible:outline-ring ${mode === level ? 'font-semibold text-info' : 'hover:text-foreground'}`}
+              >
+                {THINKING_LABELS[level]}
+              </button>
+            ))}
+          </div>
+          <p id="thinking-intensity-help" className="text-[11px] leading-relaxed text-muted-foreground">
+            {{ off: '不启用额外推理，直接给出结论和关键步骤。', low: '少量推理，适合概念理解与简单练习。', medium: '平衡推理深度与响应速度，适合日常解题。', high: '分配更多推理预算，适合复杂计算、证明与综合题。' }[mode]}
+          </p>
         </div>
         <p className="text-[11px] text-muted-foreground">
-          思考模式始终由你手动选择，系统不会自动切换；「智能」只用于下面的模型选择。
+          保存后生效，系统不会自动改变档位。强度越高通常耗时、用量越多；实际支持程度取决于模型，仅支持开关的接口会将低/中/高均映射为开启。
         </p>
       </div>
 
@@ -574,7 +574,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               多路径自洽（Self-Consistency）
             </span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
-              深度思考或难题时，并发生成多条独立思路，再由模型仲裁取最可靠答案——数学题正确率提升最明显。
+              中高强度思考或难题时，并发生成多条独立思路，再由模型仲裁取最可靠答案——数学题正确率提升最明显。
             </span>
           </span>
           <span
@@ -614,7 +614,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
         )}
         {multiPath && (
           <p className="text-[11px] text-muted-foreground">
-            仅在「深度思考」模式或识别为难题（证明/计算/推导等）时生效；快速回答与简单概念题自动跳过，不额外消耗算力。
+            仅在中高强度思考或识别为难题（证明/计算/推导等）时生效；关闭或低强度且为简单题时自动跳过，不额外消耗算力。
           </p>
         )}
 
@@ -706,7 +706,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               RAG 检索增强 · 难题专精
             </span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
-              深度思考或难题时，额外加强文档检索（召回更多相关段落）并强制依据资料作答、逐条注明出处，把权威资料用足。
+              中高强度思考或难题时，额外加强文档检索（召回更多相关段落）并强制依据资料作答、逐条注明出处，把权威资料用足。
             </span>
           </span>
           <span
@@ -719,7 +719,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
         </button>
         {ragBoost && (
           <p className="text-[11px] text-muted-foreground">
-            仅在「深度思考」模式或识别为难题时生效（检索召回 4 → 8 段）；快速回答与简单概念题自动跳过，不额外消耗 token。
+            仅在中高强度思考或识别为难题时生效（检索召回 4 → 8 段）；关闭或低强度且为简单题时自动跳过，不额外消耗 token。
           </p>
         )}
       </div>

@@ -5,10 +5,10 @@
 
 /** AI 服务配置 */
 export interface AiConfig {
-  /** 思考模式：quick 快速回答；deep 深度思考。始终由用户手动选择，系统不自动切换 */
+  /** @deprecated 兼容旧版二选一模式，新设置使用 reasoningEffort */
   thinkingMode?: 'quick' | 'deep';
-  /** @deprecated 旧版「推理强度」字段，仅用于读取历史存档后迁移到 thinkingMode */
-  reasoningEffort?: 'off' | 'low' | 'medium' | 'high';
+  /** 用户手动选择的思考强度 */
+  reasoningEffort?: ThinkingMode;
   /** 接口基础地址，如 https://api.deepseek.com/v1 */
   baseUrl: string;
   apiKey: string;
@@ -16,20 +16,18 @@ export interface AiConfig {
   model: string;
 }
 
-/** 运行时真正生效的思考模式（不含自动） */
-export type ThinkingMode = 'quick' | 'deep';
+/** 思考强度档位，不随智能模型路由自动改变 */
+export type ThinkingMode = 'off' | 'low' | 'medium' | 'high';
+export const THINKING_LEVELS = ['off', 'low', 'medium', 'high'] as const;
+export const THINKING_LABELS: Record<ThinkingMode, string> = {
+  off: '关闭', low: '低', medium: '中', high: '高',
+};
 
-/** 思考模式：quick 快速回答；deep 深度思考（手动选择，无自动档） */
-export type ThinkingModePref = 'quick' | 'deep';
-
-/**
- * 解析用户设置的思考偏好（用于设置卡片展示，可能含 auto）。
- * 兼容旧存档：历史存的是推理强度 reasoningEffort，
- * 这里把 medium/high 视为深度思考，其余视为快速回答。
- */
-export const thinkingModePref = (cfg: AiConfig): ThinkingModePref =>
-  (cfg.thinkingMode ??
-    (cfg.reasoningEffort === 'medium' || cfg.reasoningEffort === 'high' ? 'deep' : 'quick')) as ThinkingModePref;
+/** 优先使用强度字段；旧版快速/深度分别迁移为关闭/高。 */
+export const thinkingModePref = (cfg: AiConfig): ThinkingMode =>
+  THINKING_LEVELS.includes(cfg.reasoningEffort as ThinkingMode)
+    ? cfg.reasoningEffort!
+    : cfg.thinkingMode === 'deep' ? 'high' : 'off';
 
 /**
  * 按题目难度把「自动」偏好解析为具体模式——这是「在手动之上加智能」的核心：
@@ -61,15 +59,17 @@ export const classifyDifficulty = (query: string): 'easy' | 'hard' => {
 };
 
 /**
- * 解析真正生效的思考模式。思考模式由用户手动选择（quick/deep），不存在自动档；
+ * 解析真正生效的思考强度，由用户手动选择，不存在自动档；
  * 自动只用于「模型选择」（见 readAutoModel / pickAutoProfile）。
  */
 export const resolveThinkingMode = (cfg: AiConfig): ThinkingMode => thinkingModePref(cfg);
 
 /** 各模式的输出预算与采样温度：快速回答更短更聚焦，深度思考给足推理空间 */
 const MODE_PLAN = {
-  quick: { maxTokens: 2048, temperature: 0.3, thinkingBudget: 512 },
-  deep: { maxTokens: 16384, temperature: 0.2, thinkingBudget: 8192 },
+  off: { maxTokens: 2048, temperature: 0.3, thinkingBudget: 0 },
+  low: { maxTokens: 4096, temperature: 0.3, thinkingBudget: 1024 },
+  medium: { maxTokens: 8192, temperature: 0.25, thinkingBudget: 4096 },
+  high: { maxTokens: 16384, temperature: 0.2, thinkingBudget: 8192 },
 } as const;
 
 /**
@@ -81,8 +81,10 @@ const MODE_PLAN = {
  * 保证「快速 / 深度」的差异一定可感知。
  */
 const MODE_GUIDANCE = {
-  quick: '作答方式：快速回答。直接给出结论与关键步骤，不展开思考过程、不做多角度比较，力求简洁准确、直奔答案。',
-  deep: '作答方式：深度思考。先充分分析（枚举可能思路并比较、识别关键条件与易错陷阱），再严格分步推导，最后给出结论；回答可以详尽，但不要堆砌废话。',
+  off: '思考强度：关闭。直接给出结论与必要的关键步骤，简洁准确，不展开冗长分析。',
+  low: '思考强度：低。简要核对关键条件，给出结论和精炼的解题步骤，优先保证响应效率。',
+  medium: '思考强度：中。认真核对条件和计算，提供清晰、适度详细的推导与结论，兼顾准确性和效率。',
+  high: '思考强度：高。充分核验关键条件、计算和易错点，提供严谨的分步解答与必要的验证；复杂问题可比较解法，但避免冗余。',
 } as const;
 
 /** 取某模式应追加到系统提示词的作答要求 */
@@ -99,7 +101,7 @@ const thinkingParams = (
 ): Record<string, unknown> => {
   const url = baseUrl.toLowerCase();
   const m = model.toLowerCase();
-  const on = mode === 'deep';
+  const on = mode !== 'off';
   // 通义千问（阿里云百炼）：enable_thinking + thinking_budget
   if (url.includes('dashscope') || m.startsWith('qwen')) {
     return { enable_thinking: on, thinking_budget: MODE_PLAN[mode].thinkingBudget };
@@ -125,7 +127,7 @@ const thinkingParams = (
     }
   }
   // OpenAI 系：深度思考用 reasoning_effort=high；快速回答不发送该参数
-  return on ? { reasoning_effort: 'high' } : {};
+  return on ? { reasoning_effort: mode } : {};
 };
 
 /** 常用服务商预设（均为 OpenAI 兼容协议） */
@@ -278,7 +280,7 @@ export const setActiveProfile = (index: number): void => {
 export const readAiConfig = (): AiConfig | null => {
   try {
     const p = readAiProfiles()[getActiveProfile()];
-    if (isValid(p)) return { baseUrl: p.baseUrl, apiKey: p.apiKey, model: p.model, reasoningEffort: p.reasoningEffort };
+    if (isValid(p)) return { baseUrl: p.baseUrl, apiKey: p.apiKey, model: p.model, reasoningEffort: thinkingModePref(p) };
     const raw = localStorage.getItem(CONFIG_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as AiConfig;
@@ -292,7 +294,7 @@ export const readAiConfig = (): AiConfig | null => {
 /** 读取指定存档序号的配置（未配置或序号越界返回 null） */
 export const readProfileConfig = (index: number): AiConfig | null => {
   const p = readAiProfiles()[index];
-  if (isValid(p)) return { baseUrl: p.baseUrl, apiKey: p.apiKey, model: p.model, reasoningEffort: p.reasoningEffort };
+  if (isValid(p)) return { baseUrl: p.baseUrl, apiKey: p.apiKey, model: p.model, reasoningEffort: thinkingModePref(p) };
   return null;
 };
 

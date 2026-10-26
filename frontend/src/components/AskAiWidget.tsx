@@ -24,7 +24,7 @@ import { Button } from '@/components/ui/button';
 import MathText from '@/components/MathText';
 import { useAuth } from '@/lib/AuthContext';
 import { InlineMathText } from '@/components/MathText';
-import { readAiConfig } from '@/lib/ai';
+import { readAiConfig, THINKING_LABELS } from '@/lib/ai';
 import { useTutorChat, QUICK_FOLLOWUPS } from '@/lib/useTutorChat';
 import { useUserDocs } from '@/lib/docLibrary';
 
@@ -175,11 +175,11 @@ const AskAiWidget = () => {
                         {m.mode && (
                           <span
                             className={`text-[10px] px-1.5 py-0.5 ${
-                              m.mode === 'deep' ? 'bg-warning/15 text-warning' : 'bg-info/10 text-info'
+                              m.mode === 'medium' || m.mode === 'high' ? 'bg-warning/15 text-warning' : 'bg-info/10 text-info'
                             }`}
                           >
                             {m.auto && '自动·'}
-                            {m.mode === 'deep' ? '深度思考' : '快速回答'}
+                            {`思考 · ${THINKING_LABELS[m.mode]}`}
                           </span>
                         )}
                         {m.multiPath && (

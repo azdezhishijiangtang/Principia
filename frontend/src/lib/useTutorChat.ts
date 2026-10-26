@@ -35,6 +35,7 @@ import {
   type ChatMessage,
   type AiConfig,
   type AiProfile,
+  type ThinkingMode,
 } from '@/lib/ai';
 import { addQaEntry, type QaSource } from '@/lib/qaHistory';
 import { retrieveChunks } from '@/lib/docLibrary';
@@ -51,8 +52,8 @@ export interface TutorMessage {
   sources?: QaSource[];
   /** 接入的模型名（assistant 消息） */
   model?: string;
-  /** 本次回答实际采用的思考模式（quick/deep），由用户手动选择 */
-  mode?: 'quick' | 'deep';
+  /** 本次回答实际采用的思考强度，由用户手动选择 */
+  mode?: ThinkingMode;
   /** 本次是否由「智能选模型」自动挑了模型（仅模型层面，思考模式始终手动） */
   auto?: boolean;
   /** 智能自检的复核结果（assistant 消息） */
@@ -168,13 +169,12 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       if (autoModelOn) {
         const idx = pickAutoProfile(trimmed, readAiProfiles());
         const picked = idx >= 0 ? readProfileConfig(idx) : null;
-        if (picked) effectiveCfg = picked;
+        if (picked) effectiveCfg = { ...picked, reasoningEffort: resolveThinkingMode(cfg) };
       }
 
-      // ── 思考模式：把「快速回答 / 深度思考」的作答要求写进系统提示词 ──
-      // 思考模式由用户手动选择（quick/deep），不自动切换；自动只用于「智能选模型」。
-      // 这样即便接入的服务商不支持思考参数，两种模式的差异也一定可感知。
+      // 思考强度由用户手动选择；自动路由只更换模型，不改变用户档位。
       const effMode = resolveThinkingMode(effectiveCfg);
+      const intensive = effMode === 'medium' || effMode === 'high';
       const autoUsed = autoModelOn; // auto 仅表示本次由「智能选模型」自动挑了模型
       const modeGuidance = getModeGuidance(effMode);
       const systemPrompt = `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}`;
@@ -201,7 +201,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
         try {
           // RAG 难题专精：深度思考/难题时召回更多段落，把权威资料用足（topK 4 → 8）
           const ragBoostOn = readRagBoost();
-          const hardQ = effMode === 'deep' || classifyDifficulty(trimmed) === 'hard';
+          const hardQ = intensive || classifyDifficulty(trimmed) === 'hard';
           const topK = ragBoostOn && hardQ ? RAG_BOOST_TOPK : 4;
           const hits = await retrieveChunks(userId, trimmed, topK);
           if (hits.length > 0) {
@@ -276,7 +276,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       );
       const candidates: AiConfig[] = [effectiveCfg];
       for (const p of allValid) {
-        const c = { baseUrl: p.baseUrl, apiKey: p.apiKey, model: p.model } as AiConfig;
+        const c: AiConfig = { baseUrl: p.baseUrl, apiKey: p.apiKey, model: p.model, reasoningEffort: effMode };
         if (c.baseUrl !== effectiveCfg.baseUrl || c.model !== effectiveCfg.model) candidates.push(c);
       }
 
@@ -332,7 +332,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       // 多路径自洽（仅深度思考 / 难题时）：并发 K 路独立求解 → 仲裁合成
       const multiPathOn = readMultiPath();
       const linkOn = readLink();
-      const doMulti = multiPathOn && (effMode === 'deep' || classifyDifficulty(trimmed) === 'hard');
+      const doMulti = multiPathOn && (intensive || classifyDifficulty(trimmed) === 'hard');
       let didMulti = false;
       /** 多路径+交叉验证联动：本次是否由独立第二模型仲裁（兼得多路多样性与第三方公正性） */
       let linkUsed = false;
@@ -360,7 +360,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
             let synthCfg = effectiveCfg;
             const second = allValid.find((p) => p.baseUrl !== effectiveCfg.baseUrl || p.model !== effectiveCfg.model);
             if (linkOn && second) {
-              synthCfg = { baseUrl: second.baseUrl, apiKey: second.apiKey, model: second.model };
+              synthCfg = { baseUrl: second.baseUrl, apiKey: second.apiKey, model: second.model, reasoningEffort: effMode };
               linkUsed = true;
               linkModelName = second.model;
             }
@@ -441,7 +441,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       if (crossOn && acc.trim()) {
         const second = allValid.find((p) => p.baseUrl !== usedCfg.baseUrl || p.model !== usedCfg.model);
         if (second) {
-          const secondCfg: AiConfig = { baseUrl: second.baseUrl, apiKey: second.apiKey, model: second.model };
+          const secondCfg: AiConfig = { baseUrl: second.baseUrl, apiKey: second.apiKey, model: second.model, reasoningEffort: effMode };
           try {
             const secondSystem = `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${CROSS_CHECK_SOLVE_PROMPT}`;
             const secondHistory: ChatMessage[] = [{ role: 'system', content: secondSystem }, ...history.slice(1)];
