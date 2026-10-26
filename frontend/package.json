@@ -9,7 +9,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "start": "node server.mjs",
-    "serve": "node server.mjs"
+    "serve": "node server.mjs",
+    "deploy": "node scripts/deploy.mjs",
+    "deploy:edgeone": "node scripts/deploy-edgeone.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

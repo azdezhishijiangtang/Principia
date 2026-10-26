@@ -194,7 +194,21 @@ const main = async () => {
   const frontendTree = await treeFromEntries(entriesOf('frontend'));
   const docsTree = await treeFromEntries(entriesOf('docs'));
 
+  /**
+   * 保留根目录下由 git 直接维护的其他条目（如 .github/workflows、.vscode）。
+   * 否则每次部署都会用「只有 .gitignore / frontend / docs」的根树覆盖远程，
+   * 把 CI 流水线、编辑器配置等一并删掉。
+   */
+  const MANAGED = new Set(['.gitignore', 'frontend', 'docs']);
+  const preserved = rootTree.tree
+    .filter((e) => !MANAGED.has(e.path))
+    .map((e) => ({ path: e.path, mode: e.mode, type: e.type, sha: e.sha }));
+  if (preserved.length > 0) {
+    console.log('保留根目录条目:', preserved.map((e) => e.path).join(', '));
+  }
+
   const newRoot = [
+    ...preserved,
     { path: '.gitignore', mode: '100644', type: 'blob', sha: blobs.get('root\u0000.gitignore') },
     { path: 'frontend', mode: '040000', type: 'tree', sha: frontendTree },
     { path: 'docs', mode: '040000', type: 'tree', sha: docsTree },
