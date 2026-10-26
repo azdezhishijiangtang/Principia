@@ -26,7 +26,7 @@ export const renderMath = (latex: string, displayMode = false): string => {
  * 只认 $ 定界符；不转换就会整段显示为"乱码"源码。
  * (?<!\\) 负向断言避免误伤 \\[2pt] 这类换行间距命令。
  */
-const normalizeMathDelimiters = (text: string): string =>
+export const normalizeMathDelimiters = (text: string): string =>
   text
     .replace(/(?<!\\)\\\[((?:.|\n)+?)\\\]/g, (_m, inner: string) => `\n\n$$${inner}$$\n\n`)
     .replace(/(?<!\\)\\\(((?:.|\n)+?)\\\)/g, (_m, inner: string) => `$${inner}$`);

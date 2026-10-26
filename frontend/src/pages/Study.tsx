@@ -65,6 +65,7 @@ import {
   type StudySummary,
 } from '@/lib/summaryArchive';
 import { elementToPdfBlob, elementsToMergedPdfBlob } from '@/lib/pdfExport';
+import { exportQaEntriesToDocx } from '@/lib/wordExport';
 import { downloadBlob } from '@/lib/textImage';
 import { getCourse, subjectCourses } from '@/data/courses';
 
@@ -160,6 +161,22 @@ const Study = () => {
     .filter((x) => isSet(x.profile));
   const profileLabel = (p: AiProfile | null, i: number) =>
     p?.name ? `${p.name}（${p.model}）` : `${AI_PROFILE_LABELS[i]} · ${p?.model ?? '未配置'}`;
+
+  // ══ 导出 Word（可编辑：正文为真文本，公式为 Word 原生公式对象）══
+  const [wordExporting, setWordExporting] = useState(false);
+  const exportWord = async () => {
+    if (wordExporting || filteredEntries.length === 0) return;
+    setWordExporting(true);
+    try {
+      const blob = await exportQaEntriesToDocx(filteredEntries);
+      downloadBlob(blob, `Principia-答疑记录-${formatDate(Date.now())}.docx`);
+      toast.success(`已导出 ${filteredEntries.length} 条记录为 Word（公式可编辑）`);
+    } catch (err) {
+      toast.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setWordExporting(false);
+    }
+  };
 
   // 导出 PDF（打印级）：把总结/练习排版成一份独立打印文档
   const [printJob, setPrintJob] = useState<{
@@ -519,17 +536,34 @@ const Study = () => {
                 );
               })}
               {entries.length > 0 && (
-                <button
-                  onClick={() => {
-                    if (window.confirm('确定清空全部答疑记录吗？此操作不可恢复。')) {
-                      clearQaHistory(userId);
-                    }
-                  }}
-                  className="ml-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors duration-[var(--duration-fast)]"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  清空记录
-                </button>
+                <div className="ml-auto flex items-center gap-3">
+                  <button
+                    onClick={exportWord}
+                    disabled={wordExporting || filteredEntries.length === 0}
+                    className="flex items-center gap-1.5 text-xs text-info hover:underline disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
+                    title={filteredEntries.length === 0 ? '当前筛选下没有记录' : '导出为可编辑的 Word 文档（公式可在 Word 中编辑）'}
+                  >
+                    {wordExporting ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <FileDown className="h-3.5 w-3.5" />
+                    )}
+                    {wordExporting
+                      ? '正在导出…'
+                      : `导出 Word（${filteredEntries.length} 条）`}
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('确定清空全部答疑记录吗？此操作不可恢复。')) {
+                        clearQaHistory(userId);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors duration-[var(--duration-fast)]"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    清空记录
+                  </button>
+                </div>
               )}
             </div>
 
