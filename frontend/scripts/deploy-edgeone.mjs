@@ -128,6 +128,10 @@ const deploy = () => {
 
   // token 通过参数传递，避免出现在日志里：这里手动打码后再输出
   console.log(`执行：${cmd} ${args.join(' ').split(TOKEN || '\u0000').join('***')}`);
+  if (ANONYMOUS) {
+    console.log('提示：匿名部署每次都会新建一个临时项目，域名会变，且需在 1 小时内认领，否则被回收。');
+    console.log('长期使用请在控制台生成 API Token 后改用：EDGEONE_API_TOKEN=xxx npm run deploy:edgeone');
+  }
   const out = execFileSync(cmd, args, {
     cwd: FRONTEND,
     encoding: 'utf8',
