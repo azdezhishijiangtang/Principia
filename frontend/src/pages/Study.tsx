@@ -685,9 +685,10 @@ const Study = () => {
                       size="sm"
                       variant="outline"
                       className="gap-1.5"
+                      title="把学习总结导出为可编辑的 Word 文档"
                     >
                       <FileDown className="h-4 w-4" />
-                      导出 PDF
+                      导出 Word
                     </Button>
                   )}
                   {archive.length > 0 && (
@@ -944,7 +945,7 @@ const Study = () => {
               导出学习总结
             </DialogTitle>
             <DialogDescription>
-              勾选要导出的总结，再选择「合并为一个 PDF」或「分开导出多个 PDF」。
+              勾选要导出的总结，再选择「合并为一个 Word」或「分开导出多个 Word」。
             </DialogDescription>
           </DialogHeader>
 
@@ -997,7 +998,7 @@ const Study = () => {
                   : 'border-border hover:border-info/50'
               }`}
             >
-              <span className="text-sm font-medium">合并为一个 PDF</span>
+              <span className="text-sm font-medium">合并为一个 Word</span>
               <span className="mt-0.5 block text-xs text-muted-foreground">
                 所选总结合并成 1 个文件
               </span>
@@ -1012,7 +1013,7 @@ const Study = () => {
             >
               <span className="text-sm font-medium">分开导出</span>
               <span className="mt-0.5 block text-xs text-muted-foreground">
-                每份各 1 个 PDF，共 {exportChosen.length} 个文件
+                每份各 1 个 Word，共 {exportChosen.length} 个文件
               </span>
             </button>
           </div>
