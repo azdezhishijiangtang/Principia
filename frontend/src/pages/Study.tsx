@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookX,
   MessageCircleQuestion,
@@ -64,8 +64,11 @@ import {
   subscribeSummaries,
   type StudySummary,
 } from '@/lib/summaryArchive';
-import { elementToPdfBlob, elementsToMergedPdfBlob } from '@/lib/pdfExport';
-import { exportQaEntriesToDocx } from '@/lib/wordExport';
+import {
+  exportQaEntriesToDocx,
+  exportSummariesToDocx,
+  exportPracticeToDocx,
+} from '@/lib/wordExport';
 import { downloadBlob } from '@/lib/textImage';
 import { getCourse, subjectCourses } from '@/data/courses';
 
@@ -178,42 +181,11 @@ const Study = () => {
     }
   };
 
-  // 导出 PDF（打印级）：把总结/练习排版成一份独立打印文档
-  const [printJob, setPrintJob] = useState<{
-    title: string;
-    meta: string[];
-    content: ReactNode;
-  } | null>(null);
-  useEffect(() => {
-    if (!printJob) return;
-    const prevTitle = document.title;
-    document.title = printJob.title; // 让「另存为 PDF」默认用这个文件名
-    let cancelled = false;
-    const finish = () => {
-      if (cancelled) return;
-      setPrintJob(null);
-      document.title = prevTitle;
-    };
-    const onAfter = () => finish();
-    window.addEventListener('afterprint', onAfter);
-    const raf = requestAnimationFrame(() =>
-      requestAnimationFrame(() => window.print()),
-    );
-    const safety = setTimeout(finish, 120000);
-    return () => {
-      cancelled = true;
-      cancelAnimationFrame(raf);
-      clearTimeout(safety);
-      window.removeEventListener('afterprint', onAfter);
-    };
-  }, [printJob]);
-
-  // 导出 PDF 对话框
+  // 导出 Word 对话框
   const [exportOpen, setExportOpen] = useState(false);
   const [exportSel, setExportSel] = useState<Set<string>>(new Set());
   const [exportMode, setExportMode] = useState<'merge' | 'separate'>('merge');
   const [exporting, setExporting] = useState(false);
-  const docRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const exportChosen = archive.filter((s) => exportSel.has(s.id));
 
   // 练习题生成
@@ -360,7 +332,7 @@ const Study = () => {
       return next;
     });
 
-  // 确认导出：合并=1 个 PDF；分开=每个各一个 PDF
+  // 确认导出：合并=1 个 Word；分开=每个各一个 Word
   const doExport = async () => {
     const chosen = exportChosen;
     if (chosen.length === 0) {
@@ -369,28 +341,18 @@ const Study = () => {
     }
     setExporting(true);
     try {
-      // 等待离屏文档节点渲染完成
-      await new Promise((r) => requestAnimationFrame(() => r(null)));
-      await new Promise((r) => setTimeout(r, 60));
-      const nodes = chosen
-        .map((s) => docRefs.current.get(s.id))
-        .filter((n): n is HTMLDivElement => Boolean(n));
-      if (nodes.length === 0) throw new Error('文档节点未就绪，请重试');
-
       if (exportMode === 'merge') {
-        const blob = await elementsToMergedPdfBlob(nodes);
-        downloadBlob(blob, `Principia-学习总结-合并${chosen.length}份.pdf`);
-        toast.success(`已导出 1 个合并 PDF（含 ${chosen.length} 份总结）`);
+        const blob = await exportSummariesToDocx(chosen);
+        downloadBlob(blob, `Principia-学习总结-合并${chosen.length}份.docx`);
+        toast.success(`已导出 1 个合并 Word（含 ${chosen.length} 份总结）`);
       } else {
         for (let i = 0; i < chosen.length; i++) {
-          const node = docRefs.current.get(chosen[i].id);
-          if (!node) continue;
-          const blob = await elementToPdfBlob(node);
-          downloadBlob(blob, `Principia-学习总结-${formatDate(chosen[i].createdAt)}.pdf`);
+          const blob = await exportSummariesToDocx([chosen[i]]);
+          downloadBlob(blob, `Principia-学习总结-${formatDate(chosen[i].createdAt)}.docx`);
           // 间隔一下，避免浏览器拦截连续下载
           if (i < chosen.length - 1) await new Promise((r) => setTimeout(r, 400));
         }
-        toast.success(`已导出 ${chosen.length} 个 PDF`);
+        toast.success(`已导出 ${chosen.length} 个 Word`);
       }
       setExportOpen(false);
     } catch (err) {
@@ -400,39 +362,28 @@ const Study = () => {
     }
   };
 
-  const exportPracticePdf = () => {
-    if (practiceProblems.length === 0) return;
+  // 专项练习 → Word 导出（真文本 + 可编辑公式）
+  const [practiceExporting, setPracticeExporting] = useState(false);
+  const exportPracticeWord = async () => {
+    if (practiceProblems.length === 0 || practiceExporting) return;
     const course = getCourse(practiceCourse);
-    setPrintJob({
-      title: `Principia 专项练习 ${course?.name ?? practiceCourse} ${formatDate(Date.now())}`,
-      meta: [
-        `生成时间：${formatDate(Date.now())}`,
-        `课程：${course?.name ?? practiceCourse}`,
-        `难度：${practiceLevel}　·　题量：${practiceProblems.length} 道`,
-      ],
-      content: (
-        <>
-          {practiceProblems.map((p, i) => (
-            <section key={i} className="print-section">
-              <h3 className="font-serif text-base font-semibold">
-                题目 {i + 1}　<InlineMathText escape text={p.title} />
-              </h3>
-              <MathText escape content={p.question} className="text-sm" />
-              {p.hint && (
-                <div className="print-hint">
-                  <MathText escape content={p.hint} className="text-sm" />
-                </div>
-              )}
-              {p.solution && (
-                <div className="print-sol">
-                  <MathText escape content={p.solution} className="text-sm" />
-                </div>
-              )}
-            </section>
-          ))}
-        </>
-      ),
-    });
+    setPracticeExporting(true);
+    try {
+      const blob = await exportPracticeToDocx({
+        courseName: course?.name ?? practiceCourse,
+        level: practiceLevel,
+        problems: practiceProblems,
+      });
+      downloadBlob(
+        blob,
+        `Principia-专项练习-${course?.name ?? practiceCourse}-${formatDate(Date.now())}.docx`,
+      );
+      toast.success('已导出 Word');
+    } catch (err) {
+      toast.error(describeAiError(err));
+    } finally {
+      setPracticeExporting(false);
+    }
   };
 
   const courseOfEntry = (courseId?: string) =>
@@ -862,13 +813,17 @@ const Study = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={exportPracticePdf}
-                  disabled={practiceProblems.length === 0}
+                  onClick={exportPracticeWord}
+                  disabled={practiceProblems.length === 0 || practiceExporting}
                   className="gap-1.5"
-                  title="把练习题（含提示与解答）导出为 PDF"
+                  title="把练习题（含提示与解答）导出为可编辑的 Word 文档"
                 >
-                  <FileDown className="h-4 w-4" />
-                  导出 PDF
+                  {practiceExporting ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileDown className="h-4 w-4" />
+                  )}
+                  {practiceExporting ? '导出中…' : '导出 Word'}
                 </Button>
               </div>
 
@@ -980,16 +935,7 @@ const Study = () => {
       </FadeIn>
       </div>
 
-      {printJob && (
-        <div id="print-doc">
-          <p className="print-brand">Principia · 学习档案</p>
-          <h1 className="print-title">{printJob.title}</h1>
-          <p className="print-meta">{printJob.meta.join('　·　')}</p>
-          <div className="print-body">{printJob.content}</div>
-        </div>
-      )}
-
-      {/* ── 导出 PDF 对话框 ── */}
+      {/* ── 导出 Word 对话框 ── */}
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
@@ -1097,31 +1043,6 @@ const Study = () => {
         </DialogContent>
       </Dialog>
 
-      {/* 离屏导出文档节点（仅导出时渲染，供栅格化） */}
-      {exporting && (
-        <div id="pdf-export-root" aria-hidden="true">
-          {exportChosen.map((s) => (
-            <div
-              key={s.id}
-              className="pdf-doc"
-              ref={(el) => {
-                if (el) docRefs.current.set(s.id, el);
-                else docRefs.current.delete(s.id);
-              }}
-            >
-              <p className="pdf-doc-brand">Principia · 学习档案</p>
-              <h1 className="pdf-doc-title">AI 学习总结</h1>
-              <p className="pdf-doc-meta">
-                生成时间：{formatDate(s.createdAt)}　·　所用模型：{s.model}　·　覆盖{' '}
-                {s.questionCount} 个问题
-              </p>
-              <div className="pdf-doc-body">
-                <MathText escape content={s.content} className="text-sm" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </>
   );
 };

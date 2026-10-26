@@ -215,6 +215,27 @@ const sectionLabel = (text: string): Paragraph =>
     children: [new TextRun({ text, bold: true, size: 24 })],
   });
 
+/** 统一文档骨架：A4 + 页边距 + 中文字体，保证所有导出排版一致、清晰 */
+const buildDoc = (children: Paragraph[]): Document =>
+  new Document({
+    styles: {
+      default: {
+        document: { run: { font: 'Microsoft YaHei', size: 22 } },
+      },
+    },
+    sections: [
+      {
+        properties: {
+          page: {
+            size: { width: 11906, height: 16838 }, // A4
+            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
+          },
+        },
+        children,
+      },
+    ],
+  });
+
 /** 把多条答疑记录导出为 Word 文档（返回 Blob） */
 export const exportQaEntriesToDocx = async (entries: QaEntry[]): Promise<Blob> => {
   const children: Paragraph[] = [
@@ -282,24 +303,139 @@ export const exportQaEntriesToDocx = async (entries: QaEntry[]): Promise<Blob> =
     }
   });
 
-  const doc = new Document({
-    styles: {
-      default: {
-        document: { run: { font: 'Microsoft YaHei', size: 22 } },
-      },
-    },
-    sections: [
-      {
-        properties: {
-          page: {
-            size: { width: 11906, height: 16838 }, // A4
-            margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 },
-          },
-        },
-        children,
-      },
-    ],
+  return Packer.toBlob(buildDoc(children));
+};
+
+/**
+ * 学习总结 → Word。传入 1 份即为单份导出，传入多份即为合并导出。
+ * 结构与站内一致：每份总结一段，带生成时间 / 所用模型 / 覆盖问题数。
+ */
+export const exportSummariesToDocx = async (
+  summaries: { id: string; createdAt: number; model: string; questionCount: number; content: string }[],
+): Promise<Blob> => {
+  const children: Paragraph[] = [
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 120 },
+      children: [new TextRun({ text: 'Principia 学习总结' })],
+    }),
+    metaLine(`导出时间：${new Date().toLocaleString('zh-CN')}    共 ${summaries.length} 份`),
+  ];
+
+  summaries.forEach((s, idx) => {
+    children.push(
+      new Paragraph({
+        spacing: { before: 320, after: 80 },
+        border: { bottom: { style: 'single', size: 6, color: 'BFBFBF', space: 4 } },
+        children: [new TextRun({ text: `总结 ${idx + 1}`, bold: true, size: 22 })],
+      }),
+    );
+    children.push(
+      metaLine(
+        [
+          `生成时间：${new Date(s.createdAt).toLocaleString('zh-CN')}`,
+          s.model ? `模型：${s.model}` : '',
+          `覆盖问题：${s.questionCount} 个`,
+        ]
+          .filter(Boolean)
+          .join('    '),
+      ),
+    );
+    for (const p of parseBlocks(s.content ?? '')) children.push(p);
   });
 
-  return Packer.toBlob(doc);
+  return Packer.toBlob(buildDoc(children));
+};
+
+/** 专项练习 → Word：题目 + 提示 + 解答，公式可编辑 */
+export const exportPracticeToDocx = async (opts: {
+  courseName: string;
+  level: string;
+  problems: { title: string; question: string; hint: string; solution: string }[];
+}): Promise<Blob> => {
+  const { courseName, level, problems } = opts;
+  const children: Paragraph[] = [
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 120 },
+      children: [new TextRun({ text: `Principia 专项练习 · ${courseName}` })],
+    }),
+    metaLine(
+      [
+        `生成时间：${new Date().toLocaleString('zh-CN')}`,
+        `难度：${level}`,
+        `题量：${problems.length} 道`,
+      ].join('    '),
+    ),
+  ];
+
+  problems.forEach((p, idx) => {
+    children.push(
+      new Paragraph({
+        spacing: { before: 320, after: 80 },
+        border: { bottom: { style: 'single', size: 6, color: 'BFBFBF', space: 4 } },
+        children: [new TextRun({ text: `题目 ${idx + 1}　${p.title}`.trimEnd(), bold: true, size: 22 })],
+      }),
+    );
+    for (const para of parseBlocks(p.question)) children.push(para);
+    if (p.hint?.trim()) {
+      children.push(sectionLabel('提示'));
+      for (const para of parseBlocks(p.hint)) children.push(para);
+    }
+    if (p.solution?.trim()) {
+      children.push(sectionLabel('解答'));
+      for (const para of parseBlocks(p.solution)) children.push(para);
+    }
+  });
+
+  return Packer.toBlob(buildDoc(children));
+};
+
+/** 知识讲解页 → Word：提要 + 正文（含小节标题与公式）+ 核心要点 */
+export const exportTopicToDocx = async (opts: {
+  courseName: string;
+  topic: { title: string; chapter: string; summary: string; keyPoints: string[]; content: string };
+}): Promise<Blob> => {
+  const { courseName, topic } = opts;
+  const children: Paragraph[] = [
+    new Paragraph({
+      heading: HeadingLevel.HEADING_1,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 100 },
+      children: parseInline(normalizeMathDelimiters(topic.title)) as unknown as TextRun[],
+    }),
+    metaLine(`${courseName}　·　${topic.chapter}`),
+  ];
+
+  if (topic.summary?.trim()) {
+    children.push(sectionLabel('提要'));
+    children.push(
+      new Paragraph({
+        spacing: { before: 60, after: 160 },
+        children: parseInline(normalizeMathDelimiters(topic.summary)) as unknown as TextRun[],
+      }),
+    );
+  }
+
+  for (const p of parseBlocks(topic.content ?? '')) children.push(p);
+
+  if (topic.keyPoints?.length) {
+    children.push(sectionLabel('核心要点'));
+    topic.keyPoints.forEach((kp, i) => {
+      children.push(
+        new Paragraph({
+          spacing: { before: 40, after: 40 },
+          indent: { left: 480 },
+          children: [
+            new TextRun({ text: `${i + 1}. ` }),
+            ...(parseInline(normalizeMathDelimiters(kp)) as Inline[]),
+          ] as unknown as TextRun[],
+        }),
+      );
+    });
+  }
+
+  return Packer.toBlob(buildDoc(children));
 };
