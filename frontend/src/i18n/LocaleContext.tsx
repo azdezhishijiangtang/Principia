@@ -3,7 +3,7 @@
  * 切换语言时上下文值变化，所有 useLocale()/useT() 消费者自动重渲染，
  * 从而让 UI 文案与（通过 hooks 访问的）知识库数据同步切换。
  */
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { type Lang, currentLang, setLangValue } from './lang';
 import { translate, tpl } from './translate';
 
@@ -28,6 +28,16 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     setLangState(next);
     // 同步 <html lang> 属性，利于无障碍与 SEO
     document.documentElement.lang = next === 'en' ? 'en' : 'zh-CN';
+  }, []);
+
+  // 支持通过链接指定语言：?lang=en / ?lang=zh（方便直接分享英文版链接）
+  useEffect(() => {
+    const param = new URLSearchParams(window.location.search).get('lang');
+    if (param === 'en' || param === 'zh') {
+      if (param !== currentLang()) setLang(param);
+    }
+    // 仅首次挂载处理，避免地址栏参数覆盖用户手动切换
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const value = useMemo<LocaleValue>(

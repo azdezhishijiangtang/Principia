@@ -18,7 +18,7 @@ const difficultyColors: Record<Course['difficulty'], string> = {
 
 const Courses = () => {
   const t = useT();
-  const { tpl } = useLocale();
+  const { tpl, lang } = useLocale();
   const { subject } = useSubject();
   const meta = SUBJECT_META[subject];
   const [activeTag, setActiveTag] = useState<string>('全部');
@@ -60,13 +60,13 @@ const Courses = () => {
     <div className="container py-14 lg:py-20">
       {/* 页头 */}
       <FadeIn>
-        <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('课程体系 · ')}{meta.name}</p>
-        <h1 className="font-serif text-4xl font-semibold">{tpl('{short}课程总览', { short: meta.short })}</h1>
+        <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('课程体系 · ')}{t(meta.name)}</p>
+        <h1 className="font-serif text-4xl font-semibold">{tpl('{short}课程总览', { short: t(meta.short) })}</h1>
         <p className="mt-4 text-muted-foreground leading-relaxed max-w-3xl">
           {tpl('共 {n} 门本科{short}课程，横跨{names}，合计 {k} 个知识专题。每门课程按章节组织内容，配套例题详解，支持按方向与标签筛选。', {
             n: subjectCourseList.length,
-            short: meta.short,
-            names: subjectCategories(subject).map((c) => c.name).join('、'),
+            short: t(meta.short),
+            names: subjectCategories(subject).map((c) => t(c.name)).join(lang === 'en' ? ', ' : '、'),
             k: subjectTopicCount,
           })}
         </p>
@@ -103,7 +103,7 @@ const Courses = () => {
                   : 'text-muted-foreground'
               }
             >
-              {cat.name}
+              {t(cat.name)}
             </Button>
           ))}
         </div>

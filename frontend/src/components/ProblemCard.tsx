@@ -36,7 +36,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
       {/* 题头 */}
       <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-4 sm:px-6">
         <Badge variant="outline" className={`${diff.className} font-medium`}>
-          {diff.text}
+          {t(diff.text)}
         </Badge>
         <h3 className="font-serif text-base font-semibold flex-1 min-w-0"><InlineMathText escape text={problem.title} /></h3>
         {showTopicLink && (

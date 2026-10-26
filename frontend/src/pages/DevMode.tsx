@@ -493,7 +493,7 @@ const StatsAdmin = () => {
           );
           return (
             <div key={cat.id} className="flex items-center gap-3">
-              <span className="w-28 shrink-0 text-sm">{cat.name}</span>
+              <span className="w-28 shrink-0 text-sm">{t(cat.name)}</span>
               <div className="h-2 flex-1 bg-secondary">
                 <div
                   className="h-2 bg-info"

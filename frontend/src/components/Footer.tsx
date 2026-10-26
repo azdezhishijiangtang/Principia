@@ -44,7 +44,7 @@ const Footer = () => {
                     to={`/courses?category=${cat.id}`}
                     className="hover:text-foreground transition-colors duration-[var(--duration-fast)]"
                   >
-                    {cat.name}
+                    {t(cat.name)}
                   </Link>
                 </li>
               ))}

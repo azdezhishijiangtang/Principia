@@ -152,7 +152,7 @@ const Index = () => {
               <div className="border border-hero-foreground/15 bg-hero-foreground/5 backdrop-blur-sm p-8">
                 <p className="flex items-center gap-2 text-sm font-medium text-hero-foreground/70 mb-6">
                   <Sigma className="h-4 w-4" />
-                  {t('精选公式 · ')}{meta.short}
+                  {t('精选公式 · ')}{t(meta.short)}
                 </p>
                 <div className="space-y-7">
                   {heroFormulas.map((f, i) => (
@@ -208,13 +208,13 @@ const Index = () => {
                       <Icon className="h-7 w-7" />
                     </span>
                     <h3 className="font-serif text-2xl font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
-                      {m.name}
+                      {t(m.name)}
                     </h3>
                     <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                      {tpl('{blurb}。共 {n} 门课程、{k} 个知识专题。', { blurb: m.blurb, n: list.length, k: tCount })}
+                      {tpl('{blurb}。共 {n} 门课程、{k} 个知识专题。', { blurb: t(m.blurb), n: list.length, k: tCount })}
                     </p>
                     <div className="mt-5 flex items-center gap-1.5 text-sm text-info font-medium">
-                      {tpl('进入{name}', { name: m.name })}
+                      {tpl('进入{name}', { name: t(m.name) })}
                       <ArrowRight className="h-4 w-4 transition-transform duration-[var(--duration-fast)] group-hover:translate-x-1" />
                     </div>
                   </button>
@@ -247,7 +247,7 @@ const Index = () => {
         <FadeIn>
           <div className="flex items-end justify-between gap-4 mb-10">
             <div>
-              <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('课程体系 · ')}{meta.name}</p>
+              <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('课程体系 · ')}{t(meta.name)}</p>
               <h2 className="font-serif text-3xl font-semibold">{t('按课程开始学习')}</h2>
             </div>
             <Link
@@ -295,7 +295,7 @@ const Index = () => {
           <FadeIn>
             <div className="flex items-end justify-between gap-4 mb-8">
               <div>
-                <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('学科版图 · ')}{meta.name}</p>
+                <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('学科版图 · ')}{t(meta.name)}</p>
                 <h2 className="font-serif text-2xl font-semibold">
                   {tpl('{n} 大方向 · {m} 门课程全貌', { n: subjectCategories(subject).length, m: subjectCourseList.length })}
                 </h2>
@@ -317,7 +317,7 @@ const Index = () => {
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="font-serif text-lg font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
-                        {cat.name}
+                        {t(cat.name)}
                       </h3>
                       <span className="text-xs text-muted-foreground">{topicCount} {t('个知识专题')}</span>
                     </div>
@@ -339,7 +339,7 @@ const Index = () => {
           <FadeIn>
             <div className="flex items-end justify-between gap-4 mb-10">
               <div>
-              <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('知识专题 · ')}{meta.name}</p>
+              <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('知识专题 · ')}{t(meta.name)}</p>
               <h2 className="font-serif text-3xl font-semibold">{t('热门知识专题')}</h2>
               </div>
               <Link
@@ -398,7 +398,7 @@ const Index = () => {
         <FadeIn>
           <div className="flex items-end justify-between gap-4 mb-10">
             <div>
-              <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('例题精讲 · ')}{meta.name}</p>
+              <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('例题精讲 · ')}{t(meta.name)}</p>
               <h2 className="font-serif text-3xl font-semibold">{t('精选例题详解')}</h2>
               <p className="mt-2 text-sm text-muted-foreground">
                 {t('每道题都提供分步提示与完整解答——先思考，再看答案')}
