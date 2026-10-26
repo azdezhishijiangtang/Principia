@@ -4,9 +4,6 @@ dist/
 frontend/dist/
 frontend/node_modules/
 frontend/.github/
-# EdgeOne CLI 的本地项目状态与临时凭据
-.edgeone/
-frontend/.edgeone/
 
 # 日志与本地文件
 *.log

@@ -13,12 +13,13 @@
  *      .gitignore                              → 仓库根目录
  *      - 先建 blob，再分块建内层树（内层路径不带顶层前缀），根目录只挂一次 frontend/docs
  *      - 规避 frontend/frontend、docs/docs 双重嵌套问题
+ *      - 顺带把 index.html 复制成 404.html，让深链接不再 404
  *   3. 推送成功后以默认 base 重建 dist/，供本地预览服务器使用
  *
  * 安全：Token 只从环境变量读取，绝不写入仓库或任何文件。
  */
 import { execSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { copyFileSync, existsSync } from 'node:fs';
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,8 +29,6 @@ const FRONTEND = join(__dirname, '..');
 const DIST = join(FRONTEND, 'dist');
 const REPO_ROOT = join(FRONTEND, '..');
 const GITIGNORE = join(REPO_ROOT, '.gitignore');
-/** 根目录的 GitHub Actions 工作流（EdgeOne 自动部署），需一并推送 */
-const GITHUB_DIR = join(REPO_ROOT, '.github');
 
 const TOKEN = process.env.GITHUB_TOKEN;
 const REPO = process.env.GITHUB_REPO || 'azdezhishijiangtang/Principia';
@@ -77,7 +76,7 @@ async function api(method, path, body) {
 async function walk(dir, relBase, tree, out) {
   const entries = await readdir(dir, { withFileTypes: true });
   for (const e of entries) {
-    if (e.name === '.git' || e.name === 'node_modules' || e.name === '.edgeone') continue;
+    if (e.name === '.git' || e.name === 'node_modules') continue;
     // frontend/ 下的 dist 与 docs 不重复推送（docs 由 dist 单独组装）
     if (tree === 'frontend' && relBase === '' && (e.name === 'dist' || e.name === 'docs')) continue;
     const abs = join(dir, e.name);
@@ -148,6 +147,21 @@ async function treeFromEntries(entries) {
   return buildTree(items);
 }
 
+/**
+ * GitHub Pages 没有服务端路由，直接访问 /Principia/problems 这类深链接会被
+ * 判定为文件不存在（404）。把 index.html 复制一份成 404.html 后，Pages 会用
+ * 它做兜底页面，前端路由随即接管，刷新/分享深链接不再 404。
+ */
+const prepareSpaFallback = () => {
+  const indexHtml = join(DIST, 'index.html');
+  if (!existsSync(indexHtml)) {
+    console.warn('未找到 dist/index.html，跳过 404.html 兜底页面。');
+    return;
+  }
+  copyFileSync(indexHtml, join(DIST, '404.html'));
+  console.log('已生成 docs/404.html（SPA 深链接兜底）');
+};
+
 const main = async () => {
   console.log('── 1/3 构建 GitHub Pages 包（base=/Principia/）──');
   if (DRY_RUN) {
@@ -157,15 +171,14 @@ const main = async () => {
   }
 
   console.log('── 2/3 收集并推送文件 ──');
+  if (!DRY_RUN) prepareSpaFallback();
   const files = [];
   await walk(FRONTEND, '', 'frontend', files);
   await walk(DIST, '', 'docs', files);
-  if (existsSync(GITHUB_DIR)) await walk(GITHUB_DIR, '', 'github', files);
   files.push({ rel: '.gitignore', abs: GITIGNORE, tree: 'root' });
   console.log(
     `待推送: frontend ${files.filter((f) => f.tree === 'frontend').length} 个源码` +
       ` + docs ${files.filter((f) => f.tree === 'docs').length} 个产物` +
-      ` + .github ${files.filter((f) => f.tree === 'github').length} 个文件` +
       ` + .gitignore`,
   );
 
@@ -202,13 +215,12 @@ const main = async () => {
 
   const frontendTree = await treeFromEntries(entriesOf('frontend'));
   const docsTree = await treeFromEntries(entriesOf('docs'));
-  const githubEntries = entriesOf('github');
-  const githubTree = githubEntries.length > 0 ? await treeFromEntries(githubEntries) : null;
 
   /**
    * 保留根目录下由 git 直接维护的其他条目（如 .vscode）。
    * 否则每次部署都会用「只有 .gitignore / frontend / docs」的根树覆盖远程，
    * 把编辑器配置等一并删掉。
+   * `.github` 列入受管集合：历史遗留的自动化流水线会被清掉。
    */
   const MANAGED = new Set(['.gitignore', 'frontend', 'docs', '.github']);
   const preserved = rootTree.tree
@@ -223,7 +235,6 @@ const main = async () => {
     { path: '.gitignore', mode: '100644', type: 'blob', sha: blobs.get('root\u0000.gitignore') },
     { path: 'frontend', mode: '040000', type: 'tree', sha: frontendTree },
     { path: 'docs', mode: '040000', type: 'tree', sha: docsTree },
-    ...(githubTree ? [{ path: '.github', mode: '040000', type: 'tree', sha: githubTree }] : []),
   ];
   const rootSha = await buildTree(newRoot);
 
