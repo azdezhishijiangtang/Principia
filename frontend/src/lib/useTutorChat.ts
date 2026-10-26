@@ -48,6 +48,10 @@ export interface TutorMessage {
   content: string;
   /** 模型的思考过程（assistant 消息，来自 reasoning_content） */
   reasoning?: string;
+  /** 思考开始时间戳（epoch ms，用于思考面板实时计时） */
+  reasoningStartedAt?: number;
+  /** 思考耗时（ms，生成结束后写入；思考与作答交错时取首尾区间） */
+  reasoningMs?: number;
   /** 回答引用的文档段落（assistant 消息） */
   sources?: QaSource[];
   /** 接入的模型名（assistant 消息） */
@@ -258,6 +262,9 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       abortRef.current = controller;
       let acc = '';
       let reasoningAcc = '';
+      /** 思考过程的时间区间：首个 reasoning 增量开始，首个正文增量结束 */
+      let reasoningStart = 0;
+      let reasoningEnd = 0;
       let modelName: string | undefined;
       let lastUsage: { prompt: number; completion: number; total: number } | undefined;
       let usedCfg = effectiveCfg;
@@ -320,9 +327,15 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
             }
           },
           (r: string) => {
+            // 实时把思考增量写回 UI：推理模型常常先只输出 reasoning_content，
+            // 若等到正文出现再刷新，思考过程就无法「同步显示」。
+            if (!reasoningStart) reasoningStart = Date.now();
             reasoningAcc += r;
+            paint({ reasoningStartedAt: reasoningStart });
           },
         )) {
+          // 正文开始输出，视为思考阶段结束（交错输出时以首个正文为准）
+          if (reasoningStart && !reasoningEnd) reasoningEnd = Date.now();
           acc += chunk;
           paint();
         }
@@ -376,6 +389,8 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
             ];
             acc = '';
             reasoningAcc = '';
+            reasoningStart = 0;
+            reasoningEnd = 0;
             await streamInto(synthCfg, synthHistory);
             if (acc.trim()) {
               usedCfg = synthCfg;
@@ -408,6 +423,8 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
           try {
             acc = '';
             reasoningAcc = '';
+            reasoningStart = 0;
+            reasoningEnd = 0;
             lastUsage = undefined;
             await streamInto(cfg, history);
             usedCfg = cfg;
@@ -495,6 +512,12 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
             role: 'assistant',
             content: acc,
             reasoning: reasoningAcc,
+            ...(reasoningStart
+              ? {
+                  reasoningStartedAt: reasoningStart,
+                  reasoningMs: (reasoningEnd || Date.now()) - reasoningStart,
+                }
+              : {}),
             sources,
             model: last?.model ?? modelName,
             usage: last?.usage ?? lastUsage,

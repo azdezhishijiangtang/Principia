@@ -13,13 +13,13 @@ import {
   RefreshCw,
   FileSearch,
   ImagePlus,
-  Brain,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import MathText, { InlineMathText } from '@/components/MathText';
 import { FadeIn } from '@/components/MotionPrimitives';
+import ThinkingPanel from '@/components/ThinkingPanel';
 import AiSettingsCard from '@/components/AiSettingsCard';
 import DocLibraryPanel from '@/components/DocLibraryPanel';
 import { useAuth } from '@/lib/AuthContext';
@@ -153,6 +153,9 @@ const Tutor = () => {
               上传个人资料后基于资料作答，问答自动存入
               <Link to="/study" className="text-info hover:underline">学习档案</Link>
               ，可随时回顾、总结与生成练习题。
+            </p>
+            <p className="mt-1.5 text-sm text-muted-foreground max-w-2xl leading-relaxed">
+              开启「思考强度」后，回答上方会实时展示模型的思考过程（可折叠、可复制），方便学习 AI 的推理路径。
             </p>
           </div>
           <div className="flex gap-2">
@@ -306,20 +309,15 @@ const Tutor = () => {
                           <span className="text-xs text-info animate-pulse">正在输入…</span>
                         )}
                       </div>
-                      {/* 深度思考：先展示思考过程，再给出正式解答 */}
-                      {m.reasoning && (
-                        <details
-                          className="mb-2.5 border border-warning/30 bg-warning/5 px-3.5 py-2.5 text-xs"
-                          open={streaming && i === messages.length - 1}
-                        >
-                          <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-warning">
-                            <Brain className="h-3 w-3" />
-                            思考过程
-                          </summary>
-                          <div className="mt-2 whitespace-pre-wrap leading-relaxed text-muted-foreground">
-                            {m.reasoning}
-                          </div>
-                        </details>
+                      {/* 思考过程：流式实时展示推理路径，可折叠、可复制 */}
+                      {(m.reasoning ||
+                        (streaming && i === messages.length - 1 && !m.content && m.mode !== 'off')) && (
+                        <ThinkingPanel
+                          reasoning={m.reasoning ?? ''}
+                          live={streaming && i === messages.length - 1 && !m.content}
+                          startedAt={m.reasoningStartedAt}
+                          durationMs={m.reasoningMs}
+                        />
                       )}
                       {/* 智能自检：自动复核结果（榨干算力的纠错环节） */}
                       {m.selfCheck && (
