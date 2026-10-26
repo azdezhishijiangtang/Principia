@@ -18,6 +18,7 @@
  * 安全：Token 只从环境变量读取，绝不写入仓库或任何文件。
  */
 import { execSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { readFile, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -27,6 +28,8 @@ const FRONTEND = join(__dirname, '..');
 const DIST = join(FRONTEND, 'dist');
 const REPO_ROOT = join(FRONTEND, '..');
 const GITIGNORE = join(REPO_ROOT, '.gitignore');
+/** 根目录的 GitHub Actions 工作流（EdgeOne 自动部署），需一并推送 */
+const GITHUB_DIR = join(REPO_ROOT, '.github');
 
 const TOKEN = process.env.GITHUB_TOKEN;
 const REPO = process.env.GITHUB_REPO || 'azdezhishijiangtang/Principia';
@@ -74,7 +77,7 @@ async function api(method, path, body) {
 async function walk(dir, relBase, tree, out) {
   const entries = await readdir(dir, { withFileTypes: true });
   for (const e of entries) {
-    if (e.name === '.git' || e.name === 'node_modules') continue;
+    if (e.name === '.git' || e.name === 'node_modules' || e.name === '.edgeone') continue;
     // frontend/ 下的 dist 与 docs 不重复推送（docs 由 dist 单独组装）
     if (tree === 'frontend' && relBase === '' && (e.name === 'dist' || e.name === 'docs')) continue;
     const abs = join(dir, e.name);
@@ -157,8 +160,14 @@ const main = async () => {
   const files = [];
   await walk(FRONTEND, '', 'frontend', files);
   await walk(DIST, '', 'docs', files);
+  if (existsSync(GITHUB_DIR)) await walk(GITHUB_DIR, '', 'github', files);
   files.push({ rel: '.gitignore', abs: GITIGNORE, tree: 'root' });
-  console.log(`待推送: frontend ${files.filter((f) => f.tree === 'frontend').length} 个源码 + docs ${files.filter((f) => f.tree === 'docs').length} 个产物 + .gitignore`);
+  console.log(
+    `待推送: frontend ${files.filter((f) => f.tree === 'frontend').length} 个源码` +
+      ` + docs ${files.filter((f) => f.tree === 'docs').length} 个产物` +
+      ` + .github ${files.filter((f) => f.tree === 'github').length} 个文件` +
+      ` + .gitignore`,
+  );
 
   if (DRY_RUN) {
     const fe = files.filter((f) => f.tree === 'frontend');
@@ -193,13 +202,15 @@ const main = async () => {
 
   const frontendTree = await treeFromEntries(entriesOf('frontend'));
   const docsTree = await treeFromEntries(entriesOf('docs'));
+  const githubEntries = entriesOf('github');
+  const githubTree = githubEntries.length > 0 ? await treeFromEntries(githubEntries) : null;
 
   /**
-   * 保留根目录下由 git 直接维护的其他条目（如 .github/workflows、.vscode）。
+   * 保留根目录下由 git 直接维护的其他条目（如 .vscode）。
    * 否则每次部署都会用「只有 .gitignore / frontend / docs」的根树覆盖远程，
-   * 把 CI 流水线、编辑器配置等一并删掉。
+   * 把编辑器配置等一并删掉。
    */
-  const MANAGED = new Set(['.gitignore', 'frontend', 'docs']);
+  const MANAGED = new Set(['.gitignore', 'frontend', 'docs', '.github']);
   const preserved = rootTree.tree
     .filter((e) => !MANAGED.has(e.path))
     .map((e) => ({ path: e.path, mode: e.mode, type: e.type, sha: e.sha }));
@@ -212,6 +223,7 @@ const main = async () => {
     { path: '.gitignore', mode: '100644', type: 'blob', sha: blobs.get('root\u0000.gitignore') },
     { path: 'frontend', mode: '040000', type: 'tree', sha: frontendTree },
     { path: 'docs', mode: '040000', type: 'tree', sha: docsTree },
+    ...(githubTree ? [{ path: '.github', mode: '040000', type: 'tree', sha: githubTree }] : []),
   ];
   const rootSha = await buildTree(newRoot);
 
