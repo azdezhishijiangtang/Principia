@@ -365,7 +365,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
             id="ai-model"
             value={form.model}
             onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
-            placeholder="deepseek-flash（点击上方按钮可自动列出可用模型）"
+            placeholder={'deepseek-flash' + t('（点击上方按钮可自动列出可用模型）')}
             className="font-mono text-sm"
           />
         )}

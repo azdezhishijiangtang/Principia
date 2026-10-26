@@ -40,13 +40,13 @@ const About = () => {
               <Video className="h-8 w-8" />
             </span>
             <div>
-              <h2 className="font-serif text-2xl font-semibold">阿z的知识讲堂</h2>
+              <h2 className="font-serif text-2xl font-semibold">{t('阿z的知识讲堂')}</h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 {t('B 站 UP 主 · 数学物理知识科普与讲解创作者')}
               </p>
               <p className="mt-3 leading-relaxed text-muted-foreground">
                 {t('大家好，我是 B 站 UP 主')}
-                <span className="text-foreground font-medium mx-1">「阿z的知识讲堂」</span>
+                <span className="text-foreground font-medium mx-1">{t('「阿z的知识讲堂」')}</span>
                 {t('，一名热爱数学、物理与 AI 的创作者。Principia（数学物理讲堂）就是我把课堂讲解沉淀下来的成果——希望每一位来到这里的同学，都能用更低的门槛理解那些曾经"高不可攀"的概念。')}
               </p>
             </div>

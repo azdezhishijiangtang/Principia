@@ -173,7 +173,7 @@ const Forum = () => {
                       : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
                   }`}
                 >
-                  {sec.name}
+                  {t(sec.name)}
                 </button>
               ))}
             </nav>
@@ -183,7 +183,7 @@ const Forum = () => {
         {/* 主区 */}
         <div className="lg:col-span-9 min-w-0">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-serif text-xl font-semibold">{sectionName(section)}</h2>
+            <h2 className="font-serif text-xl font-semibold">{t(sectionName(section))}</h2>
             <Button size="sm" className="gap-1.5 bg-info text-info-foreground hover:bg-info/90" onClick={() => setShowForm((v) => !v)}>
               {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
               {t('发帖')}
@@ -256,7 +256,7 @@ const Forum = () => {
                     <InlineMathText escape text={openPost.title} />
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {openPost.userName} · {formatTime(openPost.createdAt)} · {sectionName(openPost.sectionId)}
+                    {openPost.userName} · {formatTime(openPost.createdAt)} · {t(sectionName(openPost.sectionId))}
                   </p>
                 </div>
                 <div className="p-5">

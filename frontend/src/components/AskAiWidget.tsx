@@ -135,7 +135,7 @@ const AskAiWidget = () => {
                 <button
                   onClick={() => setOpen(false)}
                   className="text-muted-foreground hover:text-foreground"
-                  aria-label={t('关闭')}
+                  aria-label={t('关闭面板')}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -280,7 +280,7 @@ const AskAiWidget = () => {
                                   onClick={() => send(q.prompt)}
                                   className="text-xs border border-border px-2 py-0.5 text-muted-foreground hover:border-info/50 hover:text-info transition-colors duration-[var(--duration-fast)]"
                                 >
-                                  {q.label}
+                                  {t(q.label)}
                                 </button>
                               ))}
                             </div>

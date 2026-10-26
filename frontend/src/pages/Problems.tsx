@@ -46,8 +46,8 @@ const Problems = () => {
     <div className="container py-14 lg:py-20">
       {/* 页头 */}
       <FadeIn>
-        <p className="text-sm font-semibold text-info tracking-wide mb-2">PROBLEM BANK · {meta.name}</p>
-        <h1 className="font-serif text-4xl font-semibold">{meta.short}{t('例题广场')}</h1>
+        <p className="text-sm font-semibold text-info tracking-wide mb-2">PROBLEM BANK · {t(meta.name)}</p>
+        <h1 className="font-serif text-4xl font-semibold">{t(meta.short)}{t('例题广场')}</h1>
         <p className="mt-4 text-muted-foreground leading-relaxed max-w-2xl">
           {t('每道例题配备分步提示与完整解答。建议先看提示独立思考，再展开解答核对每一步的推理依据。')}
         </p>

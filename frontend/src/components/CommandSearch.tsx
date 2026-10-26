@@ -139,7 +139,7 @@ const CommandSearch = ({ open, onOpenChange }: CommandSearchProps) => {
 
           <div className="border-t border-border px-4 py-2 text-xs text-muted-foreground flex justify-between">
             <span>{t('↑↓ 选择 · ↵ 打开 · Esc 关闭')}</span>
-            <span>Principia 搜索</span>
+            <span>{t('Principia 搜索')}</span>
           </div>
         </Command>
       </DialogContent>
