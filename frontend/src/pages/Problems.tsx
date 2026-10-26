@@ -4,11 +4,10 @@ import { Filter, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FadeIn, Stagger } from '@/components/MotionPrimitives';
 import ProblemCard from '@/components/ProblemCard';
-import { problems } from '@/data/problems';
-import { courses, subjectCourses } from '@/data/courses';
-import { topics } from '@/data/topics';
 import { useSubject } from '@/lib/SubjectContext';
 import { SUBJECT_META } from '@/types';
+import { useT } from '@/i18n/LocaleContext';
+import { useProblems, useCourses, useTopics } from '@/i18n/data';
 
 const difficultyFilters = [
   { value: 'all', label: '全部难度' },
@@ -18,10 +17,17 @@ const difficultyFilters = [
 ] as const;
 
 const Problems = () => {
+  const t = useT();
   const { subject } = useSubject();
   const meta = SUBJECT_META[subject];
-  const subjectCourseList = subjectCourses(subject);
+  const allCourses = useCourses();
+  const subjectCourseList = useMemo(
+    () => allCourses.filter((c) => (c.subject ?? 'math') === subject),
+    [allCourses, subject],
+  );
   const subjectCourseIds = useMemo(() => new Set(subjectCourseList.map((c) => c.id)), [subjectCourseList]);
+  const problems = useProblems();
+  const topics = useTopics();
   const [courseFilter, setCourseFilter] = useState('all');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
 
@@ -41,9 +47,9 @@ const Problems = () => {
       {/* 页头 */}
       <FadeIn>
         <p className="text-sm font-semibold text-info tracking-wide mb-2">PROBLEM BANK · {meta.name}</p>
-        <h1 className="font-serif text-4xl font-semibold">{meta.short}例题广场</h1>
+        <h1 className="font-serif text-4xl font-semibold">{meta.short}{t('例题广场')}</h1>
         <p className="mt-4 text-muted-foreground leading-relaxed max-w-2xl">
-          每道例题配备分步提示与完整解答。建议先看提示独立思考，再展开解答核对每一步的推理依据。
+          {t('每道例题配备分步提示与完整解答。建议先看提示独立思考，再展开解答核对每一步的推理依据。')}
         </p>
       </FadeIn>
 
@@ -52,7 +58,7 @@ const Problems = () => {
         <div className="mt-10 border border-border bg-card p-4 flex flex-col lg:flex-row lg:items-center gap-4">
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground shrink-0">
             <Filter className="h-4 w-4" />
-            筛选
+            {t('筛选')}
           </span>
 
           {/* 课程筛选 */}
@@ -63,7 +69,7 @@ const Problems = () => {
               onClick={() => setCourseFilter('all')}
               className={courseFilter === 'all' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'text-muted-foreground'}
             >
-              全部课程
+              {t('全部课程')}
             </Button>
             {subjectCourseList.map((c) => (
               <Button
@@ -94,7 +100,7 @@ const Problems = () => {
                     : 'text-muted-foreground'
                 }
               >
-                {d.label}
+                {t(d.label)}
               </Button>
             ))}
           </div>
@@ -104,14 +110,14 @@ const Problems = () => {
       {/* 结果统计 */}
       <FadeIn delay={0.15}>
         <p className="mt-6 text-sm text-muted-foreground">
-          共 <span className="font-semibold text-foreground">{filtered.length}</span> 道例题
+          {t('共')} <span className="font-semibold text-foreground">{filtered.length}</span> {t('道例题')}
         </p>
       </FadeIn>
 
       {/* 例题列表 */}
       <Stagger className="mt-6 space-y-6" stagger={0.08}>
         {filtered.map((problem) => {
-          const course = courses.find((c) => c.id === problem.courseId);
+          const course = allCourses.find((c) => c.id === problem.courseId);
           return (
             <FadeIn key={problem.id}>
               <div>
@@ -121,7 +127,7 @@ const Problems = () => {
                 >
                   {course?.name}
                   <ArrowRight className="h-3 w-3" />
-                  {topicsTitle(problem.topicId)}
+                  {topics.find((tp) => tp.id === problem.topicId)?.title ?? t('知识点')}
                 </Link>
                 <ProblemCard problem={problem} showTopicLink={false} />
               </div>
@@ -132,7 +138,7 @@ const Problems = () => {
 
       {filtered.length === 0 && (
         <div className="mt-8 border border-border bg-card py-16 text-center">
-          <p className="text-muted-foreground">当前筛选条件下暂无例题</p>
+          <p className="text-muted-foreground">{t('当前筛选条件下暂无例题')}</p>
           <Button
             variant="outline"
             className="mt-4"
@@ -141,15 +147,12 @@ const Problems = () => {
               setDifficultyFilter('all');
             }}
           >
-            清除筛选条件
+            {t('清除筛选条件')}
           </Button>
         </div>
       )}
     </div>
   );
 };
-
-// 按 topicId 从 topics 数据查出真实标题，查不到时兜底为「知识点」
-const topicsTitle = (topicId: string) => topics.find((t) => t.id === topicId)?.title ?? '知识点';
 
 export default Problems;

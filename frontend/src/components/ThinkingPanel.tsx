@@ -10,6 +10,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { Brain, Check, ChevronDown, Copy, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useT } from '@/i18n/LocaleContext';
+import { tpl } from '@/i18n/translate';
 
 export interface ThinkingPanelProps {
   /** 已累积的思考内容（可随流式输出增长） */
@@ -26,13 +28,14 @@ export interface ThinkingPanelProps {
 /** 把毫秒格式化为「12 秒」「1 分 05 秒」 */
 const formatDuration = (ms: number): string => {
   const total = Math.max(0, Math.round(ms / 1000));
-  if (total < 60) return `${total} 秒`;
+  if (total < 60) return tpl('{n} 秒', { n: total });
   const min = Math.floor(total / 60);
   const sec = total % 60;
-  return `${min} 分 ${String(sec).padStart(2, '0')} 秒`;
+  return tpl('{m} 分 {s} 秒', { m: min, s: String(sec).padStart(2, '0') });
 };
 
 const ThinkingPanel = ({ reasoning, live = false, startedAt, durationMs, className }: ThinkingPanelProps) => {
+  const t = useT();
   const bodyId = useId();
   const contentRef = useRef<HTMLDivElement>(null);
   // 默认展开（首次出现即能看到推理过程），用户可随时手动折叠
@@ -82,23 +85,23 @@ const ThinkingPanel = ({ reasoning, live = false, startedAt, durationMs, classNa
           className="flex min-w-0 flex-1 items-center gap-2 text-left"
         >
           <Brain className={cn('h-3.5 w-3.5 shrink-0 text-warning', live && 'animate-pulse')} />
-          <span className="shrink-0 font-medium text-warning">思考过程</span>
+          <span className="shrink-0 font-medium text-warning">{t('思考过程')}</span>
 
           {live ? (
             <span className="flex items-center gap-1 text-[11px] text-warning/80">
               <Loader2 className="h-3 w-3 shrink-0 animate-spin" />
-              {elapsed > 0 ? `思考中 · ${formatDuration(elapsed)}` : '正在思考…'}
+              {elapsed > 0 ? t('思考中 · ') + formatDuration(elapsed) : t('正在思考…')}
             </span>
           ) : (
             elapsed > 0 && (
               <span className="shrink-0 text-[11px] text-muted-foreground">
-                用时 {formatDuration(elapsed)}
+                {t('用时 ')}{formatDuration(elapsed)}
               </span>
             )
           )}
 
           {reasoning.length > 0 && (
-            <span className="shrink-0 text-[10px] text-muted-foreground">· {reasoning.length} 字</span>
+            <span className="shrink-0 text-[10px] text-muted-foreground">{t('· ')}{reasoning.length}{t(' 字')}</span>
           )}
 
           <ChevronDown
@@ -114,13 +117,13 @@ const ThinkingPanel = ({ reasoning, live = false, startedAt, durationMs, classNa
             type="button"
             onClick={() => void copy()}
             className="flex shrink-0 items-center gap-1 px-1 py-0.5 text-[11px] text-muted-foreground transition-colors duration-[var(--duration-fast)] hover:text-foreground"
-            aria-label="复制思考过程"
-            title="复制思考过程"
+            aria-label={t('复制思考过程')}
+            title={t('复制思考过程')}
           >
             {copied ? (
               <>
                 <Check className="h-3 w-3 text-success" />
-                已复制
+                {t('已复制')}
               </>
             ) : (
               <Copy className="h-3 w-3" />
@@ -135,7 +138,7 @@ const ThinkingPanel = ({ reasoning, live = false, startedAt, durationMs, classNa
           ref={contentRef}
           className="max-h-64 overflow-y-auto border-t border-warning/20 px-3 py-2 leading-relaxed whitespace-pre-wrap text-muted-foreground"
         >
-          {reasoning || <span className="text-warning/70">模型正在整理思路，稍等片刻…</span>}
+          {reasoning || <span className="text-warning/70">{t('模型正在整理思路，稍等片刻…')}</span>}
           {live && reasoning.length > 0 && (
             <span className="ml-0.5 inline-block h-3 w-1 translate-y-0.5 animate-pulse bg-warning/70 align-baseline" />
           )}

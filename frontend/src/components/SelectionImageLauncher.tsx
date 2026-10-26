@@ -31,6 +31,8 @@ import {
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useT } from '@/i18n/LocaleContext';
+import { tpl, translate } from '@/i18n/translate';
 import {
   streamChat,
   readAiProfiles,
@@ -56,9 +58,10 @@ import {
 const isSet = (p: AiProfile | null) =>
   Boolean(p && p.baseUrl && p.apiKey && p.model);
 const profileLabel = (p: AiProfile | null, i: number) =>
-  p?.name ? `${p.name}（${p.model}）` : `${AI_PROFILE_LABELS[i]} · ${p?.model ?? '未配置'}`;
+  p?.name ? `${p.name}（${p.model}）` : `${AI_PROFILE_LABELS[i]} · ${p?.model ?? translate('未配置')}`;
 
 const SelectionImageLauncher = () => {
+  const t = useT();
   // 当前有效文字选区（用于按钮高亮；点击时以实时选区为准）
   const [selText, setSelText] = useState('');
   // AI 答疑面板展开时避让（AskAiWidget 会在 body 上打 data-ask-ai-open 标记）
@@ -186,7 +189,7 @@ const SelectionImageLauncher = () => {
     }
     const picked = live.length >= 2 ? live : selText;
     if (!picked) {
-      toast.info('请先在页面上选中一段文字，再点我生成示意图');
+      toast.info(t('请先在页面上选中一段文字，再点我生成示意图'));
       return;
     }
     openDialog(picked);
@@ -195,7 +198,7 @@ const SelectionImageLauncher = () => {
   const generate = useCallback(async () => {
     const cfg = readProfileConfig(modelIndex);
     if (!cfg) {
-      setError('所选存档尚未配置 API Key，请先到 AI 答疑页完成设置。');
+      setError(t('所选存档尚未配置 API Key，请先到 AI 答疑页完成设置。'));
       return;
     }
     // 取消上一次未完成的生成，并取新序号：旧流的 chunk 一律丢弃
@@ -236,7 +239,7 @@ const SelectionImageLauncher = () => {
       if (final && isCurrent()) {
         setSvg(sanitizeSvg(final));
       } else if (isCurrent()) {
-        setError('模型没有返回有效的 SVG，请重试或更换一个模型/存档。');
+        setError(t('模型没有返回有效的 SVG，请重试或更换一个模型/存档。'));
       }
     } catch (err) {
       if (isCurrent()) setError(describeAiError(err));
@@ -262,7 +265,7 @@ const SelectionImageLauncher = () => {
       new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }),
       `${svgFilenameBase(text)}.svg`,
     );
-    toast.success('已下载 SVG 矢量图');
+    toast.success(t('已下载 SVG 矢量图'));
   };
 
   const onDownloadPng = async () => {
@@ -270,7 +273,7 @@ const SelectionImageLauncher = () => {
     try {
       const blob = await svgToPngBlob(svg, 2);
       downloadBlob(blob, `${svgFilenameBase(text)}.png`);
-      toast.success('已下载 PNG 图片');
+      toast.success(t('已下载 PNG 图片'));
     } catch (e) {
       toast.error(describeAiError(e));
     }
@@ -280,9 +283,9 @@ const SelectionImageLauncher = () => {
     if (!svg) return;
     try {
       await navigator.clipboard.writeText(svg);
-      toast.success('已复制 SVG 代码');
+      toast.success(t('已复制 SVG 代码'));
     } catch {
-      toast.error('复制失败，请手动选择复制');
+      toast.error(t('复制失败，请手动选择复制'));
     }
   };
 
@@ -297,8 +300,10 @@ const SelectionImageLauncher = () => {
         onMouseDown={(e) => e.preventDefault()}
         title={
           selText
-            ? `把选中文字生成示意图：${selText.slice(0, 40)}${selText.length > 40 ? '…' : ''}`
-            : '选中一段文字后，点我生成示意图'
+            ? tpl('把选中文字生成示意图：{s}', {
+                s: selText.slice(0, 40) + (selText.length > 40 ? '…' : ''),
+              })
+            : t('选中一段文字后，点我生成示意图')
         }
         className={`fixed bottom-[5.5rem] right-4 sm:right-6 z-40 flex h-10 items-center gap-1.5 rounded-full border px-4 text-xs font-medium shadow-lg transition-all duration-[var(--duration-fast)] ${
           askAiOpen
@@ -309,7 +314,7 @@ const SelectionImageLauncher = () => {
         }`}
       >
         <Sparkles className="h-4 w-4" />
-        生成示意图
+        {t('生成示意图')}
       </button>
 
       <Dialog
@@ -323,10 +328,10 @@ const SelectionImageLauncher = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ImageIcon className="h-5 w-5 text-info" />
-              AI 生成示意图
+              {t('AI 生成示意图')}
             </DialogTitle>
             <DialogDescription>
-              用你存档的模型把选中内容画成矢量图（函数曲线 / 受力图 / 电路 / 光路等），可下载 SVG 或 PNG。
+              {t('用你存档的模型把选中内容画成矢量图（函数曲线 / 受力图 / 电路 / 光路等），可下载 SVG 或 PNG。')}
             </DialogDescription>
           </DialogHeader>
 
@@ -375,13 +380,13 @@ const SelectionImageLauncher = () => {
               className="bg-info text-info-foreground hover:bg-info/90 gap-1.5"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              {svg ? '重新生成' : '生成'}
+              {svg ? t('重新生成') : t('生成')}
             </Button>
           </div>
 
           {noProfile && (
             <p className="text-sm text-muted-foreground">
-              还没有可用的 API 存档——请先到 AI 答疑页配置接口与模型。
+              {t('还没有可用的 API 存档——请先到 AI 答疑页配置接口与模型。')}
             </p>
           )}
 
@@ -396,18 +401,18 @@ const SelectionImageLauncher = () => {
             {loading && !svg && (
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin text-info" />
-                <span className="text-sm">正在绘图…</span>
+                <span className="text-sm">{t('正在绘图…')}</span>
               </div>
             )}
             {svg && (
               <img
                 src={svgBlobUrl ?? undefined}
-                alt="AI 生成的示意图"
+                alt={t('AI 生成的示意图')}
                 className="max-w-full h-auto max-h-[55vh]"
               />
             )}
             {!loading && !svg && !error && !noProfile && (
-              <span className="text-sm text-muted-foreground">尚未生成</span>
+              <span className="text-sm text-muted-foreground">{t('尚未生成')}</span>
             )}
           </div>
 
@@ -416,15 +421,15 @@ const SelectionImageLauncher = () => {
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={onDownloadSvg} className="gap-1.5">
                 <Download className="h-4 w-4" />
-                下载 SVG
+                {t('下载 SVG')}
               </Button>
               <Button variant="outline" size="sm" onClick={() => void onDownloadPng()} className="gap-1.5">
                 <ImageDown className="h-4 w-4" />
-                下载 PNG
+                {t('下载 PNG')}
               </Button>
               <Button variant="outline" size="sm" onClick={() => void onCopy()} className="gap-1.5">
                 <Copy className="h-4 w-4" />
-                复制 SVG
+                {t('复制 SVG')}
               </Button>
             </div>
           )}

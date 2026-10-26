@@ -27,6 +27,7 @@ import { InlineMathText } from '@/components/MathText';
 import { readAiConfig, THINKING_LABELS } from '@/lib/ai';
 import { useTutorChat, QUICK_FOLLOWUPS } from '@/lib/useTutorChat';
 import { useUserDocs } from '@/lib/docLibrary';
+import { useT } from '@/i18n/LocaleContext';
 
 const HIDDEN_PATHS = ['/tutor', '/login'];
 
@@ -38,6 +39,7 @@ const useRouteTopicId = (): string | null => {
 };
 
 const AskAiWidget = () => {
+  const t = useT();
   const location = useLocation();
   const { user } = useAuth();
   const topicId = useRouteTopicId();
@@ -93,7 +95,7 @@ const AskAiWidget = () => {
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.94 }}
         className="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-info text-info-foreground shadow-lg shadow-info/25 transition-colors hover:bg-info/90"
-        aria-label={open ? '关闭 AI 答疑' : '打开 AI 答疑'}
+        aria-label={open ? t('关闭 AI 答疑') : t('打开 AI 答疑')}
       >
         {open ? <X className="h-5 w-5" /> : <Sparkles className="h-5 w-5" />}
       </motion.button>
@@ -113,7 +115,7 @@ const AskAiWidget = () => {
               <span className="flex h-6 w-6 items-center justify-center bg-info text-info-foreground shrink-0">
                 <Sparkles className="h-3.5 w-3.5" />
               </span>
-              <span className="text-sm font-medium">AI 助教</span>
+              <span className="text-sm font-medium">{t('AI 助教')}</span>
               {topic && (
                 <span className="flex items-center gap-1 text-xs text-info truncate max-w-[140px]" title={topic.title}>
                   <BookOpen className="h-3 w-3 shrink-0" />
@@ -125,15 +127,15 @@ const AskAiWidget = () => {
                   to="/tutor"
                   onClick={() => setOpen(false)}
                   className="flex items-center gap-1 text-xs text-muted-foreground hover:text-info transition-colors duration-[var(--duration-fast)]"
-                  title="打开完整答疑台"
+                  title={t('打开完整答疑台')}
                 >
                   <Maximize2 className="h-3.5 w-3.5" />
-                  答疑台
+                  {t('答疑台')}
                 </Link>
                 <button
                   onClick={() => setOpen(false)}
                   className="text-muted-foreground hover:text-foreground"
-                  aria-label="关闭"
+                  aria-label={t('关闭')}
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -146,14 +148,14 @@ const AskAiWidget = () => {
                 <div className="py-6 text-center">
                   <Sparkles className="mx-auto h-8 w-8 text-info/40 mb-3" />
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    随时提问，随叫随到。
+                    {t('随时提问，随叫随到。')}
                     <br />
-                    概念、解题、证明都可以问。
+                    {t('概念、解题、证明都可以问。')}
                   </p>
                   {enabledDocCount > 0 && (
                     <p className="mt-2 flex items-center justify-center gap-1 text-xs text-info">
                       <Library className="h-3 w-3" />
-                      已加载 {enabledDocCount} 份个人资料
+                      {t('已加载 ')}{enabledDocCount}{t(' 份个人资料')}
                     </p>
                   )}
                 </div>
@@ -168,7 +170,7 @@ const AskAiWidget = () => {
                   ) : (
                     <div className="max-w-full">
                       <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-xs font-medium text-muted-foreground">Principia 助教</span>
+                        <span className="text-xs font-medium text-muted-foreground">{t('Principia 助教')}</span>
                         {m.model && (
                           <span className="text-[10px] bg-secondary text-muted-foreground px-1.5 py-0.5 font-mono">{m.model}</span>
                         )}
@@ -178,29 +180,29 @@ const AskAiWidget = () => {
                               m.mode === 'medium' || m.mode === 'high' ? 'bg-warning/15 text-warning' : 'bg-info/10 text-info'
                             }`}
                           >
-                            {m.auto && '自动·'}
-                            {`思考 · ${THINKING_LABELS[m.mode]}`}
+                            {m.auto && t('自动·')}
+                            {t('思考 · ') + t(THINKING_LABELS[m.mode])}
                           </span>
                         )}
                         {m.multiPath && (
                           <span className="text-[10px] bg-info/15 text-info px-1.5 py-0.5">
-                            多路径·{m.multiPath}路
+                            {t('多路径·')}{m.multiPath}{t('路')}
                           </span>
                         )}
                         {m.crossModel && (
                           <span className="text-[10px] bg-warning/15 text-warning px-1.5 py-0.5">
-                            交叉验证·{m.crossModel}
+                            {t('交叉验证·')}{m.crossModel}
                           </span>
                         )}
                         {m.link && (
                           <span className="text-[10px] bg-success/15 text-success px-1.5 py-0.5">
-                            联动·{m.linkModel}
+                            {t('联动·')}{m.linkModel}
                           </span>
                         )}
                         {status === 'searching' && i === messages.length - 1 && (
                           <span className="flex items-center gap-1 text-xs text-info">
                             <FileSearch className="h-3 w-3 animate-pulse" />
-                            检索文档中…
+                            {t('检索文档中…')}
                           </span>
                         )}
                       </div>
@@ -222,7 +224,7 @@ const AskAiWidget = () => {
                         >
                           <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-success">
                             <Check className="h-3 w-3" />
-                            智能自检
+                            {t('智能自检')}
                           </summary>
                           <div className="mt-1.5 whitespace-pre-wrap leading-relaxed text-muted-foreground">
                             {m.selfCheck}
@@ -234,12 +236,12 @@ const AskAiWidget = () => {
                         <details className="mb-2 border border-info/30 bg-info/5 px-3 py-2 text-xs">
                           <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-info">
                             <Sparkles className="h-3 w-3" />
-                            多路径推理 · {m.paths.length} 路独立思路{m.link ? `（经 ${m.linkModel} 仲裁）` : ''}
+                            {t('多路径推理 · ')}{m.paths.length}{t(' 路独立思路')}{m.link ? t('（经 ') + m.linkModel + t(' 仲裁）') : ''}
                           </summary>
                           <div className="mt-1.5 space-y-2">
                             {m.paths.map((p, j) => (
                               <div key={j}>
-                                <div className="mb-0.5 font-medium text-foreground">思路 {j + 1}</div>
+                                <div className="mb-0.5 font-medium text-foreground">{t('思路 ') + (j + 1)}</div>
                                 <div className="whitespace-pre-wrap leading-relaxed text-muted-foreground">{p}</div>
                               </div>
                             ))}
@@ -251,7 +253,7 @@ const AskAiWidget = () => {
                         <details className="mb-2 border border-warning/30 bg-warning/5 px-3 py-2 text-xs">
                           <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-warning">
                             <RefreshCw className="h-3 w-3" />
-                            交叉验证 · 模型B（{m.crossModel}）
+                            {t('交叉验证 · 模型B（')}{m.crossModel}{t('）')}
                           </summary>
                           <div className="mt-1.5 whitespace-pre-wrap leading-relaxed text-muted-foreground">
                             {m.crossCheck}
@@ -263,11 +265,11 @@ const AskAiWidget = () => {
                           <MathText content={m.content} className="text-sm" />
                           {m.sources && m.sources.length > 0 && (
                             <p className="mt-1.5 text-xs text-info">
-                              · 参考了我的文档 {m.sources.length} 个段落（
+                              {t('· 参考了我的文档 ')}{m.sources.length}{t(' 个段落（')}
                               <Link to="/tutor" onClick={() => setOpen(false)} className="hover:underline">
-                                查看详情
+                                {t('查看详情')}
                               </Link>
-                              ）
+                              {t('）')}
                             </p>
                           )}
                           {!streaming && i === messages.length - 1 && (
@@ -303,7 +305,7 @@ const AskAiWidget = () => {
                   {error}
                   {error.includes('API Key') && (
                     <Link to="/tutor" onClick={() => setOpen(false)} className="ml-1 underline">
-                      去配置
+                      {t('去配置')}
                     </Link>
                   )}
                 </div>
@@ -323,13 +325,13 @@ const AskAiWidget = () => {
                       send(input);
                     }
                   }}
-                  placeholder="输入问题，Enter 发送…"
+                  placeholder={t('输入问题，Enter 发送…')}
                   disabled={streaming}
                   rows={1}
                   className="flex-1 resize-none border border-border bg-background px-3 py-2 text-sm outline-none focus:border-info/50 disabled:opacity-50"
                 />
                 {streaming ? (
-                  <Button onClick={stop} variant="outline" size="icon" className="shrink-0" aria-label="停止生成">
+                  <Button onClick={stop} variant="outline" size="icon" className="shrink-0" aria-label={t('停止生成')}>
                     <Square className="h-4 w-4" />
                   </Button>
                 ) : (
@@ -338,7 +340,7 @@ const AskAiWidget = () => {
                     disabled={!input.trim() || !readAiConfig()}
                     size="icon"
                     className="shrink-0 bg-info text-info-foreground hover:bg-info/90"
-                    aria-label="发送"
+                    aria-label={t('发送')}
                   >
                     <Send className="h-4 w-4" />
                   </Button>

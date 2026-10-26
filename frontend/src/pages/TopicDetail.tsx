@@ -16,9 +16,8 @@ import { Button } from '@/components/ui/button';
 import { FadeIn, Stagger } from '@/components/MotionPrimitives';
 import MathText, { InlineMathText, renderInline } from '@/components/MathText';
 import ProblemCard from '@/components/ProblemCard';
-import { courses } from '@/data/courses';
-import { topics } from '@/data/topics';
-import { problems } from '@/data/problems';
+import { useCourses, useProblems, useTopics } from '@/i18n/data';
+import { useT, useLocale } from '@/i18n/LocaleContext';
 import { exportTopicToDocx } from '@/lib/wordExport';
 import { downloadBlob } from '@/lib/textImage';
 import { toast } from 'sonner';
@@ -54,16 +53,21 @@ const TopicDetail = () => {
   const { topicId } = useParams<{ topicId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const sectionParam = searchParams.get('section');
-  const topic = topics.find((t) => t.id === topicId);
+  const t = useT();
+  const { tpl } = useLocale();
+  const topics = useTopics();
+  const courses = useCourses();
+  const problems = useProblems();
+  const topic = topics.find((tp) => tp.id === topicId);
 
   const course = useMemo(
     () => (topic ? courses.find((c) => c.id === topic.courseId) : undefined),
-    [topic],
+    [topic, courses],
   );
 
   const relatedProblems = useMemo(
     () => (topic ? problems.filter((p) => p.topicId === topic.id) : []),
-    [topic],
+    [topic, problems],
   );
 
   const sections = useMemo(
@@ -74,8 +78,8 @@ const TopicDetail = () => {
   // 同课程的前后知识点
   const { prev, next } = useMemo(() => {
     if (!topic) return { prev: undefined, next: undefined };
-    const siblings = topics.filter((t) => t.courseId === topic.courseId);
-    const idx = siblings.findIndex((t) => t.id === topic.id);
+    const siblings = topics.filter((tp) => tp.courseId === topic.courseId);
+    const idx = siblings.findIndex((tp) => tp.id === topic.id);
     return { prev: idx > 0 ? siblings[idx - 1] : undefined, next: idx < siblings.length - 1 ? siblings[idx + 1] : undefined };
   }, [topic]);
 
@@ -127,9 +131,9 @@ const TopicDetail = () => {
       });
       const safe = topic.title.replace(/[\\/:*?"<>|]/g, '_').slice(0, 60);
       downloadBlob(blob, `Principia-知识讲解-${safe}.docx`);
-      toast.success('已导出 Word');
+      toast.success(t('已导出 Word'));
     } catch (err) {
-      toast.error(`导出失败：${err instanceof Error ? err.message : String(err)}`);
+      toast.error(tpl('导出失败：{msg}', { msg: err instanceof Error ? err.message : String(err) }));
     } finally {
       setExporting(false);
     }
@@ -139,9 +143,9 @@ const TopicDetail = () => {
     <div className="container py-10 lg:py-14">
       {/* 面包屑 */}
       <FadeIn>
-        <nav aria-label="面包屑" className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
+        <nav aria-label={t('面包屑')} className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
           <Link to="/" className="hover:text-foreground transition-colors duration-[var(--duration-fast)]">
-            首页
+            {t('首页')}
           </Link>
           <ChevronRight className="h-3.5 w-3.5" />
           <Link
@@ -171,7 +175,7 @@ const TopicDetail = () => {
               <Button asChild className="gap-2 bg-info text-info-foreground hover:bg-info/90">
                 <Link to={`/tutor?topic=${topic.id}`}>
                   <Sparkles className="h-4 w-4" />
-                  问 AI 讲解这个知识点
+                  {t('问 AI 讲解这个知识点')}
                 </Link>
               </Button>
               <Button
@@ -180,17 +184,17 @@ const TopicDetail = () => {
                 className="gap-1.5"
                 onClick={() => void handleExportWord()}
                 disabled={exporting}
-                title="导出为可编辑的 Word 文档（公式可在 Word 中编辑）"
+                title={t('导出为可编辑的 Word 文档（公式可在 Word 中编辑）')}
               >
                 {exporting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <FileDown className="h-4 w-4" />
                 )}
-                {exporting ? '导出中…' : '导出 Word'}
+                {exporting ? t('导出中…') : t('导出 Word')}
               </Button>
               <span className="text-xs text-muted-foreground">
-                带着本页上下文提问，问答自动记入学习档案
+                {t('带着本页上下文提问，问答自动记入学习档案')}
               </span>
             </div>
             <div className="mt-6 h-px bg-border" />
@@ -201,14 +205,14 @@ const TopicDetail = () => {
             <div className="mt-6 flex items-center gap-3 border border-info/30 bg-info/5 px-4 py-3">
               <Sparkles className="h-4 w-4 shrink-0 text-info" />
               <p className="text-sm flex-1 min-w-0">
-                正在阅读：
+                {t('正在阅读：')}
                 <span className="text-info font-medium mx-1"><InlineMathText escape text={sectionParam} /></span>
-                <span className="text-muted-foreground">（AI 答疑时会结合这一节讲解）</span>
+                <span className="text-muted-foreground">{t('（AI 答疑时会结合这一节讲解）')}</span>
               </p>
               <button
                 onClick={clearSectionContext}
                 className="text-muted-foreground hover:text-foreground shrink-0"
-                aria-label="清除小节上下文"
+                aria-label={t('清除小节上下文')}
               >
                 <X className="h-4 w-4" />
               </button>
