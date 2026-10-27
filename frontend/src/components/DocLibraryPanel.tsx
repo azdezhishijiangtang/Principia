@@ -16,6 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useT, useLocale } from '@/i18n/LocaleContext';
 import { Switch } from '@/components/ui/switch';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -60,6 +61,8 @@ interface DocLibraryPanelProps {
 }
 
 const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelProps) => {
+  const t = useT();
+  const { tpl } = useLocale();
   const docs = useUserDocs(userId);
   const [dragging, setDragging] = useState(false);
   const [uploadName, setUploadName] = useState<string | null>(null);
@@ -80,14 +83,17 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
           await saveDocument(userId, file, (p) => setProgress(p));
         } catch (err) {
           setUploadError(
-            err instanceof Error ? `《${file.name}》${err.message}` : `《${file.name}》上传失败`,
+            tpl('《{name}》{msg}', {
+              name: file.name,
+              msg: err instanceof Error ? t(err.message) : t('上传失败'),
+            }),
           );
         }
       }
       setUploadName(null);
       setProgress(null);
     },
-    [userId],
+    [userId, t, tpl],
   );
 
   const handleDrop = (e: React.DragEvent) => {
@@ -104,17 +110,21 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
       {/* ── 标题 ── */}
       <div className="flex items-center gap-2">
         <Library className="h-4 w-4 text-info" />
-        <h3 className="font-serif text-base font-semibold">我的文档知识库</h3>
+        <h3 className="font-serif text-base font-semibold">{t('我的文档知识库')}</h3>
         {docs.length > 0 && (
           <span className="ml-auto text-xs text-muted-foreground">
-            {enabledCount}/{docs.length} 份参与检索 · {totalChunks} 个段落
+            {tpl('{on}/{all} 份参与检索 · {n} 个段落', {
+              on: enabledCount,
+              all: docs.length,
+              n: totalChunks,
+            })}
           </span>
         )}
         {compact && onClose && (
           <button
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground"
-            aria-label="关闭文档面板"
+            aria-label={t('关闭文档面板')}
           >
             <X className="h-4 w-4" />
           </button>
@@ -125,7 +135,7 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
       <div
         role="button"
         tabIndex={0}
-        aria-label="上传文档：拖入文件，或按回车键选择文件"
+        aria-label={t('上传文档：拖入文件，或按回车键选择文件')}
         onKeyDown={(e) => {
           // 键盘用户按 Enter / 空格触发文件选择
           if (e.key === 'Enter' || e.key === ' ') {
@@ -161,27 +171,29 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
           <div className="space-y-3">
             <div className="flex items-center justify-center gap-2 text-sm">
               <Loader2 className="h-4 w-4 animate-spin text-info" />
-              <span className="truncate max-w-[220px]">正在解析《{uploadName}》…</span>
+              <span className="truncate max-w-[220px]">
+                {tpl('正在解析《{name}》…', { name: uploadName })}
+              </span>
             </div>
             {progress && progress.total > 0 ? (
               <>
                 <Progress value={(progress.done / progress.total) * 100} className="h-1.5" />
                 <p className="text-xs text-muted-foreground">
-                  {progress.done} / {progress.total} 页
+                  {tpl('{done} / {total} 页', { done: progress.done, total: progress.total })}
                 </p>
               </>
             ) : (
-              <p className="text-xs text-muted-foreground">提取文字并分块中…</p>
+              <p className="text-xs text-muted-foreground">{t('提取文字并分块中…')}</p>
             )}
           </div>
         ) : (
           <>
             <Upload className="mx-auto h-7 w-7 text-muted-foreground/60 mb-2" />
-            <p className="text-sm font-medium">拖入文件，或点击上传</p>
+            <p className="text-sm font-medium">{t('拖入文件，或点击上传')}</p>
             <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
-              支持 PDF / Word / txt / Markdown，单个不超过 500MB。
+              {t('支持 PDF / Word / txt / Markdown，单个不超过 500MB。')}
               <br />
-              文件仅在本地浏览器解析并存储，不会上传到任何服务器。
+              {t('文件仅在本地浏览器解析并存储，不会上传到任何服务器。')}
             </p>
           </>
         )}
@@ -191,7 +203,7 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
         <div className="flex items-start gap-2 border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-xs text-destructive leading-relaxed">
           <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
           <span className="flex-1">{uploadError}</span>
-          <button onClick={() => setUploadError(null)} aria-label="关闭错误提示">
+          <button onClick={() => setUploadError(null)} aria-label={t('关闭错误提示')}>
             <X className="h-3.5 w-3.5" />
           </button>
         </div>
@@ -202,9 +214,9 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
         <div className="py-6 text-center">
           <FileType2 className="mx-auto h-8 w-8 text-muted-foreground/40 mb-2.5" />
           <p className="text-sm text-muted-foreground leading-relaxed">
-            还没有上传资料。
+            {t('还没有上传资料。')}
             <br />
-            上传教材、讲义或笔记后，AI 回答时会优先参考你的资料并注明出处。
+            {t('上传教材、讲义或笔记后，AI 回答时会优先参考你的资料并注明出处。')}
           </p>
         </div>
       ) : (
@@ -219,7 +231,7 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
               onDelete={async () => {
                 const res = await deleteDocument(userId, doc.id);
                 if (!res.ok) {
-                  toast.error(res.error ?? '删除失败');
+                  toast.error(res.error ? t(res.error) : t('删除失败'));
                   return;
                 }
                 setConfirmDeleteId(null);
@@ -234,7 +246,9 @@ const DocLibraryPanel = ({ userId, compact = false, onClose }: DocLibraryPanelPr
       <div className="flex items-start gap-2 text-xs text-muted-foreground bg-secondary/50 px-3 py-2.5 leading-relaxed">
         <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5 text-success" />
         <span>
-          提问时自动检索与问题最相关的段落注入 AI 上下文；关闭开关可临时让某份资料不参与检索。
+          {t(
+            '提问时自动检索与问题最相关的段落注入 AI 上下文；关闭开关可临时让某份资料不参与检索。',
+          )}
         </span>
       </div>
     </div>
@@ -258,6 +272,8 @@ const DocRow = ({
   onDelete,
   onToggle,
 }: DocRowProps) => {
+  const t = useT();
+  const { tpl } = useLocale();
   const ext = docExt(doc.name);
   return (
     <li
@@ -272,8 +288,8 @@ const DocRow = ({
             {doc.name}
           </p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            {DOC_TYPE_HINT[ext] ?? ext.toUpperCase()} · {formatSize(doc.size)} ·{' '}
-            {doc.chunkCount} 个段落 · {formatDate(doc.addedAt)}
+            {t(DOC_TYPE_HINT[ext] ?? ext.toUpperCase())} · {formatSize(doc.size)} ·{' '}
+            {tpl('{n} 个段落', { n: doc.chunkCount })} · {formatDate(doc.addedAt)}
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -285,7 +301,7 @@ const DocRow = ({
                 className="h-7 px-2.5 text-xs"
                 onClick={onDelete}
               >
-                确认删除
+                {t('确认删除')}
               </Button>
               <Button
                 size="sm"
@@ -293,20 +309,19 @@ const DocRow = ({
                 className="h-7 px-2 text-xs"
                 onClick={onCancelDelete}
               >
-                取消
-              </Button>
-            </>
+                {t('取消')}
+              </Button>            </>
           ) : (
             <>
               <Switch
                 checked={doc.enabled}
                 onCheckedChange={onToggle}
-                aria-label={doc.enabled ? '停用该文档' : '启用该文档'}
+                aria-label={doc.enabled ? t('停用该文档') : t('启用该文档')}
               />
               <button
                 onClick={onConfirmDelete}
                 className="text-muted-foreground hover:text-destructive transition-colors duration-[var(--duration-fast)]"
-                aria-label={`删除 ${doc.name}`}
+                aria-label={tpl('删除 {name}', { name: doc.name })}
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </button>

@@ -17,10 +17,12 @@ import { Input } from '@/components/ui/input';
 import { FadeIn } from '@/components/MotionPrimitives';
 import { renderMath } from '@/components/MathText';
 import { useAuth } from '@/lib/AuthContext';
+import { useT } from '@/i18n/LocaleContext';
 
 const inputCls = 'pl-10';
 
 const Login = () => {
+  const t = useT();
   const { signUpWithPhone, signInWithPhone, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -43,7 +45,7 @@ const Login = () => {
     e.preventDefault();
     setPhoneError('');
     if (regPassword !== confirmPassword) {
-      setPhoneError('两次输入的密码不一致');
+      setPhoneError(t('两次输入的密码不一致'));
       return;
     }
     setPhoneSubmitting(true);
@@ -51,7 +53,7 @@ const Login = () => {
       await signUpWithPhone(phone, username, regPassword);
       navigate(from, { replace: true });
     } catch (err) {
-      setPhoneError(err instanceof Error ? err.message : '注册失败，请重试');
+      setPhoneError(err instanceof Error ? err.message : t('注册失败，请重试'));
     } finally {
       setPhoneSubmitting(false);
     }
@@ -66,7 +68,7 @@ const Login = () => {
       navigate(from, { replace: true });
     } catch {
       // 统一文案，避免泄露「账号不存在」vs「密码错误」，防止账号枚举
-      setPhoneError('账号或密码错误');
+      setPhoneError(t('账号或密码错误'));
     } finally {
       setPhoneSubmitting(false);
     }
@@ -82,13 +84,12 @@ const Login = () => {
             MATHLENS
           </p>
           <h1 className="font-serif text-4xl font-semibold leading-tight">
-            手机号注册，
+            {t('手机号注册，')}
             <br />
-            开启你的数学学习之旅
+            {t('开启你的数学学习之旅')}
           </h1>
           <p className="mt-5 text-muted-foreground leading-relaxed">
-            一个手机号一个账号，设置专属用户名与密码；登录后保存学习进度、
-            收藏知识点，在任意页面继续你的推导。
+            {t('一个手机号一个账号，设置专属用户名与密码；登录后保存学习进度、收藏知识点，在任意页面继续你的推导。')}
           </p>
           <div
             className="mt-8 border-l-2 border-info pl-5 text-sm text-muted-foreground"
@@ -97,7 +98,7 @@ const Login = () => {
             }}
           />
           <p className="mt-3 text-xs text-muted-foreground">
-            欧拉恒等式 —— 数学中最美的公式之一
+            {t('欧拉恒等式 —— 数学中最美的公式之一')}
           </p>
         </FadeIn>
 
@@ -111,11 +112,11 @@ const Login = () => {
               </span>
             </div>
 
-            <h2 className="font-serif text-2xl font-semibold">欢迎来到 Principia</h2>
+            <h2 className="font-serif text-2xl font-semibold">{t('欢迎来到 Principia')}</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               {phoneMode === 'register'
-                ? '手机号注册：一个手机号一个账号，用户名全站唯一'
-                : '输入手机号（或用户名）与密码登录'}
+                ? t('手机号注册：一个手机号一个账号，用户名全站唯一')
+                : t('输入手机号（或用户名）与密码登录')}
             </p>
 
             <div className="mt-6">
@@ -135,7 +136,7 @@ const Login = () => {
                     }`}
                   >
                     <UserPlus className="h-4 w-4" />
-                    注册新账号
+                    {t('注册新账号')}
                   </button>
                   <button
                     type="button"
@@ -150,7 +151,7 @@ const Login = () => {
                     }`}
                   >
                     <LogIn className="h-4 w-4" />
-                    已有账号登录
+                    {t('已有账号登录')}
                   </button>
                 </div>
 
@@ -158,7 +159,7 @@ const Login = () => {
                   <form onSubmit={handlePhoneRegister} className="mt-6 space-y-4" noValidate>
                     <div>
                       <label htmlFor="phone" className="block text-sm font-medium mb-2">
-                        手机号
+                        {t('手机号')}
                       </label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -168,7 +169,7 @@ const Login = () => {
                           inputMode="numeric"
                           maxLength={11}
                           autoComplete="tel"
-                          placeholder="11 位手机号，如 13812345678"
+                          placeholder={t('11 位手机号，如 13812345678')}
                           className={inputCls}
                           value={phone}
                           onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
@@ -179,7 +180,7 @@ const Login = () => {
 
                     <div>
                       <label htmlFor="username" className="block text-sm font-medium mb-2">
-                        用户名 <span className="text-xs text-muted-foreground">（全站唯一，2-16 位）</span>
+                        {t('用户名')} <span className="text-xs text-muted-foreground">{t('（全站唯一，2-16 位）')}</span>
                       </label>
                       <div className="relative">
                         <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -188,7 +189,7 @@ const Login = () => {
                           type="text"
                           maxLength={16}
                           autoComplete="username"
-                          placeholder="中文、字母、数字或下划线"
+                          placeholder={t('中文、字母、数字或下划线')}
                           className={inputCls}
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
@@ -200,7 +201,7 @@ const Login = () => {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div>
                         <label htmlFor="reg-password" className="block text-sm font-medium mb-2">
-                          设置密码
+                          {t('设置密码')}
                         </label>
                         <div className="relative">
                           <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -208,7 +209,7 @@ const Login = () => {
                             id="reg-password"
                             type="password"
                             autoComplete="new-password"
-                            placeholder="6-32 位"
+                            placeholder={t('6-32 位')}
                             className={inputCls}
                             value={regPassword}
                             onChange={(e) => setRegPassword(e.target.value)}
@@ -218,7 +219,7 @@ const Login = () => {
                       </div>
                       <div>
                         <label htmlFor="confirm-password" className="block text-sm font-medium mb-2">
-                          确认密码
+                          {t('确认密码')}
                         </label>
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -226,7 +227,7 @@ const Login = () => {
                             id="confirm-password"
                             type="password"
                             autoComplete="new-password"
-                            placeholder="再输入一次"
+                            placeholder={t('再输入一次')}
                             className={inputCls}
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -253,18 +254,18 @@ const Login = () => {
                       {phoneSubmitting ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          正在注册…
+                          {t('正在注册…')}
                         </>
                       ) : (
                         <>
                           <UserPlus className="h-4 w-4" />
-                          注册并登录
+                          {t('注册并登录')}
                         </>
                       )}
                     </Button>
 
                     <p className="text-center text-xs text-muted-foreground">
-                      已有账号？
+                      {t('已有账号？')}
                       <button
                         type="button"
                         onClick={() => {
@@ -273,7 +274,7 @@ const Login = () => {
                         }}
                         className="ml-1 text-info hover:underline"
                       >
-                        直接登录
+                        {t('直接登录')}
                       </button>
                     </p>
                   </form>
@@ -281,7 +282,7 @@ const Login = () => {
                   <form onSubmit={handlePhoneLogin} className="mt-6 space-y-4" noValidate>
                     <div>
                       <label htmlFor="identifier" className="block text-sm font-medium mb-2">
-                        手机号或用户名
+                        {t('手机号或用户名')}
                       </label>
                       <div className="relative">
                         <UserRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -289,7 +290,7 @@ const Login = () => {
                           id="identifier"
                           type="text"
                           autoComplete="username"
-                          placeholder="注册时的手机号或用户名"
+                          placeholder={t('注册时的手机号或用户名')}
                           className={inputCls}
                           value={identifier}
                           onChange={(e) => setIdentifier(e.target.value)}
@@ -300,7 +301,7 @@ const Login = () => {
 
                     <div>
                       <label htmlFor="login-password" className="block text-sm font-medium mb-2">
-                        密码
+                        {t('密码')}
                       </label>
                       <div className="relative">
                         <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -308,7 +309,7 @@ const Login = () => {
                           id="login-password"
                           type="password"
                           autoComplete="current-password"
-                          placeholder="注册时设置的密码"
+                          placeholder={t('注册时设置的密码')}
                           className={inputCls}
                           value={loginPassword}
                           onChange={(e) => setLoginPassword(e.target.value)}
@@ -334,18 +335,18 @@ const Login = () => {
                       {phoneSubmitting ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          正在登录…
+                          {t('正在登录…')}
                         </>
                       ) : (
                         <>
                           <LogIn className="h-4 w-4" />
-                          登录
+                          {t('登录')}
                         </>
                       )}
                     </Button>
 
                     <p className="text-center text-xs text-muted-foreground">
-                      还没有账号？
+                      {t('还没有账号？')}
                       <button
                         type="button"
                         onClick={() => {
@@ -354,7 +355,7 @@ const Login = () => {
                         }}
                         className="ml-1 text-info hover:underline"
                       >
-                        用手机号注册
+                        {t('用手机号注册')}
                       </button>
                     </p>
                   </form>
@@ -366,7 +367,7 @@ const Login = () => {
               className="mt-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-[var(--duration-fast)]"
             >
               <ArrowLeft className="h-4 w-4" />
-              返回首页
+              {t('返回首页')}
             </Link>
           </div>
         </FadeIn>
@@ -375,7 +376,7 @@ const Login = () => {
       {/* 已登录用户的隐蔽跳转提示（无障碍） */}
       {user && (
         <p className="sr-only" role="status">
-          你已登录，正在跳转…
+          {t('你已登录，正在跳转…')}
         </p>
       )}
     </div>

@@ -4,11 +4,11 @@ import { ArrowRight, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FadeIn, Stagger, HoverLift } from '@/components/MotionPrimitives';
 import CourseIcon from '@/components/CourseIcon';
-import { subjectCourses, subjectCategories } from '@/data/courses';
-import { topics } from '@/data/topics';
-import { problems } from '@/data/problems';
+import { subjectCategories } from '@/data/courses';
+import { useT, useLocale } from '@/i18n/LocaleContext';
+import { useCourses, useTopics, useProblems } from '@/i18n/data';
 import { useSubject } from '@/lib/SubjectContext';
-import { SUBJECT_META, type Course } from '@/types';
+import { SUBJECT_META, subjectOf, type Course } from '@/types';
 
 const difficultyColors: Record<Course['difficulty'], string> = {
   基础: 'bg-success/12 text-success border-success/30',
@@ -17,6 +17,8 @@ const difficultyColors: Record<Course['difficulty'], string> = {
 };
 
 const Courses = () => {
+  const t = useT();
+  const { tpl, lang } = useLocale();
   const { subject } = useSubject();
   const meta = SUBJECT_META[subject];
   const [activeTag, setActiveTag] = useState<string>('全部');
@@ -28,11 +30,17 @@ const Courses = () => {
     else setSearchParams({ category: id });
   };
 
-  const subjectCourseList = useMemo(() => subjectCourses(subject), [subject]);
+  const allCourses = useCourses();
+  const subjectCourseList = useMemo(
+    () => allCourses.filter((c) => subjectOf(c) === subject),
+    [allCourses, subject],
+  );
+  const topics = useTopics();
+  const problems = useProblems();
 
   const allTags = useMemo(() => {
     const set = new Set<string>();
-    subjectCourseList.forEach((c) => c.tags.forEach((t) => set.add(t)));
+    subjectCourseList.forEach((c) => c.tags.forEach((tag) => set.add(tag)));
     return ['全部', ...Array.from(set)];
   }, [subjectCourseList]);
 
@@ -52,12 +60,15 @@ const Courses = () => {
     <div className="container py-14 lg:py-20">
       {/* 页头 */}
       <FadeIn>
-        <p className="text-sm font-semibold text-info tracking-wide mb-2">课程体系 · {meta.name}</p>
-        <h1 className="font-serif text-4xl font-semibold">{meta.short}课程总览</h1>
+        <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('课程体系 · ')}{t(meta.name)}</p>
+        <h1 className="font-serif text-4xl font-semibold">{tpl('{short}课程总览', { short: t(meta.short) })}</h1>
         <p className="mt-4 text-muted-foreground leading-relaxed max-w-3xl">
-          共 {subjectCourseList.length} 门本科{meta.short}课程，横跨{subjectCategories(subject).map((c) => c.name).join('、')}
-          {subject === 'math' ? '' : ''}，合计 {subjectTopicCount} 个知识专题。每门课程按章节组织内容，
-          配套例题详解，支持按方向与标签筛选。
+          {tpl('共 {n} 门本科{short}课程，横跨{names}，合计 {k} 个知识专题。每门课程按章节组织内容，配套例题详解，支持按方向与标签筛选。', {
+            n: subjectCourseList.length,
+            short: t(meta.short),
+            names: subjectCategories(subject).map((c) => t(c.name)).join(lang === 'en' ? ', ' : '、'),
+            k: subjectTopicCount,
+          })}
         </p>
       </FadeIn>
 
@@ -66,7 +77,7 @@ const Courses = () => {
         <div className="mt-10 flex items-center gap-2 flex-wrap">
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground mr-1">
             <Filter className="h-4 w-4" />
-            方向
+            {t('方向')}
           </span>
           <Button
             variant={activeCategory === '全部' ? 'default' : 'outline'}
@@ -78,7 +89,7 @@ const Courses = () => {
                 : 'text-muted-foreground'
             }
           >
-            全部
+            {t('全部')}
           </Button>
           {subjectCategories(subject).map((cat) => (
             <Button
@@ -92,7 +103,7 @@ const Courses = () => {
                   : 'text-muted-foreground'
               }
             >
-              {cat.name}
+              {t(cat.name)}
             </Button>
           ))}
         </div>
@@ -103,7 +114,7 @@ const Courses = () => {
         <div className="mt-4 flex items-center gap-2 flex-wrap">
           <span className="flex items-center gap-1.5 text-sm text-muted-foreground mr-1">
             <Filter className="h-4 w-4" />
-            筛选
+            {t('筛选')}
           </span>
           {allTags.map((tag) => (
             <Button
@@ -117,7 +128,7 @@ const Courses = () => {
                   : 'text-muted-foreground'
               }
             >
-              {tag}
+              {t(tag)}
             </Button>
           ))}
         </div>
@@ -177,10 +188,10 @@ const Courses = () => {
 
                 <div className="px-6 py-4 border-t border-border flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">
-                    {courseTopics.length} 个专题 · {problemCount} 道例题
+                    {tpl('{n} 个专题 · {m} 道例题', { n: courseTopics.length, m: problemCount })}
                   </span>
                   <span className="flex items-center gap-1.5 text-info font-medium">
-                    进入课程
+                    {t('进入课程')}
                     <ArrowRight className="h-4 w-4 transition-transform duration-[var(--duration-fast)] group-hover:translate-x-1" />
                   </span>
                 </div>
@@ -192,9 +203,9 @@ const Courses = () => {
 
       {filtered.length === 0 && (
         <div className="mt-10 border border-border bg-card py-16 text-center">
-          <p className="text-muted-foreground">该标签下暂无课程，试试其他标签吧</p>
+          <p className="text-muted-foreground">{t('该标签下暂无课程，试试其他标签吧')}</p>
           <Button variant="outline" className="mt-4" onClick={() => setActiveTag('全部')}>
-            查看全部课程
+            {t('查看全部课程')}
           </Button>
         </div>
       )}

@@ -6,14 +6,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FadeIn, Stagger } from '@/components/MotionPrimitives';
 import { InlineMathText, renderMath } from '@/components/MathText';
-import { formulaGroups } from '@/data/formulas';
-import { courses, subjectCourses } from '@/data/courses';
+import { useFormulaGroups, useCourses } from '@/i18n/data';
+import { subjectCourses } from '@/data/courses';
+import { useT, useLocale } from '@/i18n/LocaleContext';
 import { useSubject } from '@/lib/SubjectContext';
 import { SUBJECT_META } from '@/types';
 
 const Formulas = () => {
+  const t = useT();
+  const { tpl } = useLocale();
   const { subject } = useSubject();
   const meta = SUBJECT_META[subject];
+  const formulaGroups = useFormulaGroups();
+  const courses = useCourses();
   const subjectCourseList = subjectCourses(subject);
   const subjectCourseIds = useMemo(() => new Set(subjectCourseList.map((c) => c.id)), [subjectCourseList]);
 
@@ -32,6 +37,7 @@ const Formulas = () => {
 
   const groups = formulaGroups.filter((g) => g.courseId === activeCourse);
   const activeCourseObj = courses.find((c) => c.id === activeCourse);
+  const courseById = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
 
   // 每门课程一个标签（按当前学科课程聚合）
   const courseTabs = subjectCourseList
@@ -47,10 +53,10 @@ const Formulas = () => {
     <div className="container py-14 lg:py-20">
       {/* 页头 */}
       <FadeIn>
-        <p className="text-sm font-semibold text-info tracking-wide mb-2">CHEAT SHEET · {meta.name}</p>
-        <h1 className="font-serif text-4xl font-semibold">{meta.short}公式速查表</h1>
+        <p className="text-sm font-semibold text-info tracking-wide mb-2">CHEAT SHEET · {t(meta.name)}</p>
+        <h1 className="font-serif text-4xl font-semibold">{tpl('{short}公式速查表', { short: t(meta.short) })}</h1>
         <p className="mt-4 text-muted-foreground leading-relaxed max-w-2xl">
-          按课程归类的常用公式集合，考前冲刺与作业速查两相宜。所有公式均由 KaTeX 规范排版。
+          {t('按课程归类的常用公式集合，考前冲刺与作业速查两相宜。所有公式均由 KaTeX 规范排版。')}
         </p>
       </FadeIn>
 
@@ -71,7 +77,7 @@ const Formulas = () => {
                 }`}
               >
                 <BookMarked className="h-4 w-4" />
-                {course.name}
+                {courseById.get(course.id)?.name ?? course.name}
                 <Badge variant="secondary" className="ml-1 font-mono text-xs">
                   {count}
                 </Badge>
@@ -92,7 +98,7 @@ const Formulas = () => {
                   to={`/courses/${group.courseId}`}
                   className="text-xs text-muted-foreground hover:text-info transition-colors duration-[var(--duration-fast)]"
                 >
-                  前往{activeCourseObj?.name}课程 →
+                  {tpl('前往 {name} 课程 →', { name: activeCourseObj?.name ?? '' })}
                 </Link>
               </div>
               <Stagger className="mt-4 grid gap-4 md:grid-cols-2" stagger={0.06}>
@@ -109,6 +115,8 @@ const Formulas = () => {
 };
 
 const FormulaCard = ({ name, latex, note }: { name: string; latex: string; note?: string }) => {
+  const t = useT();
+  const { tpl } = useLocale();
   const [copied, setCopied] = useState(false);
 
   const copyLatex = async () => {
@@ -117,7 +125,7 @@ const FormulaCard = ({ name, latex, note }: { name: string; latex: string; note?
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      toast.error('复制失败，请手动选择公式文本');
+      toast.error(t('复制失败，请手动选择公式文本'));
     }
   };
 
@@ -130,7 +138,7 @@ const FormulaCard = ({ name, latex, note }: { name: string; latex: string; note?
           size="icon"
           className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity duration-[var(--duration-fast)] text-muted-foreground hover:text-info"
           onClick={copyLatex}
-          aria-label={`复制 ${name} 的 LaTeX 源码`}
+          aria-label={tpl('复制 {name} 的 LaTeX 源码', { name })}
         >
           {copied ? <Check className="h-3.5 w-3.5 text-success" /> : <Copy className="h-3.5 w-3.5" />}
         </Button>
