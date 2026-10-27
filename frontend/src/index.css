@@ -422,11 +422,19 @@
 }
 
 /* Tailwind v4: container no longer auto-centers. Restore v3 behavior.
-   需求：内容铺满整个屏幕宽度 —— 不再设置 max-width 上限，仅保留左右内边距 */
+   需求：内容铺满整个屏幕宽度。
+   注意：Tailwind v4 内置 container 会额外生成 5 档 @media max-width 断点规则，
+   仅在 @utility 里省略 max-width 无法覆盖它们，必须显式声明 max-width 才能压过内置规则 */
 @utility container {
   width: 100%;
+  max-width: 100%;
   margin-inline: auto;
   padding-inline: 1rem;
+}
+
+/* 兜底：强制压掉 Tailwind v4 内置生成的 .container 断点 max-width（确保任何顺序下都铺满） */
+.container {
+  max-width: 100% !important;
 }
 
 /* ================================================================
