@@ -5,7 +5,7 @@
  * 可在线预览并下载 SVG / PNG。
  * 采用"模型无关"技能：让任意文本模型绘制自包含 SVG，前端渲染。
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Sparkles,
   Loader2,
@@ -14,6 +14,16 @@ import {
   Copy,
   ImageDown,
   Image as ImageIcon,
+  Wand2,
+  LineChart,
+  Network,
+  Atom,
+  Triangle,
+  CircuitBoard,
+  BarChart3,
+  Shapes,
+  CircleCheck,
+  CircleHelp,
 } from 'lucide-react';
 import {
   Dialog,
@@ -30,6 +40,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import {
   streamChat,
@@ -48,10 +59,23 @@ import {
   svgToPngBlob,
   downloadBlob,
   svgFilenameBase,
-  detectKind,
+  detectKindDetailed,
   DIAGRAM_KIND_LABELS,
+  DIAGRAM_KIND_HINTS,
   type DiagramKind,
 } from '@/lib/textImage';
+
+/** 类型选择卡片：图标 + 名称 + 一句话说明 */
+const KIND_OPTIONS: { kind: DiagramKind; Icon: typeof Wand2 }[] = [
+  { kind: 'auto', Icon: Wand2 },
+  { kind: 'function', Icon: LineChart },
+  { kind: 'mindmap', Icon: Network },
+  { kind: 'physics', Icon: Atom },
+  { kind: 'geometry', Icon: Triangle },
+  { kind: 'circuit', Icon: CircuitBoard },
+  { kind: 'chart', Icon: BarChart3 },
+  { kind: 'general', Icon: Shapes },
+];
 
 const isSet = (p: AiProfile | null) =>
   Boolean(p && p.baseUrl && p.apiKey && p.model);
@@ -68,6 +92,7 @@ const SelectionImageLauncher = () => {
 
   // 弹窗内状态
   const [kind, setKind] = useState<DiagramKind>('auto');
+  const [extra, setExtra] = useState('');
   const [modelIndex, setModelIndex] = useState(0);
   const [svg, setSvg] = useState<string | null>(null);
   const [svgBlobUrl, setSvgBlobUrl] = useState<string | null>(null);
@@ -98,6 +123,9 @@ const SelectionImageLauncher = () => {
   const configuredProfiles = readAiProfiles()
     .map((p, i) => ({ index: i, profile: p }))
     .filter((x) => isSet(x.profile));
+
+  // 打分式识别：文字一变就重算，用于「自动识别」卡片与提示
+  const detection = useMemo(() => detectKindDetailed(text), [text]);
 
   const clearSelection = useCallback(() => {
     try {
@@ -163,6 +191,7 @@ const SelectionImageLauncher = () => {
   const openDialog = (selected: string) => {
     setText(selected);
     setKind('auto');
+    setExtra('');
     // 默认选一个已配置存档：优先当前生效，否则第一个
     const active = getActiveProfile();
     const idx = configuredProfiles.some((c) => c.index === active)
@@ -208,9 +237,15 @@ const SelectionImageLauncher = () => {
     setError(null);
     setSvg(null);
     try {
+      const trimmedExtra = extra.trim();
       const messages = [
-        { role: 'system' as const, content: buildSvgSystemPrompt() },
-        { role: 'user' as const, content: buildSvgUserPrompt(text, kind) },
+        { role: 'system' as const, content: buildSvgSystemPrompt(kind, text) },
+        {
+          role: 'user' as const,
+          content:
+            buildSvgUserPrompt(text, kind) +
+            (trimmedExtra ? `\n\n额外要求（必须满足）：${trimmedExtra}` : ''),
+        },
       ];
       const runOnce = async (extraHint?: string): Promise<string | null> => {
         let acc = '';
@@ -246,7 +281,7 @@ const SelectionImageLauncher = () => {
         abortRef.current = null;
       }
     }
-  }, [modelIndex, text, kind]);
+  }, [modelIndex, text, kind, extra]);
 
   // 打开后自动生成一次
   useEffect(() => {
@@ -335,23 +370,73 @@ const SelectionImageLauncher = () => {
             {text}
           </div>
 
-          {/* 控件 */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="w-32">
-              <Select value={kind} onValueChange={(v) => setKind(v as DiagramKind)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(DIAGRAM_KIND_LABELS) as DiagramKind[]).map((k) => (
-                    <SelectItem key={k} value={k}>
-                      {DIAGRAM_KIND_LABELS[k]}
-                      {k === 'auto' ? `（${DIAGRAM_KIND_LABELS[detectKind(text)]}）` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/*
+            图像类型选择：用卡片而不是下拉框。
+            选中文字后程序会先打分识别一次，把结论写在「自动识别」卡片上，
+            用户不满意可以一键换成别的类型，避免只能得到思维导图。
+          */}
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-medium text-muted-foreground">图像类型</span>
+              <span
+                className={`inline-flex items-center gap-1 text-xs ${
+                  detection.confident ? 'text-muted-foreground' : 'text-warning'
+                }`}
+              >
+                {detection.confident ? (
+                  <CircleCheck className="h-3.5 w-3.5 text-success" />
+                ) : (
+                  <CircleHelp className="h-3.5 w-3.5" />
+                )}
+                识别为「{DIAGRAM_KIND_LABELS[detection.kind]}」
+                {detection.confident ? '' : '，不太确定，建议手动选择'}
+              </span>
             </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {KIND_OPTIONS.map(({ kind: k, Icon }) => {
+                const active = kind === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setKind(k)}
+                    title={DIAGRAM_KIND_HINTS[k]}
+                    className={`flex flex-col items-start gap-1 rounded-md border px-2.5 py-2 text-left transition-colors ${
+                      active
+                        ? 'border-info bg-info/10 text-info'
+                        : 'border-border bg-card text-muted-foreground hover:border-info/40 hover:text-foreground'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5 text-xs font-medium">
+                      <Icon className="h-3.5 w-3.5" />
+                      {DIAGRAM_KIND_LABELS[k]}
+                      {k === 'auto' && (
+                        <span className="opacity-70">
+                          · {DIAGRAM_KIND_LABELS[detection.kind]}
+                        </span>
+                      )}
+                    </span>
+                    <span className="line-clamp-2 text-[11px] leading-snug opacity-80">
+                      {DIAGRAM_KIND_HINTS[k]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 额外要求（可选）：让用户微调构图，而不是只能反复重抽 */}
+          <Textarea
+            value={extra}
+            onChange={(e) => setExtra(e.target.value)}
+            rows={2}
+            placeholder="可选：补充要求，例如「只画第一象限」「标出渐近线 y=x」「简化为三支主分支」"
+            className="text-sm resize-none"
+          />
+
+          {/* 模型与生成 */}
+          <div className="flex flex-wrap items-center gap-3">
             <div className="w-52">
               <Select
                 value={String(modelIndex)}
@@ -377,6 +462,9 @@ const SelectionImageLauncher = () => {
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               {svg ? '重新生成' : '生成'}
             </Button>
+            <span className="text-xs text-muted-foreground">
+              将按「{DIAGRAM_KIND_LABELS[kind === 'auto' ? detection.kind : kind]}」的规范绘制
+            </span>
           </div>
 
           {noProfile && (
