@@ -224,7 +224,7 @@ const TopicDetail = () => {
             <details className="lg:hidden mt-6 border border-border bg-card">
               <summary className="flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer select-none">
                 <List className="h-4 w-4 text-info" />
-                本页目录（{tocSections.length} 节）
+                {tpl('本页目录（{n} 节）', { n: tocSections.length })}
               </summary>
               <ul className="border-t border-border px-4 py-2">
                 {tocSections.map((s) => (
@@ -257,10 +257,10 @@ const TopicDetail = () => {
                       <Link
                         to={`/tutor?topic=${topic.id}&section=${encodeURIComponent(s.title)}`}
                         className="group flex shrink-0 items-center gap-1.5 border border-border px-2.5 py-1.5 text-xs text-muted-foreground transition-colors duration-[var(--duration-fast)] hover:border-info/50 hover:text-info"
-                        title={`让 AI 结合「${s.title}」这一节讲解`}
+                        title={tpl('让 AI 结合「{title}」这一节讲解', { title: s.title })}
                       >
                         <Sparkles className="h-3.5 w-3.5" />
-                        问 AI 这一节
+                        {t('问 AI 这一节')}
                       </Link>
                     </div>
                   )}
@@ -275,7 +275,7 @@ const TopicDetail = () => {
             <section className="mt-12 border border-border bg-card">
               <div className="flex items-center gap-2 border-b border-border px-5 py-4">
                 <Lightbulb className="h-4 w-4 text-warning" />
-                <h2 className="font-serif text-lg font-semibold">核心要点</h2>
+                <h2 className="font-serif text-lg font-semibold">{t('核心要点')}</h2>
               </div>
               <ul className="p-5 space-y-3">
                 {topic.keyPoints.map((kp, i) => (
@@ -297,11 +297,11 @@ const TopicDetail = () => {
                 <div className="flex items-center gap-2 mb-6">
                   <FileQuestion className="h-5 w-5 text-info" />
                   <h2 className="font-serif text-2xl font-semibold">
-                    配套例题（{relatedProblems.length}）
+                    {tpl('配套例题（{n}）', { n: relatedProblems.length })}
                   </h2>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6 -mt-3">
-                  建议先读提示独立思考，再对照完整解答核对步骤
+                  {t('建议先读提示独立思考，再对照完整解答核对步骤')}
                 </p>
               </FadeIn>
               <Stagger className="space-y-6" stagger={0.1}>
@@ -323,7 +323,7 @@ const TopicDetail = () => {
               >
                 <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  上一个知识点
+                  {t('上一个知识点')}
                 </span>
                 <p className="mt-2 font-serif font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
                   <InlineMathText escape text={prev.title} />
@@ -338,7 +338,7 @@ const TopicDetail = () => {
                 className="group border border-border bg-card p-5 text-right transition-colors duration-[var(--duration-normal)] hover:border-info/50"
               >
                 <span className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
-                  下一个知识点
+                  {t('下一个知识点')}
                   <ChevronRight className="h-3.5 w-3.5" />
                 </span>
                 <p className="mt-2 font-serif font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
@@ -357,7 +357,7 @@ const TopicDetail = () => {
               <div className="border border-border bg-card">
                 <div className="flex items-center gap-2 border-b border-border px-5 py-4">
                   <List className="h-4 w-4 text-info" />
-                  <h2 className="font-serif text-base font-semibold">本页目录</h2>
+                  <h2 className="font-serif text-base font-semibold">{t('本页目录')}</h2>
                 </div>
                 <nav className="p-3">
                   <ul className="space-y-0.5">
@@ -384,7 +384,7 @@ const TopicDetail = () => {
             <div className="border border-border bg-card">
               <div className="flex items-center gap-2 border-b border-border px-5 py-4">
                 <ListChecks className="h-4 w-4 text-info" />
-                <h2 className="font-serif text-base font-semibold">本页要点</h2>
+                <h2 className="font-serif text-base font-semibold">{t('本页要点')}</h2>
               </div>
               <ul className="p-4 space-y-2.5">
                 {topic.keyPoints.map((kp, i) => (
@@ -398,7 +398,7 @@ const TopicDetail = () => {
 
             {/* 课程信息 */}
             <div className="border border-border bg-card p-5">
-              <h2 className="font-serif text-base font-semibold mb-3">所属课程</h2>
+              <h2 className="font-serif text-base font-semibold mb-3">{t('所属课程')}</h2>
               <Link
                 to={`/courses/${course.id}`}
                 className="group flex items-center justify-between"
@@ -422,28 +422,28 @@ const TopicDetail = () => {
 
             {/* 快速入口 */}
             <div className="border border-border bg-card p-5">
-              <h2 className="font-serif text-base font-semibold mb-3">继续学习</h2>
+              <h2 className="font-serif text-base font-semibold mb-3">{t('继续学习')}</h2>
               <div className="space-y-2.5">
                 <Link
                   to={`/tutor?topic=${topic.id}`}
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-info transition-colors duration-[var(--duration-fast)]"
                 >
                   <Sparkles className="h-4 w-4" />
-                  问 AI 这个知识点
+                  {t('问 AI 讲解这个知识点')}
                 </Link>
                 <Link
                   to="/problems"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-info transition-colors duration-[var(--duration-fast)]"
                 >
                   <FileQuestion className="h-4 w-4" />
-                  例题广场
+                  {t('例题广场')}
                 </Link>
                 <Link
                   to="/formulas"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-info transition-colors duration-[var(--duration-fast)]"
                 >
                   <ListChecks className="h-4 w-4" />
-                  公式速查表
+                  {t('公式速查表')}
                 </Link>
               </div>
             </div>

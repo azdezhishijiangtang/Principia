@@ -145,6 +145,18 @@ const dict: Record<string, string> = {
   '清除小节上下文': 'Clear section context',
   '已导出 Word': 'Word exported',
   '导出失败：{msg}': 'Export failed: {msg}',
+  '本页目录': 'On this page',
+  '本页目录（{n} 节）': 'On this page ({n} sections)',
+  '问 AI 这一节': 'Ask AI about this section',
+  '让 AI 结合「{title}」这一节讲解': 'Ask AI to explain the section “{title}”',
+  '核心要点': 'Key Points',
+  '本页要点': 'Key Points on This Page',
+  '配套例题（{n}）': 'Practice Problems ({n})',
+  '建议先读提示独立思考，再对照完整解答核对步骤': 'Read the hints first, think it through, then compare each step with the full solution.',
+  '下一个知识点': 'Next topic',
+  '上一个知识点': 'Previous topic',
+  '所属课程': 'Course',
+  '继续学习': 'Continue Learning',
 };
 
 export default dict;

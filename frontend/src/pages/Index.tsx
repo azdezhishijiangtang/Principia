@@ -321,7 +321,7 @@ const Index = () => {
                       </h3>
                       <span className="text-xs text-muted-foreground">{topicCount} {t('个知识专题')}</span>
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">{cat.description}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{t(cat.description)}</p>
                     <p className="mt-3 text-xs text-muted-foreground leading-relaxed line-clamp-2">
                       {catCourses.map((c) => c.name).join(' · ')}
                     </p>

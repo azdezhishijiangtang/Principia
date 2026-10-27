@@ -252,7 +252,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
                   )}
                 </span>
                 <span className="text-[11px] text-muted-foreground truncate w-full">
-                  {p ? p.name || p.model : t('未配置')}
+                  {p ? t(p.name || p.model) : t('未配置')}
                 </span>
               </button>
             );
@@ -283,7 +283,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
         <div className="flex flex-wrap gap-1.5">
           {AI_PRESETS.map((p, i) => (
             <button
-              key={p.name}
+              key={t(p.name)}
               type="button"
               onClick={() => applyPreset(i)}
               title={p.hint}
@@ -293,7 +293,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
                   : 'border-border text-muted-foreground hover:border-info/50 hover:text-foreground'
               }`}
             >
-              {p.name}
+              {t(p.name)}
             </button>
           ))}
           {/* 其他：自定义任意 OpenAI 兼容接口地址 */}

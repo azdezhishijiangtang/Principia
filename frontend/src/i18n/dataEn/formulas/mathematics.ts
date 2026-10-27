@@ -33,7 +33,7 @@ const map: Record<string, GroupPatch> = {
       { id: 'f-10', group: 'Basic Formulas', name: 'Newton–Leibniz Formula', latex: '\\int_a^b f(x)\\,dx = F(b) - F(a),\\quad F\' = f' },
       { id: 'f-11', group: 'Integration by Substitution', name: 'Substitution Formula', latex: '\\int_a^b f(x)\\,dx = \\int_{\\alpha}^{\\beta} f(\\varphi(t))\\varphi\'(t)\\,dt' },
       { id: 'f-12', group: 'Integration by Parts', name: 'Integration by Parts', latex: '\\int_a^b u\\,dv = \\big[uv\\big]_a^b - \\int_a^b v\\,du' },
-      { id: 'f-13', group: 'Symmetry', name: 'Odd and Even Functions', latex: 'f\\ \\text{奇} \\Rightarrow \\int_{-a}^{a} f = 0;\\quad f\\ \\text{偶} \\Rightarrow \\int_{-a}^{a} f = 2\\int_0^a f' },
+      { id: 'f-13', group: 'Symmetry', name: 'Odd and Even Functions', latex: 'f\\ \\text{odd} \\Rightarrow \\int_{-a}^{a} f = 0;\\quad f\\ \\text{even} \\Rightarrow \\int_{-a}^{a} f = 2\\int_0^a f' },
     ],
   },
   'la-basics': {
