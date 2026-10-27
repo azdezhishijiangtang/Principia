@@ -18,6 +18,8 @@ import { useSubject } from '@/lib/SubjectContext';
 import { useLocale } from '@/i18n/LocaleContext';
 import { SUBJECT_META, type Subject } from '@/types';
 
+// xlOnly 的链接在 <1280px 时收起（进入抽屉菜单），
+// 避免英文标签更长把头部撑出横向滚动条、导致右侧出现空白区域
 const navLinks = [
   { to: '/', label: '首页' },
   { to: '/courses', label: '课程' },
@@ -25,8 +27,8 @@ const navLinks = [
   { to: '/tutor', label: 'AI 答疑' },
   { to: '/problems', label: '例题广场' },
   { to: '/formulas', label: '公式速查' },
-  { to: '/mistakes', label: '错题本' },
-  { to: '/about', label: '关于' },
+  { to: '/mistakes', label: '错题本', xlOnly: true },
+  { to: '/about', label: '关于', xlOnly: true },
 ];
 
 interface NavbarProps {
@@ -70,7 +72,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <div className="container flex h-16 items-center justify-between gap-4">
+      <div className="container flex h-16 items-center justify-between gap-3">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="Principia 首页">
           <BrandMark className="h-9 w-9 drop-shadow-sm" />
@@ -79,15 +81,15 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
           </span>
         </Link>
 
-        {/* 桌面导航 */}
-        <nav className="hidden md:flex items-center gap-1" aria-label="主导航">
+        {/* 桌面导航（lg 起显示，xl 起显示全部链接） */}
+        <nav className="hidden min-w-0 items-center gap-0.5 lg:flex" aria-label="主导航">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className={`px-3 py-2 text-sm font-medium transition-colors duration-[var(--duration-fast)] hover:text-foreground ${
-                isActive(link.to) ? 'text-foreground' : 'text-muted-foreground'
-              }`}
+              className={`whitespace-nowrap px-2 py-2 text-sm font-medium transition-colors duration-[var(--duration-fast)] hover:text-foreground xl:px-3 ${
+                link.xlOnly ? 'hidden xl:inline-block' : ''
+              } ${isActive(link.to) ? 'text-foreground' : 'text-muted-foreground'}`}
             >
               {t(link.label)}
               {isActive(link.to) && (
@@ -97,19 +99,19 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
           ))}
         </nav>
 
-        <div className="flex items-center gap-2">
-          {/* 搜索触发按钮 */}
+        <div className="flex min-w-0 shrink-0 items-center gap-1.5 xl:gap-2">
+          {/* 搜索触发按钮（xl 起带完整文案，窄屏退化为图标按钮） */}
           <Button
             variant="outline"
             onClick={onOpenSearch}
-            className="hidden sm:flex items-center gap-2 text-muted-foreground font-normal w-44 lg:w-56 justify-between"
+            className="hidden min-w-0 max-w-[9rem] shrink items-center gap-2 text-muted-foreground font-normal justify-between xl:flex xl:max-w-[15rem]"
             aria-label={t('搜索知识点与例题')}
           >
-            <span className="flex items-center gap-2">
-              <Search className="h-4 w-4" />
-              <span className="text-sm">{t('搜索知识 / 例题')}</span>
+            <span className="flex min-w-0 items-center gap-2">
+              <Search className="h-4 w-4 shrink-0" />
+              <span className="truncate text-sm">{t('搜索知识 / 例题')}</span>
             </span>
-            <kbd className="pointer-events-none hidden lg:inline-flex h-5 select-none items-center gap-0.5 border border-border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground">
+            <kbd className="pointer-events-none hidden shrink-0 select-none items-center gap-0.5 border border-border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground xl:inline-flex h-5">
               ⌘K
             </kbd>
           </Button>
@@ -117,7 +119,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
             variant="ghost"
             size="icon"
             onClick={onOpenSearch}
-            className="sm:hidden"
+            className="hidden shrink-0 sm:inline-flex xl:hidden"
             aria-label={t('搜索')}
           >
             <Search className="h-5 w-5" />
@@ -225,11 +227,11 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
             </Button>
           )}
 
-          {/* 移动端菜单按钮 */}
+          {/* 折叠菜单按钮（<lg 使用抽屉导航） */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden"
+            className="shrink-0 lg:hidden"
             onClick={() => setMobileOpen((v) => !v)}
             ref={toggleRef}
             aria-label={mobileOpen ? t('关闭菜单') : t('打开菜单')}
@@ -244,7 +246,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
       {mobileOpen && (
         <nav
           ref={drawerRef}
-          className="md:hidden border-t border-border bg-background"
+          className="lg:hidden border-t border-border bg-background"
           aria-label="移动端导航"
           role="dialog"
           aria-modal="true"

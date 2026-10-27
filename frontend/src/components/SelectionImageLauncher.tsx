@@ -5,7 +5,7 @@
  * 可在线预览并下载 SVG / PNG。
  * 采用"模型无关"技能：让任意文本模型绘制自包含 SVG，前端渲染。
  */
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Sparkles,
   Loader2,
@@ -14,6 +14,16 @@ import {
   Copy,
   ImageDown,
   Image as ImageIcon,
+  Wand2,
+  LineChart,
+  Network,
+  Atom,
+  Triangle,
+  CircuitBoard,
+  BarChart3,
+  Shapes,
+  CircleCheck,
+  CircleHelp,
 } from 'lucide-react';
 import {
   Dialog,
@@ -30,9 +40,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { useT } from '@/i18n/LocaleContext';
-import { tpl, translate } from '@/i18n/translate';
 import {
   streamChat,
   readAiProfiles,
@@ -50,18 +59,30 @@ import {
   svgToPngBlob,
   downloadBlob,
   svgFilenameBase,
-  detectKind,
+  detectKindDetailed,
   DIAGRAM_KIND_LABELS,
+  DIAGRAM_KIND_HINTS,
   type DiagramKind,
 } from '@/lib/textImage';
+
+/** 类型选择卡片：图标 + 名称 + 一句话说明 */
+const KIND_OPTIONS: { kind: DiagramKind; Icon: typeof Wand2 }[] = [
+  { kind: 'auto', Icon: Wand2 },
+  { kind: 'function', Icon: LineChart },
+  { kind: 'mindmap', Icon: Network },
+  { kind: 'physics', Icon: Atom },
+  { kind: 'geometry', Icon: Triangle },
+  { kind: 'circuit', Icon: CircuitBoard },
+  { kind: 'chart', Icon: BarChart3 },
+  { kind: 'general', Icon: Shapes },
+];
 
 const isSet = (p: AiProfile | null) =>
   Boolean(p && p.baseUrl && p.apiKey && p.model);
 const profileLabel = (p: AiProfile | null, i: number) =>
-  p?.name ? `${p.name}（${p.model}）` : `${AI_PROFILE_LABELS[i]} · ${p?.model ?? translate('未配置')}`;
+  p?.name ? `${p.name}（${p.model}）` : `${AI_PROFILE_LABELS[i]} · ${p?.model ?? '未配置'}`;
 
 const SelectionImageLauncher = () => {
-  const t = useT();
   // 当前有效文字选区（用于按钮高亮；点击时以实时选区为准）
   const [selText, setSelText] = useState('');
   // AI 答疑面板展开时避让（AskAiWidget 会在 body 上打 data-ask-ai-open 标记）
@@ -71,6 +92,7 @@ const SelectionImageLauncher = () => {
 
   // 弹窗内状态
   const [kind, setKind] = useState<DiagramKind>('auto');
+  const [extra, setExtra] = useState('');
   const [modelIndex, setModelIndex] = useState(0);
   const [svg, setSvg] = useState<string | null>(null);
   const [svgBlobUrl, setSvgBlobUrl] = useState<string | null>(null);
@@ -101,6 +123,9 @@ const SelectionImageLauncher = () => {
   const configuredProfiles = readAiProfiles()
     .map((p, i) => ({ index: i, profile: p }))
     .filter((x) => isSet(x.profile));
+
+  // 打分式识别：文字一变就重算，用于「自动识别」卡片与提示
+  const detection = useMemo(() => detectKindDetailed(text), [text]);
 
   const clearSelection = useCallback(() => {
     try {
@@ -166,6 +191,7 @@ const SelectionImageLauncher = () => {
   const openDialog = (selected: string) => {
     setText(selected);
     setKind('auto');
+    setExtra('');
     // 默认选一个已配置存档：优先当前生效，否则第一个
     const active = getActiveProfile();
     const idx = configuredProfiles.some((c) => c.index === active)
@@ -189,7 +215,7 @@ const SelectionImageLauncher = () => {
     }
     const picked = live.length >= 2 ? live : selText;
     if (!picked) {
-      toast.info(t('请先在页面上选中一段文字，再点我生成示意图'));
+      toast.info('请先在页面上选中一段文字，再点我生成示意图');
       return;
     }
     openDialog(picked);
@@ -198,7 +224,7 @@ const SelectionImageLauncher = () => {
   const generate = useCallback(async () => {
     const cfg = readProfileConfig(modelIndex);
     if (!cfg) {
-      setError(t('所选存档尚未配置 API Key，请先到 AI 答疑页完成设置。'));
+      setError('所选存档尚未配置 API Key，请先到 AI 答疑页完成设置。');
       return;
     }
     // 取消上一次未完成的生成，并取新序号：旧流的 chunk 一律丢弃
@@ -211,9 +237,15 @@ const SelectionImageLauncher = () => {
     setError(null);
     setSvg(null);
     try {
+      const trimmedExtra = extra.trim();
       const messages = [
-        { role: 'system' as const, content: buildSvgSystemPrompt() },
-        { role: 'user' as const, content: buildSvgUserPrompt(text, kind) },
+        { role: 'system' as const, content: buildSvgSystemPrompt(kind, text) },
+        {
+          role: 'user' as const,
+          content:
+            buildSvgUserPrompt(text, kind) +
+            (trimmedExtra ? `\n\n额外要求（必须满足）：${trimmedExtra}` : ''),
+        },
       ];
       const runOnce = async (extraHint?: string): Promise<string | null> => {
         let acc = '';
@@ -239,7 +271,7 @@ const SelectionImageLauncher = () => {
       if (final && isCurrent()) {
         setSvg(sanitizeSvg(final));
       } else if (isCurrent()) {
-        setError(t('模型没有返回有效的 SVG，请重试或更换一个模型/存档。'));
+        setError('模型没有返回有效的 SVG，请重试或更换一个模型/存档。');
       }
     } catch (err) {
       if (isCurrent()) setError(describeAiError(err));
@@ -249,7 +281,7 @@ const SelectionImageLauncher = () => {
         abortRef.current = null;
       }
     }
-  }, [modelIndex, text, kind]);
+  }, [modelIndex, text, kind, extra]);
 
   // 打开后自动生成一次
   useEffect(() => {
@@ -265,7 +297,7 @@ const SelectionImageLauncher = () => {
       new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }),
       `${svgFilenameBase(text)}.svg`,
     );
-    toast.success(t('已下载 SVG 矢量图'));
+    toast.success('已下载 SVG 矢量图');
   };
 
   const onDownloadPng = async () => {
@@ -273,7 +305,7 @@ const SelectionImageLauncher = () => {
     try {
       const blob = await svgToPngBlob(svg, 2);
       downloadBlob(blob, `${svgFilenameBase(text)}.png`);
-      toast.success(t('已下载 PNG 图片'));
+      toast.success('已下载 PNG 图片');
     } catch (e) {
       toast.error(describeAiError(e));
     }
@@ -283,9 +315,9 @@ const SelectionImageLauncher = () => {
     if (!svg) return;
     try {
       await navigator.clipboard.writeText(svg);
-      toast.success(t('已复制 SVG 代码'));
+      toast.success('已复制 SVG 代码');
     } catch {
-      toast.error(t('复制失败，请手动选择复制'));
+      toast.error('复制失败，请手动选择复制');
     }
   };
 
@@ -300,10 +332,8 @@ const SelectionImageLauncher = () => {
         onMouseDown={(e) => e.preventDefault()}
         title={
           selText
-            ? tpl('把选中文字生成示意图：{s}', {
-                s: selText.slice(0, 40) + (selText.length > 40 ? '…' : ''),
-              })
-            : t('选中一段文字后，点我生成示意图')
+            ? `把选中文字生成示意图：${selText.slice(0, 40)}${selText.length > 40 ? '…' : ''}`
+            : '选中一段文字后，点我生成示意图'
         }
         className={`fixed bottom-[5.5rem] right-4 sm:right-6 z-40 flex h-10 items-center gap-1.5 rounded-full border px-4 text-xs font-medium shadow-lg transition-all duration-[var(--duration-fast)] ${
           askAiOpen
@@ -314,7 +344,7 @@ const SelectionImageLauncher = () => {
         }`}
       >
         <Sparkles className="h-4 w-4" />
-        {t('生成示意图')}
+        生成示意图
       </button>
 
       <Dialog
@@ -328,10 +358,10 @@ const SelectionImageLauncher = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ImageIcon className="h-5 w-5 text-info" />
-              {t('AI 生成示意图')}
+              AI 生成示意图
             </DialogTitle>
             <DialogDescription>
-              {t('用你存档的模型把选中内容画成矢量图（函数曲线 / 受力图 / 电路 / 光路等），可下载 SVG 或 PNG。')}
+              用你存档的模型把选中内容画成矢量图（函数曲线 / 受力图 / 电路 / 光路等），可下载 SVG 或 PNG。
             </DialogDescription>
           </DialogHeader>
 
@@ -340,23 +370,73 @@ const SelectionImageLauncher = () => {
             {text}
           </div>
 
-          {/* 控件 */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="w-32">
-              <Select value={kind} onValueChange={(v) => setKind(v as DiagramKind)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(DIAGRAM_KIND_LABELS) as DiagramKind[]).map((k) => (
-                    <SelectItem key={k} value={k}>
-                      {DIAGRAM_KIND_LABELS[k]}
-                      {k === 'auto' ? `（${DIAGRAM_KIND_LABELS[detectKind(text)]}）` : ''}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {/*
+            图像类型选择：用卡片而不是下拉框。
+            选中文字后程序会先打分识别一次，把结论写在「自动识别」卡片上，
+            用户不满意可以一键换成别的类型，避免只能得到思维导图。
+          */}
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-medium text-muted-foreground">图像类型</span>
+              <span
+                className={`inline-flex items-center gap-1 text-xs ${
+                  detection.confident ? 'text-muted-foreground' : 'text-warning'
+                }`}
+              >
+                {detection.confident ? (
+                  <CircleCheck className="h-3.5 w-3.5 text-success" />
+                ) : (
+                  <CircleHelp className="h-3.5 w-3.5" />
+                )}
+                识别为「{DIAGRAM_KIND_LABELS[detection.kind]}」
+                {detection.confident ? '' : '，不太确定，建议手动选择'}
+              </span>
             </div>
+
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {KIND_OPTIONS.map(({ kind: k, Icon }) => {
+                const active = kind === k;
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setKind(k)}
+                    title={DIAGRAM_KIND_HINTS[k]}
+                    className={`flex flex-col items-start gap-1 rounded-md border px-2.5 py-2 text-left transition-colors ${
+                      active
+                        ? 'border-info bg-info/10 text-info'
+                        : 'border-border bg-card text-muted-foreground hover:border-info/40 hover:text-foreground'
+                    }`}
+                  >
+                    <span className="flex items-center gap-1.5 text-xs font-medium">
+                      <Icon className="h-3.5 w-3.5" />
+                      {DIAGRAM_KIND_LABELS[k]}
+                      {k === 'auto' && (
+                        <span className="opacity-70">
+                          · {DIAGRAM_KIND_LABELS[detection.kind]}
+                        </span>
+                      )}
+                    </span>
+                    <span className="line-clamp-2 text-[11px] leading-snug opacity-80">
+                      {DIAGRAM_KIND_HINTS[k]}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 额外要求（可选）：让用户微调构图，而不是只能反复重抽 */}
+          <Textarea
+            value={extra}
+            onChange={(e) => setExtra(e.target.value)}
+            rows={2}
+            placeholder="可选：补充要求，例如「只画第一象限」「标出渐近线 y=x」「简化为三支主分支」"
+            className="text-sm resize-none"
+          />
+
+          {/* 模型与生成 */}
+          <div className="flex flex-wrap items-center gap-3">
             <div className="w-52">
               <Select
                 value={String(modelIndex)}
@@ -380,13 +460,16 @@ const SelectionImageLauncher = () => {
               className="bg-info text-info-foreground hover:bg-info/90 gap-1.5"
             >
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              {svg ? t('重新生成') : t('生成')}
+              {svg ? '重新生成' : '生成'}
             </Button>
+            <span className="text-xs text-muted-foreground">
+              将按「{DIAGRAM_KIND_LABELS[kind === 'auto' ? detection.kind : kind]}」的规范绘制
+            </span>
           </div>
 
           {noProfile && (
             <p className="text-sm text-muted-foreground">
-              {t('还没有可用的 API 存档——请先到 AI 答疑页配置接口与模型。')}
+              还没有可用的 API 存档——请先到 AI 答疑页配置接口与模型。
             </p>
           )}
 
@@ -401,18 +484,18 @@ const SelectionImageLauncher = () => {
             {loading && !svg && (
               <div className="flex flex-col items-center gap-2 text-muted-foreground">
                 <Loader2 className="h-6 w-6 animate-spin text-info" />
-                <span className="text-sm">{t('正在绘图…')}</span>
+                <span className="text-sm">正在绘图…</span>
               </div>
             )}
             {svg && (
               <img
                 src={svgBlobUrl ?? undefined}
-                alt={t('AI 生成的示意图')}
+                alt="AI 生成的示意图"
                 className="max-w-full h-auto max-h-[55vh]"
               />
             )}
             {!loading && !svg && !error && !noProfile && (
-              <span className="text-sm text-muted-foreground">{t('尚未生成')}</span>
+              <span className="text-sm text-muted-foreground">尚未生成</span>
             )}
           </div>
 
@@ -421,15 +504,15 @@ const SelectionImageLauncher = () => {
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" onClick={onDownloadSvg} className="gap-1.5">
                 <Download className="h-4 w-4" />
-                {t('下载 SVG')}
+                下载 SVG
               </Button>
               <Button variant="outline" size="sm" onClick={() => void onDownloadPng()} className="gap-1.5">
                 <ImageDown className="h-4 w-4" />
-                {t('下载 PNG')}
+                下载 PNG
               </Button>
               <Button variant="outline" size="sm" onClick={() => void onCopy()} className="gap-1.5">
                 <Copy className="h-4 w-4" />
-                {t('复制 SVG')}
+                复制 SVG
               </Button>
             </div>
           )}

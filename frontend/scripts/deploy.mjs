@@ -220,7 +220,8 @@ const main = async () => {
    * 保留根目录下由 git 直接维护的其他条目（如 .vscode）。
    * 否则每次部署都会用「只有 .gitignore / frontend / docs」的根树覆盖远程，
    * 把编辑器配置等一并删掉。
-   * `.github` 列入受管集合：历史遗留的自动化流水线会被清掉。
+   * `.github` 故意列入受管集合且不再写回：它既不由本脚本维护，也不应随部署
+   * 残留在远程，清理动作顺带把历史遗留的自动部署流水线移除。
    */
   const MANAGED = new Set(['.gitignore', 'frontend', 'docs', '.github']);
   const preserved = rootTree.tree
