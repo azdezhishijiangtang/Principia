@@ -40,15 +40,6 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 同步 <html lang> 与页面标题（首次加载与切换时都要生效，利于 SEO / 分享）
-  useEffect(() => {
-    document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
-    document.title =
-      lang === 'en'
-        ? 'Principia · Undergraduate Math & Physics Knowledge Platform'
-        : 'Principia · 大学数学物理本科知识解答平台';
-  }, [lang]);
-
   const value = useMemo<LocaleValue>(
     () => ({
       lang,
