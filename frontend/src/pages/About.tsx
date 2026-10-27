@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import { Heart, HandCoins, Video, Sigma, Atom, Bot, ArrowRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FadeIn, Stagger, HoverLift } from '@/components/MotionPrimitives';
-import { useT } from '@/i18n/LocaleContext';
 
 const interests = [
   {
@@ -23,13 +22,12 @@ const interests = [
 ];
 
 const About = () => {
-  const t = useT();
   return (
     <div className="container py-10 lg:py-14 max-w-4xl">
       {/* 页头 */}
       <FadeIn>
         <p className="text-sm font-semibold text-info tracking-wide mb-2">ABOUT THE DEVELOPER</p>
-        <h1 className="font-serif text-3xl font-semibold">{t('关于开发者')}</h1>
+        <h1 className="font-serif text-3xl font-semibold">关于开发者</h1>
       </FadeIn>
 
       {/* 开发者名片 */}
@@ -40,14 +38,15 @@ const About = () => {
               <Video className="h-8 w-8" />
             </span>
             <div>
-              <h2 className="font-serif text-2xl font-semibold">{t('阿z的知识讲堂')}</h2>
+              <h2 className="font-serif text-2xl font-semibold">阿z的知识讲堂</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {t('B 站 UP 主 · 数学物理知识科普与讲解创作者')}
+                B 站 UP 主 · 数学物理知识科普与讲解创作者
               </p>
               <p className="mt-3 leading-relaxed text-muted-foreground">
-                {t('大家好，我是 B 站 UP 主')}
-                <span className="text-foreground font-medium mx-1">{t('「阿z的知识讲堂」')}</span>
-                {t('，一名热爱数学、物理与 AI 的创作者。Principia（数学物理讲堂）就是我把课堂讲解沉淀下来的成果——希望每一位来到这里的同学，都能用更低的门槛理解那些曾经"高不可攀"的概念。')}
+                大家好，我是 B 站 UP 主
+                <span className="text-foreground font-medium mx-1">「阿z的知识讲堂」</span>
+                ，一名热爱数学、物理与 AI 的创作者。Principia（数学物理讲堂）就是我把课堂讲解沉淀下来的成果——
+                希望每一位来到这里的同学，都能用更低的门槛理解那些曾经"高不可攀"的概念。
               </p>
             </div>
           </div>
@@ -62,8 +61,8 @@ const About = () => {
               <span className="flex h-10 w-10 items-center justify-center bg-primary/10 text-primary mb-3">
                 <Icon className="h-5 w-5" />
               </span>
-              <h3 className="font-semibold">{t(title)}</h3>
-              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{t(desc)}</p>
+              <h3 className="font-semibold">{title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{desc}</p>
             </div>
           </HoverLift>
         ))}
@@ -74,17 +73,17 @@ const About = () => {
         <div className="mt-6 border border-border bg-card p-6 lg:p-8">
           <h3 className="font-serif text-xl font-semibold flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-info" />
-            {t('我的心愿：免费的关注就是最大的鼓励')}
+            我的心愿：免费的关注就是最大的鼓励
           </h3>
           <p className="mt-3 leading-relaxed text-muted-foreground">
-            {t('做内容不易，但我最大的心愿其实很简单——')}
-            <span className="text-foreground font-medium">{t('希望得到大家免费的关注')}</span>
-            {t('。如果你还没有关注我的 B 站账号「阿z的知识讲堂」，欢迎去点个关注，你的每一次关注都是我持续更新课程视频与网站内容的动力。')}
+            做内容不易，但我最大的心愿其实很简单——
+            <span className="text-foreground font-medium">希望得到大家免费的关注</span>
+            。如果你还没有关注我的 B 站账号「阿z的知识讲堂」，欢迎去点个关注，你的每一次关注都是我持续更新课程视频与网站内容的动力。
           </p>
           <p className="mt-3 leading-relaxed text-muted-foreground">
-            {t('如果这个网站对你真的很有帮助，也可以选择给我打赏，请根据自身情况量力而行——')}
-            <span className="text-foreground font-medium">{t('如果你喜欢白嫖，开发者也完全不介意哦')}</span>
-            {t('。知识本就应该自由流动，能帮到你，我就很开心了。')}
+            如果这个网站对你真的很有帮助，也可以选择给我打赏，请根据自身情况量力而行——
+            <span className="text-foreground font-medium">如果你喜欢白嫖，开发者也完全不介意哦</span>
+            。知识本就应该自由流动，能帮到你，我就很开心了。
           </p>
         </div>
       </FadeIn>
@@ -95,20 +94,20 @@ const About = () => {
           <Button asChild size="lg" className="bg-primary text-primary-foreground hover:bg-primary/90">
             <Link to="/donate" className="flex items-center gap-2">
               <HandCoins className="h-5 w-5" />
-              {t('打赏开发者')}
+              打赏开发者
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
           <Button asChild size="lg" variant="outline">
             <Link to="/custom" className="flex items-center gap-2">
-              {t('功能定制与需求共建')}
+              功能定制与需求共建
               <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </div>
         <p className="mt-4 text-xs text-muted-foreground flex items-center gap-1.5">
           <Heart className="h-3.5 w-3.5 text-destructive" />
-          {t('每一份支持，无论大小，都会变成这里更多更好的课程内容。')}
+          每一份支持，无论大小，都会变成这里更多更好的课程内容。
         </p>
       </FadeIn>
     </div>

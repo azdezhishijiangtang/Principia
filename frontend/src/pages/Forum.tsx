@@ -10,7 +10,6 @@ import { FadeIn } from '@/components/MotionPrimitives';
 import MathText from '@/components/MathText';
 import { InlineMathText } from '@/components/MathText';
 import { useAuth } from '@/lib/AuthContext';
-import { useT, useLocale } from '@/i18n/LocaleContext';
 import {
   GENERAL_SECTION,
   MAX_ATTACHMENTS,
@@ -47,12 +46,10 @@ const getAnonId = (): string => {
 };
 
 const Forum = () => {
-  const t = useT();
-  const { tpl } = useLocale();
   const { user } = useAuth();
   const [anonId] = useState(getAnonId);
   const userId = user?.id ?? anonId;
-  const userName = user?.name ?? t('访客');
+  const userName = user?.name ?? '访客';
 
   const [section, setSection] = useState(GENERAL_SECTION);
   const posts = useForumPosts(section);
@@ -81,7 +78,7 @@ const Forum = () => {
       try {
         next.push({ name: f.name, dataUrl: await readAttachment(f) });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : t('附件读取失败'));
+        toast.error(err instanceof Error ? err.message : '附件读取失败');
       }
     }
     setAttachments(next);
@@ -89,7 +86,7 @@ const Forum = () => {
 
   const submitPost = () => {
     if (!title.trim() || !content.trim()) {
-      toast.error(t('请填写标题与正文'));
+      toast.error('请填写标题与正文');
       return;
     }
     const res = addPost({
@@ -104,7 +101,7 @@ const Forum = () => {
       toast.error(res.error);
       return;
     }
-    toast.success(t('发布成功'));
+    toast.success('发布成功');
     setTitle('');
     setContent('');
     setAttachments([]);
@@ -113,7 +110,7 @@ const Forum = () => {
 
   const submitReply = (postId: string) => {
     if (!replyText.trim()) {
-      toast.error(t('回复内容不能为空'));
+      toast.error('回复内容不能为空');
       return;
     }
     const res = addReply(postId, { userId, userName, content: replyText.trim() });
@@ -122,7 +119,7 @@ const Forum = () => {
       return;
     }
     setReplyText('');
-    toast.success(t('回复成功'));
+    toast.success('回复成功');
   };
 
   const renderAttachments = (atts: ForumAttachment[]) => (
@@ -146,11 +143,11 @@ const Forum = () => {
       <FadeIn>
         <p className="mb-2 flex items-center gap-2 text-sm font-semibold tracking-wide text-info">
           <MessagesSquare className="h-4 w-4" />
-          {t('学习论坛')}
+          学习论坛
         </p>
-        <h1 className="font-serif text-3xl font-semibold">{t('交流区')}</h1>
+        <h1 className="font-serif text-3xl font-semibold">交流区</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {t('分课程讨论 + 综合讨论区：分享对各门课的理解、学习方法与学到的知识，支持 LaTeX 公式与文档/图片附件。')}
+          分课程讨论 + 综合讨论区：分享对各门课的理解、学习方法与学到的知识，支持 LaTeX 公式与文档/图片附件。
         </p>
       </FadeIn>
 
@@ -158,7 +155,7 @@ const Forum = () => {
         {/* 分区侧栏 */}
         <aside className="lg:col-span-3">
           <div className="border border-border bg-card">
-            <div className="border-b border-border px-4 py-3 text-sm font-semibold">{t('版块')}</div>
+            <div className="border-b border-border px-4 py-3 text-sm font-semibold">版块</div>
             <nav className="p-2">
               {sections.map((sec) => (
                 <button
@@ -173,7 +170,7 @@ const Forum = () => {
                       : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
                   }`}
                 >
-                  {t(sec.name)}
+                  {sec.name}
                 </button>
               ))}
             </nav>
@@ -183,31 +180,27 @@ const Forum = () => {
         {/* 主区 */}
         <div className="lg:col-span-9 min-w-0">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-serif text-xl font-semibold">{t(sectionName(section))}</h2>
+            <h2 className="font-serif text-xl font-semibold">{sectionName(section)}</h2>
             <Button size="sm" className="gap-1.5 bg-info text-info-foreground hover:bg-info/90" onClick={() => setShowForm((v) => !v)}>
               {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-              {t('发帖')}
+              发帖
             </Button>
           </div>
 
           {showForm && (
             <FadeIn className="mt-4 border border-border bg-card p-5">
               <div className="space-y-1.5">
-                <Label htmlFor="forum-title" className="text-xs text-muted-foreground">{t('标题 *')}</Label>
-                <Input id="forum-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('一句话概括你的分享/提问')} />
+                <Label htmlFor="forum-title" className="text-xs text-muted-foreground">标题 *</Label>
+                <Input id="forum-title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="一句话概括你的分享/提问" />
               </div>
               <div className="mt-3 space-y-1.5">
-                <Label htmlFor="forum-content" className="text-xs text-muted-foreground">{t('正文 *（支持 Markdown 与 LaTeX 公式）')}</Label>
+                <Label htmlFor="forum-content" className="text-xs text-muted-foreground">正文 *（支持 Markdown 与 LaTeX 公式）</Label>
                 <Textarea
                   id="forum-content"
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                   rows={6}
-                  placeholder={
-                    t('分享你的学习方法、对某个知识点的理解，或提出问题……\n\n例如：我这样理解 ') +
-                    '$\\epsilon-\\delta$' +
-                    t(' 语言……')
-                  }
+                  placeholder={'分享你的学习方法、对某个知识点的理解，或提出问题……\n\n例如：我这样理解 $\epsilon-\delta$ 语言……'}
                 />
               </div>
               <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -223,10 +216,10 @@ const Forum = () => {
                 />
                 <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => attInputRef.current?.click()}>
                   <Paperclip className="h-4 w-4" />
-                  {t('添加附件（≤2MB/个）')}
+                  添加附件（≤2MB/个）
                 </Button>
                 <span className="text-xs text-muted-foreground">{attachments.length}/{MAX_ATTACHMENTS}</span>
-                <Button className="ml-auto" onClick={submitPost}>{t('发布')}</Button>
+                <Button className="ml-auto" onClick={submitPost}>发布</Button>
               </div>
               {attachments.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -234,7 +227,7 @@ const Forum = () => {
                     <span key={i} className="relative flex items-center gap-1 border border-border bg-secondary px-2 py-1 text-xs">
                       <Paperclip className="h-3 w-3" />
                       {a.name}
-                      <button onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))} aria-label={tpl('移除附件 {name}', { name: a.name })}>
+                      <button onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))} aria-label={`移除附件 ${a.name}`}>
                         <X className="h-3 w-3 text-destructive" />
                       </button>
                     </span>
@@ -250,13 +243,13 @@ const Forum = () => {
               <div className="border border-border bg-card">
                 <div className="border-b border-border px-5 py-4">
                   <button onClick={() => setOpenPostId(null)} className="text-xs text-info hover:underline">
-                    ← {t('返回列表')}
+                    ← 返回列表
                   </button>
                   <h3 className="mt-2 font-serif text-xl font-semibold">
                     <InlineMathText escape text={openPost.title} />
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {openPost.userName} · {formatTime(openPost.createdAt)} · {t(sectionName(openPost.sectionId))}
+                    {openPost.userName} · {formatTime(openPost.createdAt)} · {sectionName(openPost.sectionId)}
                   </p>
                 </div>
                 <div className="p-5">
@@ -270,17 +263,17 @@ const Forum = () => {
                       onClick={() => {
                         if (deletePost(openPost.id, userId)) {
                           setOpenPostId(null);
-                          toast.success(t('已删除'));
+                          toast.success('已删除');
                         }
                       }}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      {t('删除本帖')}
+                      删除本帖
                     </Button>
                   )}
                 </div>
                 <div className="border-t border-border px-5 py-4">
-                  <p className="text-sm font-semibold">{tpl('{n} 条回复', { n: openPost.replies.length })}</p>
+                  <p className="text-sm font-semibold">{openPost.replies.length} 条回复</p>
                   <div className="mt-3 space-y-3">
                     {openPost.replies.map((r) => (
                       <div key={r.id} className="border-l-2 border-info/30 pl-3">
@@ -298,17 +291,17 @@ const Forum = () => {
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
                       rows={2}
-                      placeholder={t('写下你的回复……')}
+                      placeholder="写下你的回复……"
                     />
                     <Button className="shrink-0 self-end" onClick={() => submitReply(openPost.id)}>
-                      {t('回复')}
+                      回复
                     </Button>
                   </div>
                 </div>
               </div>
             ) : posts.length === 0 ? (
               <div className="border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
-                {t('本版块还没有帖子，点右上角「发帖」分享你的第一篇理解吧。')}
+                本版块还没有帖子，点右上角「发帖」分享你的第一篇理解吧。
               </div>
             ) : (
               posts.map((p) => (
@@ -321,14 +314,14 @@ const Forum = () => {
                       <h3 className="min-w-0 truncate font-serif text-base font-semibold group-hover:text-info">
                         <InlineMathText escape text={p.title} />
                       </h3>
-                      <span className="shrink-0 text-xs text-muted-foreground">{tpl('{n} 回复', { n: p.replies.length })}</span>
+                      <span className="shrink-0 text-xs text-muted-foreground">{p.replies.length} 回复</span>
                     </div>
                     <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground">
                       <InlineMathText escape text={p.content.slice(0, 160)} />
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground">
                       {p.userName} · {formatTime(p.createdAt)}
-                      {p.attachments && p.attachments.length > 0 ? ` · ${tpl('{n} 个附件', { n: p.attachments.length })}` : ''}
+                      {p.attachments && p.attachments.length > 0 ? ` · ${p.attachments.length} 个附件` : ''}
                     </p>
                   </button>
                 </FadeIn>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   Send,
@@ -32,8 +32,8 @@ import {
 } from '@/lib/modelCatalog';
 import { useTutorChat, QUICK_FOLLOWUPS } from '@/lib/useTutorChat';
 import { useUserDocs } from '@/lib/docLibrary';
-import { useTopic, useCourse } from '@/i18n/data';
-import { useT, useLocale } from '@/i18n/LocaleContext';
+import { getTopic } from '@/data/topics';
+import { getCourse } from '@/data/courses';
 
 const SUGGESTED_QUESTIONS = [
   '泰勒展开和洛必达法则有什么区别？什么时候该用哪个？',
@@ -46,14 +46,15 @@ const SUGGESTED_QUESTIONS = [
 
 const Tutor = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const t = useT();
-  const { tpl } = useLocale();
   const { user } = useAuth();
   const userId = user?.id ?? 'guest';
   const topicId = searchParams.get('topic');
   const section = searchParams.get('section');
-  const topic = useTopic(topicId ?? undefined);
-  const course = useCourse(topic?.courseId);
+  const topic = useMemo(() => (topicId ? getTopic(topicId) : undefined), [topicId]);
+  const course = useMemo(
+    () => (topic ? getCourse(topic.courseId) : undefined),
+    [topic],
+  );
 
   const [config, setConfig] = useState(readAiConfig());
   const [showSettings, setShowSettings] = useState(!readAiConfig());
@@ -146,14 +147,15 @@ const Tutor = () => {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-info tracking-wide mb-2">AI TUTOR</p>
-            <h1 className="font-serif text-3xl font-semibold">{t('AI 答疑')}</h1>
+            <h1 className="font-serif text-3xl font-semibold">AI 答疑</h1>
             <p className="mt-2 text-muted-foreground max-w-2xl leading-relaxed">
-              {t('用你自己的 API Key 调用大模型，随问随答。支持分步推导、公式渲染、上传个人资料后基于资料作答，问答自动存入')}
-              <Link to="/study" className="text-info hover:underline">{t('学习档案')}</Link>
-              {t('，可随时回顾、总结与生成练习题。')}
+              用你自己的 API Key 调用大模型，随问随答。支持分步推导、公式渲染、
+              上传个人资料后基于资料作答，问答自动存入
+              <Link to="/study" className="text-info hover:underline">学习档案</Link>
+              ，可随时回顾、总结与生成练习题。
             </p>
             <p className="mt-1.5 text-sm text-muted-foreground max-w-2xl leading-relaxed">
-              {t('开启「思考强度」后，回答上方会实时展示模型的思考过程（可折叠、可复制），方便学习 AI 的推理路径。')}
+              开启「思考强度」后，回答上方会实时展示模型的思考过程（可折叠、可复制），方便学习 AI 的推理路径。
             </p>
           </div>
           <div className="flex gap-2">
@@ -163,12 +165,12 @@ const Tutor = () => {
               onClick={() => setShowSettings((v) => !v)}
               className="gap-1.5"
             >
-              {showSettings ? t('收起设置') : t('密钥设置')}
+              {showSettings ? '收起设置' : '密钥设置'}
             </Button>
             {messages.length > 0 && (
               <Button variant="outline" size="sm" onClick={clear} className="gap-1.5">
                 <MessageSquarePlus className="h-4 w-4" />
-                {t('新对话')}
+                新对话
               </Button>
             )}
           </div>
@@ -181,7 +183,7 @@ const Tutor = () => {
           <div className="mt-6 flex items-center gap-3 border border-info/30 bg-info/5 px-4 py-3">
             <BookOpen className="h-4 w-4 shrink-0 text-info" />
             <p className="text-sm flex-1 min-w-0">
-              {t('正在带着知识点提问：')}
+              正在带着知识点提问：
               <Link to={`/topics/${topic.id}`} className="text-info font-medium hover:underline mx-1">
                 <InlineMathText text={topic.title} />
               </Link>
@@ -191,12 +193,12 @@ const Tutor = () => {
                   <span className="text-info font-medium mx-1"><InlineMathText text={section} /></span>
                 </>
               )}
-              <span className="text-muted-foreground">{tpl('（{name} · {chapter}）', { name: course?.name ?? '', chapter: topic.chapter })}</span>
+              <span className="text-muted-foreground">（{course?.name} · {topic.chapter}）</span>
             </p>
             <button
               onClick={clearTopicContext}
               className="text-muted-foreground hover:text-foreground shrink-0"
-              aria-label={t('清除知识点上下文')}
+              aria-label="清除知识点上下文"
             >
               <X className="h-4 w-4" />
             </button>
@@ -206,11 +208,11 @@ const Tutor = () => {
 
       {config && (
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          <span>{t('已接入模型：')}<code className="bg-secondary px-1.5 py-0.5 text-info">{config.model}</code></span>
+          <span>已接入模型：<code className="bg-secondary px-1.5 py-0.5 text-info">{config.model}</code></span>
           {(sessionUsage.total > 0 || lastModel) && (
-            <span>{tpl('本次会话用量：↑{p} / ↓{c} · 共 {t} tokens', { p: sessionUsage.prompt, c: sessionUsage.completion, t: sessionUsage.total })}</span>
+            <span>本次会话用量：↑{sessionUsage.prompt} / ↓{sessionUsage.completion} · 共 {sessionUsage.total} tokens</span>
           )}
-          <span className="hidden sm:inline">{t('支持上传图片（≤4 张）与 500MB 内文档')}</span>
+          <span className="hidden sm:inline">支持上传图片（≤4 张）与 500MB 内文档</span>
         </div>
       )}
 
@@ -223,12 +225,12 @@ const Tutor = () => {
               {messages.length === 0 && (
                 <div className="py-10 text-center">
                   <Sparkles className="mx-auto h-10 w-10 text-info/40 mb-4" />
-                  <h2 className="font-serif text-xl font-semibold">{t('问点什么吧')}</h2>
+                  <h2 className="font-serif text-xl font-semibold">问点什么吧</h2>
                   <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-                    {t('可以问概念理解、解题思路、定理证明。')}
+                    可以问概念理解、解题思路、定理证明。
                     {topic ? (
                       <>
-                        {t('也可以让我结合「')}
+                        {'也可以让我结合「'}
                         <InlineMathText text={topic.title} />
                         {section ? (
                           <>
@@ -236,12 +238,12 @@ const Tutor = () => {
                             <InlineMathText text={section} />
                           </>
                         ) : null}
-                        {t('」这一节展开讲。')}
+                        {'」这一节展开讲。'}
                       </>
                     ) : (
-                      t('先从下面的常见问题开始，或直接在输入框提问。')
+                      '先从下面的常见问题开始，或直接在输入框提问。'
                     )}
-                    {docs.length > 0 && t(' 有不懂的也可以问我上传的资料。')}
+                    {docs.length > 0 && ' 有不懂的也可以问我上传的资料。'}
                   </p>
                 </div>
               )}
@@ -254,7 +256,7 @@ const Tutor = () => {
                       {m.images && m.images.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {m.images.map((src, j) => (
-                            <img key={j} src={src} alt={t('提问附图')} className="max-h-40 border border-border" />
+                            <img key={j} src={src} alt="提问附图" className="max-h-40 border border-border" />
                           ))}
                         </div>
                       )}
@@ -265,7 +267,7 @@ const Tutor = () => {
                         <span className="flex h-6 w-6 items-center justify-center bg-info text-info-foreground">
                           <Sparkles className="h-3.5 w-3.5" />
                         </span>
-                        <span className="text-xs font-medium text-muted-foreground">Principia {t('助教')}</span>
+                        <span className="text-xs font-medium text-muted-foreground">Principia 助教</span>
                         {m.model && (
                           <span className="text-[10px] bg-secondary text-muted-foreground px-1.5 py-0.5 font-mono">{m.model}</span>
                         )}
@@ -275,23 +277,23 @@ const Tutor = () => {
                               m.mode === 'medium' || m.mode === 'high' ? 'bg-warning/15 text-warning' : 'bg-info/10 text-info'
                             }`}
                           >
-                            {m.auto && t('自动·')}
-                            {tpl('思考 · {mode}', { mode: t(THINKING_LABELS[m.mode]) })}
+                            {m.auto && '自动·'}
+                            {`思考 · ${THINKING_LABELS[m.mode]}`}
                           </span>
                         )}
                         {m.multiPath && (
                           <span className="text-[10px] bg-info/15 text-info px-1.5 py-0.5">
-                            {tpl('多路径·{n}路', { n: m.multiPath })}
+                            多路径·{m.multiPath}路
                           </span>
                         )}
                         {m.crossModel && (
                           <span className="text-[10px] bg-warning/15 text-warning px-1.5 py-0.5">
-                            {tpl('交叉验证·{model}', { model: m.crossModel })}
+                            交叉验证·{m.crossModel}
                           </span>
                         )}
                         {m.link && (
                           <span className="text-[10px] bg-success/15 text-success px-1.5 py-0.5">
-                            {tpl('联动·{model}', { model: m.linkModel ?? '' })}
+                            联动·{m.linkModel}
                           </span>
                         )}
                         {m.usage && (
@@ -300,11 +302,11 @@ const Tutor = () => {
                         {status === 'searching' && i === messages.length - 1 && (
                           <span className="flex items-center gap-1 text-xs text-info">
                             <FileSearch className="h-3 w-3 animate-pulse" />
-                            {t('正在检索我的文档…')}
+                            正在检索我的文档…
                           </span>
                         )}
                         {streaming && i === messages.length - 1 && (
-                          <span className="text-xs text-info animate-pulse">{t('正在输入…')}</span>
+                          <span className="text-xs text-info animate-pulse">正在输入…</span>
                         )}
                       </div>
                       {/* 思考过程：流式实时展示推理路径，可折叠、可复制 */}
@@ -325,7 +327,7 @@ const Tutor = () => {
                         >
                           <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-success">
                             <Check className="h-3 w-3" />
-                            {t('智能自检')}
+                            智能自检
                           </summary>
                           <div className="mt-2 whitespace-pre-wrap leading-relaxed text-muted-foreground">
                             {m.selfCheck}
@@ -337,13 +339,12 @@ const Tutor = () => {
                         <details className="mb-2.5 border border-info/30 bg-info/5 px-3.5 py-2.5 text-xs">
                           <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-info">
                             <Sparkles className="h-3 w-3" />
-                            {tpl('多路径推理 · {n} 路独立思路', { n: m.paths.length })}
-                            {m.link ? tpl('（经 {model} 仲裁）', { model: m.linkModel ?? '' }) : ''}
+                            多路径推理 · {m.paths.length} 路独立思路{m.link ? `（经 ${m.linkModel} 仲裁）` : ''}
                           </summary>
                           <div className="mt-2 space-y-3">
                             {m.paths.map((p, j) => (
                               <div key={j}>
-                                <div className="mb-1 font-medium text-foreground">{tpl('思路 {n}', { n: j + 1 })}</div>
+                                <div className="mb-1 font-medium text-foreground">思路 {j + 1}</div>
                                 <div className="whitespace-pre-wrap leading-relaxed text-muted-foreground">
                                   {p}
                                 </div>
@@ -357,7 +358,7 @@ const Tutor = () => {
                         <details className="mb-2.5 border border-warning/30 bg-warning/5 px-3.5 py-2.5 text-xs">
                           <summary className="flex cursor-pointer select-none items-center gap-1.5 font-medium text-warning">
                             <RefreshCw className="h-3 w-3" />
-                            {tpl('交叉验证 · 模型B（{model}）独立解答', { model: m.crossModel ?? '' })}
+                            交叉验证 · 模型B（{m.crossModel}）独立解答
                           </summary>
                           <div className="mt-2 whitespace-pre-wrap leading-relaxed text-muted-foreground">
                             {m.crossCheck}
@@ -371,12 +372,12 @@ const Tutor = () => {
                           {m.sources && m.sources.length > 0 && (
                             <details className="mt-2.5 border border-info/20 bg-info/5 px-3.5 py-2.5 text-xs">
                               <summary className="cursor-pointer text-info font-medium select-none">
-                                {tpl('参考了我的文档 · {n} 个段落（点击展开）', { n: m.sources.length })}
+                                参考了我的文档 · {m.sources.length} 个段落（点击展开）
                               </summary>
                               <ul className="mt-2 space-y-2 leading-relaxed">
                                 {m.sources.map((s, j) => (
                                   <li key={j} className="text-muted-foreground">
-                                    <span className="font-medium text-foreground">{tpl('《{name}》', { name: s.docName })}</span>
+                                    <span className="font-medium text-foreground">《{s.docName}》</span>
                                     <span className="mx-1.5 text-info">›</span>
                                     {s.snippet}…
                                   </li>
@@ -394,12 +395,12 @@ const Tutor = () => {
                                 {copiedIdx === i ? (
                                   <>
                                     <Check className="h-3.5 w-3.5 text-success" />
-                                    {t('已复制')}
+                                    已复制
                                   </>
                                 ) : (
                                   <>
                                     <Copy className="h-3.5 w-3.5" />
-                                    {t('复制')}
+                                    复制
                                   </>
                                 )}
                               </button>
@@ -408,7 +409,7 @@ const Tutor = () => {
                                 className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors duration-[var(--duration-fast)]"
                               >
                                 <RefreshCw className="h-3.5 w-3.5" />
-                                {t('重新生成')}
+                                重新生成
                               </button>
                             </div>
                           )}
@@ -421,7 +422,7 @@ const Tutor = () => {
                                   onClick={() => send(q.prompt)}
                                   className="text-xs border border-border px-2.5 py-1 text-muted-foreground hover:border-info/50 hover:text-info transition-colors duration-[var(--duration-fast)]"
                                 >
-                                  {t(q.label)}
+                                  {q.label}
                                 </button>
                               ))}
                             </div>
@@ -451,7 +452,7 @@ const Tutor = () => {
             {/* 推荐问题（空对话时显示） */}
             {messages.length === 0 && !streaming && (
               <div className="border-t border-border px-5 py-4">
-                <p className="text-xs text-muted-foreground mb-2.5">{t('常见问题')}</p>
+                <p className="text-xs text-muted-foreground mb-2.5">常见问题</p>
                 <div className="space-y-1.5">
                   {SUGGESTED_QUESTIONS.map((q) => (
                     <button
@@ -460,7 +461,7 @@ const Tutor = () => {
                       className="group flex w-full items-center gap-2 text-left text-sm text-muted-foreground hover:text-foreground transition-colors duration-[var(--duration-fast)]"
                     >
                       <ChevronRight className="h-3.5 w-3.5 shrink-0 text-info" />
-                      <span className="truncate">{t(q)}</span>
+                      <span className="truncate">{q}</span>
                     </button>
                   ))}
                 </div>
@@ -480,15 +481,15 @@ const Tutor = () => {
                       send(input);
                     }
                   }}
-                  placeholder={config ? t('输入你的数学问题（Enter 发送，Shift+Enter 换行）…') : t('请先在右侧配置 API Key')}
+                  placeholder={config ? '输入你的数学问题（Enter 发送，Shift+Enter 换行）…' : '请先在右侧配置 API Key'}
                   disabled={streaming}
                   rows={2}
                   className="resize-none flex-1"
                 />
                 {streaming ? (
-                  <Button onClick={stop} variant="outline" className="gap-1.5" aria-label={t('停止生成')}>
+                  <Button onClick={stop} variant="outline" className="gap-1.5" aria-label="停止生成">
                     <Square className="h-4 w-4" />
-                    {t('停止')}
+                    停止
                   </Button>
                 ) : (
                   <>
@@ -499,7 +500,7 @@ const Tutor = () => {
                             <img src={im.dataUrl} alt={im.name} className="h-14 w-14 object-cover border border-border" />
                             <button
                               onClick={() => removeImage(im.id)}
-                              aria-label={tpl('移除图片 {name}', { name: im.name })}
+                              aria-label={`移除图片 ${im.name}`}
                               className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center bg-destructive text-destructive-foreground"
                             >
                               <X className="h-3 w-3" />
@@ -526,8 +527,8 @@ const Tutor = () => {
                       size="icon"
                       disabled={streaming || images.length >= 4}
                       onClick={() => attachRef.current?.click()}
-                      aria-label={t('添加图片')}
-                      title={t('添加图片（随提问发给多模态模型，最多 4 张）')}
+                      aria-label="添加图片"
+                      title="添加图片（随提问发给多模态模型，最多 4 张）"
                       className="shrink-0"
                     >
                       <ImagePlus className="h-4 w-4" />
@@ -536,10 +537,10 @@ const Tutor = () => {
                     onClick={() => send(input)}
                     disabled={!input.trim() || !config}
                     className="bg-info text-info-foreground hover:bg-info/90 gap-1.5"
-                    aria-label={t('发送')}
+                    aria-label="发送"
                   >
                     <Send className="h-4 w-4" />
-                    {t('发送')}
+                    发送
                   </Button>
                   </>
                 )}
@@ -550,13 +551,13 @@ const Tutor = () => {
                     <Switch
                       checked={useDocs}
                       onCheckedChange={setUseDocs}
-                      aria-label={t('是否使用我的文档知识库')}
+                      aria-label="是否使用我的文档知识库"
                     />
-                    {tpl('使用我的文档知识库作答（{n} 份已启用）', { n: docs.filter((d) => d.enabled).length })}
+                    使用我的文档知识库作答（{docs.filter((d) => d.enabled).length} 份已启用）
                   </label>
                 ) : (
                   <span className="text-xs text-muted-foreground">
-                    {t('上传教材讲义后，可让 AI 参考你的资料作答')}
+                    上传教材讲义后，可让 AI 参考你的资料作答
                   </span>
                 )}
                 {messages.length > 0 && (
@@ -564,7 +565,7 @@ const Tutor = () => {
                     onClick={clear}
                     className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors duration-[var(--duration-fast)]"
                   >
-                    {t('清空当前对话（不影响已保存的答疑记录）')}
+                    清空当前对话（不影响已保存的答疑记录）
                   </button>
                 )}
               </div>
@@ -574,35 +575,35 @@ const Tutor = () => {
           {/* ── 对话框下方：使用说明 / 学习档案 ── */}
           <div className="mt-5 grid gap-5 md:grid-cols-5">
             <div className="border border-border bg-card p-5 md:col-span-3">
-              <h3 className="font-serif text-base font-semibold mb-3">{t('使用说明')}</h3>
+              <h3 className="font-serif text-base font-semibold mb-3">使用说明</h3>
               <ul className="space-y-2.5 text-sm text-muted-foreground leading-relaxed">
                 <li className="flex gap-2">
                   <span className="font-mono text-info shrink-0">01</span>
-                  {t('填写任一 OpenAI 兼容服务商的密钥（见右侧预设），保存后即可提问。')}
+                  填写任一 OpenAI 兼容服务商的密钥（见右侧预设），保存后即可提问。
                 </li>
                 <li className="flex gap-2">
                   <span className="font-mono text-info shrink-0">02</span>
-                  {t('在任意知识点页点击"问 AI"，会自动带上该知识点的上下文。')}
+                  在任意知识点页点击"问 AI"，会自动带上该知识点的上下文。
                 </li>
                 <li className="flex gap-2">
                   <span className="font-mono text-info shrink-0">03</span>
-                  {t('上传教材 / 讲义 / 笔记，提问时自动检索相关段落，AI 会参考你的资料并注明出处。')}
+                  上传教材 / 讲义 / 笔记，提问时自动检索相关段落，AI 会参考你的资料并注明出处。
                 </li>
                 <li className="flex gap-2">
                   <span className="font-mono text-info shrink-0">04</span>
-                  {t('每轮问答自动存入学习档案，可回顾、AI 总结、生成专项练习。')}
+                  每轮问答自动存入学习档案，可回顾、AI 总结、生成专项练习。
                 </li>
               </ul>
             </div>
 
             <div className="border border-border bg-card p-5 md:col-span-2">
-              <h3 className="font-serif text-base font-semibold mb-3">{t('学习档案')}</h3>
+              <h3 className="font-serif text-base font-semibold mb-3">学习档案</h3>
               <p className="text-sm text-muted-foreground leading-relaxed mb-3">
-                {t('答疑历史按账户沉淀，AI 可帮你总结薄弱点并生成个性化练习题。')}
+                答疑历史按账户沉淀，AI 可帮你总结薄弱点并生成个性化练习题。
               </p>
               <Button asChild variant="outline" size="sm" className="w-full gap-1.5">
                 <Link to="/study">
-                  {t('打开学习档案')}
+                  打开学习档案
                   <ChevronRight className="h-4 w-4" />
                 </Link>
               </Button>
@@ -625,15 +626,15 @@ const Tutor = () => {
           ) : (
             <div className="border border-border bg-card p-5">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-serif text-base font-semibold">{t('当前模型')}</h3>
-                <span className="text-xs text-success">{t('已就绪')}</span>
+                <h3 className="font-serif text-base font-semibold">当前模型</h3>
+                <span className="text-xs text-success">已就绪</span>
               </div>
 
               {/* 模型切换：选项来自服务商实时目录（随服务商自动更新） */}
               {catalog.models.length > 0 ? (
                 <div className="space-y-2">
                   <label htmlFor="tutor-model" className="text-xs text-muted-foreground">
-                     {tpl('切换模型（{n} 个可选）', { n: catalog.models.length })}
+                    切换模型（{catalog.models.length} 个可选）
                   </label>
                   <select
                     id="tutor-model"
@@ -642,7 +643,7 @@ const Tutor = () => {
                     className="h-9 w-full border border-input bg-background px-2 text-sm font-mono"
                   >
                     {config?.model && !catalog.models.includes(config.model) && (
-                      <option value={config.model}>{tpl('{model}（当前）', { model: config.model })}</option>
+                      <option value={config.model}>{config.model}（当前）</option>
                     )}
                     {catalog.models.map((m) => (
                       <option key={m} value={m}>
@@ -653,9 +654,8 @@ const Tutor = () => {
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[11px] text-muted-foreground">
                       {catalog.source === 'remote'
-                        ? tpl('服务商实时列表 · 更新于 {age}', { age: describeCatalogAge(catalog.fetchedAt) }) +
-                          (catalog.stale ? t('（已过期）') : '')
-                        : t('内置参考列表（实时拉取失败）')}
+                        ? `服务商实时列表 · 更新于 ${describeCatalogAge(catalog.fetchedAt)}${catalog.stale ? '（已过期）' : ''}`
+                        : '内置参考列表（实时拉取失败）'}
                     </span>
                     <button
                       type="button"
@@ -664,7 +664,7 @@ const Tutor = () => {
                       className="flex items-center gap-1 text-[11px] text-info hover:underline disabled:text-muted-foreground disabled:no-underline"
                     >
                       <RefreshCw className={`h-3 w-3 ${catalogLoading ? 'animate-spin' : ''}`} />
-                      {t('刷新')}
+                      刷新
                     </button>
                   </div>
                 </div>
@@ -677,7 +677,7 @@ const Tutor = () => {
 
               {retiredModelHint(config?.model ?? '') && (
                 <p className="mt-2 text-[11px] text-warning leading-relaxed">
-                  {tpl('当前模型已被服务商退役，建议更换为 {model}', { model: retiredModelHint(config?.model ?? '') ?? '' })}
+                  当前模型已被服务商退役，建议更换为 {retiredModelHint(config?.model ?? '')}
                 </p>
               )}
 
@@ -687,7 +687,7 @@ const Tutor = () => {
                 className="mt-4 w-full"
                 onClick={() => setShowSettings(true)}
               >
-                {t('更换密钥 / 接口存档')}
+                更换密钥 / 接口存档
               </Button>
             </div>
           )}

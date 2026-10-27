@@ -4,11 +4,10 @@ import { Search, BookOpen, X, ChevronRight, GraduationCap } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { FadeIn, Stagger } from '@/components/MotionPrimitives';
 import CourseIcon from '@/components/CourseIcon';
-import { useTopics, useCourses } from '@/i18n/data';
-import { subjectCourses } from '@/data/courses';
+import { topics } from '@/data/topics';
 import { InlineMathText } from '@/components/MathText';
+import { courses, subjectCourses } from '@/data/courses';
 import { searchAll } from '@/lib/mathSearch';
-import { useT, useLocale } from '@/i18n/LocaleContext';
 import { useSubject } from '@/lib/SubjectContext';
 import { SUBJECT_META } from '@/types';
 
@@ -52,13 +51,8 @@ const highlightMath = (text: string, query: string): ReactNode => {
 
 
 const Knowledge = () => {
-  const t = useT();
-  const { tpl } = useLocale();
   const { subject } = useSubject();
   const meta = SUBJECT_META[subject];
-  const topics = useTopics();
-  const courses = useCourses();
-  const courseById = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
   const [query, setQuery] = useState('');
   const [courseFilter, setCourseFilter] = useState<string>('all');
 
@@ -89,17 +83,11 @@ const Knowledge = () => {
     <div className="container py-10 lg:py-14">
       {/* 页头 */}
       <FadeIn>
-        <p className="text-sm font-semibold text-info tracking-wide mb-2">KNOWLEDGE BASE · {t(meta.name)}</p>
-        <h1 className="font-serif text-3xl font-semibold">{t('知识点检索大全')}</h1>
+        <p className="text-sm font-semibold text-info tracking-wide mb-2">KNOWLEDGE BASE · {meta.name}</p>
+        <h1 className="font-serif text-3xl font-semibold">知识点检索大全</h1>
         <p className="mt-2 text-muted-foreground max-w-2xl leading-relaxed">
-          {tpl(
-            '{n} 门{short}课程 · {k} 个知识专题。输入关键词或按课程浏览——每个专题都有完整的定义、定理、方法讲解与 LaTeX 公式推导。',
-            {
-              n: subjectCourseList.length,
-              short: t(meta.short),
-              k: topics.filter((t) => subjectCourseIds.has(t.courseId)).length,
-            },
-          )}
+          {subjectCourseList.length} 门{meta.short}课程 · {topics.filter((t) => subjectCourseIds.has(t.courseId)).length} 个知识专题。
+          输入关键词或按课程浏览——每个专题都有完整的定义、定理、方法讲解与 LaTeX 公式推导。
         </p>
       </FadeIn>
 
@@ -110,14 +98,14 @@ const Knowledge = () => {
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('用自然语言提问也可以：怎么求矩阵的逆 / 钟形曲线 / 抽屉原理 / 点乘…')}
+            placeholder="用自然语言提问也可以：怎么求矩阵的逆 / 钟形曲线 / 抽屉原理 / 点乘…"
             className="pl-12 pr-10 h-12 text-base"
           />
           {query && (
             <button
               onClick={() => setQuery('')}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label={t('清空搜索')}
+              aria-label="清空搜索"
             >
               <X className="h-4 w-4" />
             </button>
@@ -136,7 +124,7 @@ const Knowledge = () => {
                 : 'border-border text-muted-foreground hover:text-foreground'
             }`}
           >
-            {t('全部课程')}
+            全部课程
           </button>
           {subjectCourseList.map((c) => (
             <button
@@ -149,7 +137,7 @@ const Knowledge = () => {
               }`}
             >
               <CourseIcon name={c.icon} className="h-3.5 w-3.5" />
-              {courseById.get(c.id)?.name ?? c.name}
+              {c.name}
               <span className="text-muted-foreground/60">{topicCountByCourse.get(c.id) ?? 0}</span>
             </button>
           ))}
@@ -159,19 +147,19 @@ const Knowledge = () => {
       {/* 结果统计 */}
       <div className="mt-6 flex items-center gap-2 text-sm text-muted-foreground">
         <GraduationCap className="h-4 w-4" />
-        {t('共')} <span className="text-info font-semibold">{results.length}</span> {t('个结果')}
-        {query && <span>{tpl('（关键词「{q}」）', { q: query })}</span>}
+        共 <span className="text-info font-semibold">{results.length}</span> 个结果
+        {query && <span>（关键词「{query}」）</span>}
       </div>
 
       {/* 结果列表 */}
       {results.length === 0 ? (
         <div className="mt-8 border border-border bg-card py-16 text-center">
           <Search className="mx-auto h-10 w-10 text-muted-foreground/40 mb-4" />
-          <p className="text-muted-foreground">{t('没有找到匹配的知识点')}</p>
+          <p className="text-muted-foreground">没有找到匹配的知识点</p>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            {t('换个关键词试试，或去')}
-            <Link to="/tutor" className="text-info hover:underline mx-1">{t('AI 答疑')}</Link>
-            {t('直接提问。')}
+            换个关键词试试，或去
+            <Link to="/tutor" className="text-info hover:underline mx-1">AI 答疑</Link>
+            直接提问。
           </p>
         </div>
       ) : (
@@ -223,13 +211,13 @@ const Knowledge = () => {
         <div className="mt-10 flex items-center gap-3 border border-border bg-card px-6 py-5">
           <BookOpen className="h-5 w-5 shrink-0 text-info" />
           <p className="text-sm text-muted-foreground flex-1">
-            {t('没找到想学的内容？可以在 AI 答疑中描述你的问题，助教会结合课程知识体系为你讲解。')}
+            没找到想学的内容？可以在 AI 答疑中描述你的问题，助教会结合课程知识体系为你讲解。
           </p>
           <Link
             to="/tutor"
             className="text-sm text-info hover:underline shrink-0 flex items-center gap-1"
           >
-            {t('去 AI 答疑')}
+            去 AI 答疑
             <ChevronRight className="h-4 w-4" />
           </Link>
         </div>

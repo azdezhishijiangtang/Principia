@@ -27,9 +27,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { courseCategories } from '@/data/courses';
-import { useCourses, useFormulaGroups, useProblems, useTopics } from '@/i18n/data';
-import { useLocale, useT } from '@/i18n/LocaleContext';
+import { courses, courseCategories } from '@/data/courses';
+import { topics } from '@/data/topics';
+import { problems } from '@/data/problems';
+import { formulaGroups } from '@/data/formulas';
 import {
   FEEDBACK_STATUS_LABELS,
   FEEDBACK_TYPE_LABELS,
@@ -75,43 +76,38 @@ const statusStyle: Record<FeedbackStatus, string> = {
 };
 
 /* ─────────────────────────── 无权访问页 ─────────────────────────── */
-const AccessDenied = ({ loggedIn }: { loggedIn: boolean }) => {
-  const t = useT();
-  return (
-    <div className="container py-24">
-      <div className="mx-auto max-w-md border border-border bg-card p-8 text-center">
-        <span className="mx-auto flex h-12 w-12 items-center justify-center bg-destructive/10 text-destructive">
-          <ShieldX className="h-6 w-6" />
-        </span>
-        <h1 className="mt-4 font-serif text-2xl font-semibold">{t('无权访问')}</h1>
-        <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-          {t('开发者模式仅对指定的开发者账号开放。')}
-          {loggedIn
-            ? t('当前登录账号不是开发者账号，请退出后使用开发者手机号登录。')
-            : t('请先登录开发者账号后再访问。')}
-        </p>
-        <div className="mt-6 flex flex-col gap-2">
-          {!loggedIn && (
-            <Button asChild className="w-full gap-2 bg-info text-info-foreground hover:bg-info/90">
-              <Link to="/login">
-                <LogIn className="h-4 w-4" />
-                {t('前往登录')}
-              </Link>
-            </Button>
-          )}
-          <Button asChild variant="outline" className="w-full">
-            <Link to="/">{t('返回首页')}</Link>
+const AccessDenied = ({ loggedIn }: { loggedIn: boolean }) => (
+  <div className="container py-24">
+    <div className="mx-auto max-w-md border border-border bg-card p-8 text-center">
+      <span className="mx-auto flex h-12 w-12 items-center justify-center bg-destructive/10 text-destructive">
+        <ShieldX className="h-6 w-6" />
+      </span>
+      <h1 className="mt-4 font-serif text-2xl font-semibold">无权访问</h1>
+      <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+        开发者模式仅对指定的开发者账号开放。
+        {loggedIn
+          ? '当前登录账号不是开发者账号，请退出后使用开发者手机号登录。'
+          : '请先登录开发者账号后再访问。'}
+      </p>
+      <div className="mt-6 flex flex-col gap-2">
+        {!loggedIn && (
+          <Button asChild className="w-full gap-2 bg-info text-info-foreground hover:bg-info/90">
+            <Link to="/login">
+              <LogIn className="h-4 w-4" />
+              前往登录
+            </Link>
           </Button>
-        </div>
+        )}
+        <Button asChild variant="outline" className="w-full">
+          <Link to="/">返回首页</Link>
+        </Button>
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 /* ─────────────────────────── 反馈管理 ─────────────────────────── */
 const FeedbackAdmin = () => {
-  const t = useT();
-  const { tpl } = useLocale();
   const all = useAllFeedback();
   const [filter, setFilter] = useState<'all' | FeedbackStatus>('all');
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -121,24 +117,24 @@ const FeedbackAdmin = () => {
 
   const submitReply = (id: string) => {
     if (!draft.trim()) {
-      toast.error(t('回复内容不能为空'));
+      toast.error('回复内容不能为空');
       return;
     }
     const res = replyFeedback(id, draft.trim());
     if (!res.ok) {
-      toast.error(res.error ?? t('回复保存失败'));
+      toast.error(res.error ?? '回复保存失败');
       return;
     }
     setDraft('');
     setActiveId(null);
-    toast.success(t('回复已发送'));
+    toast.success('回复已发送');
   };
 
   const filters: { key: 'all' | FeedbackStatus; label: string }[] = [
-    { key: 'all', label: tpl('全部 {n}', { n: all.length }) },
-    { key: 'pending', label: tpl('待处理 {n}', { n: all.filter((e) => e.status === 'pending').length }) },
-    { key: 'replied', label: tpl('已回复 {n}', { n: all.filter((e) => e.status === 'replied').length }) },
-    { key: 'closed', label: tpl('已关闭 {n}', { n: all.filter((e) => e.status === 'closed').length }) },
+    { key: 'all', label: `全部 ${all.length}` },
+    { key: 'pending', label: `待处理 ${all.filter((e) => e.status === 'pending').length}` },
+    { key: 'replied', label: `已回复 ${all.filter((e) => e.status === 'replied').length}` },
+    { key: 'closed', label: `已关闭 ${all.filter((e) => e.status === 'closed').length}` },
   ];
 
   return (
@@ -159,7 +155,7 @@ const FeedbackAdmin = () => {
 
       {list.length === 0 ? (
         <div className="mt-8 border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
-          {t('暂无反馈')}
+          暂无反馈
         </div>
       ) : (
         <div className="mt-5 space-y-3">
@@ -170,16 +166,16 @@ const FeedbackAdmin = () => {
                   <p className="font-medium">{item.title}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {item.userName} · {formatTime(item.createdAt)}
-                    {item.contact ? ` · ${t('联系：')}${item.contact}` : ''}
+                    {item.contact ? ` · 联系：${item.contact}` : ''}
                     {item.pageUrl ? ` · ${item.pageUrl}` : ''}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-1.5">
                   <span className="border border-border bg-secondary px-1.5 py-0.5 text-xs">
-                    {t(FEEDBACK_TYPE_LABELS[item.type])}
+                    {FEEDBACK_TYPE_LABELS[item.type]}
                   </span>
                   <span className={`border px-1.5 py-0.5 text-xs ${statusStyle[item.status]}`}>
-                    {t(FEEDBACK_STATUS_LABELS[item.status])}
+                    {FEEDBACK_STATUS_LABELS[item.status]}
                   </span>
                 </div>
               </div>
@@ -207,16 +203,16 @@ const FeedbackAdmin = () => {
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}
                     rows={3}
-                    placeholder={t('输入官方回复……')}
+                    placeholder="输入官方回复……"
                     autoFocus
                   />
                   <div className="flex gap-2">
                     <Button size="sm" className="gap-1.5" onClick={() => submitReply(item.id)}>
                       <CheckCircle2 className="h-3.5 w-3.5" />
-                      {t('发送回复')}
+                      发送回复
                     </Button>
                     <Button size="sm" variant="outline" onClick={() => setActiveId(null)}>
-                      {t('取消')}
+                      取消
                     </Button>
                   </div>
                 </div>
@@ -232,7 +228,7 @@ const FeedbackAdmin = () => {
                     }}
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
-                    {t('回复')}
+                    回复
                   </Button>
                   {item.status !== 'closed' && (
                     <Button
@@ -242,14 +238,14 @@ const FeedbackAdmin = () => {
                     onClick={() => {
                       const res = setFeedbackStatus(item.id, 'closed');
                       if (!res.ok) {
-                        toast.error(res.error ?? t('状态更新失败'));
+                        toast.error(res.error ?? '状态更新失败');
                         return;
                       }
-                      toast.success(t('已关闭'));
+                      toast.success('已关闭');
                     }}
                     >
                       <XCircle className="h-3.5 w-3.5" />
-                      {t('关闭')}
+                      关闭
                     </Button>
                   )}
                   <Button
@@ -259,14 +255,14 @@ const FeedbackAdmin = () => {
                     onClick={() => {
                       const res = deleteFeedback(item.id);
                       if (!res.ok) {
-                        toast.error(res.error ?? t('删除失败'));
+                        toast.error(res.error ?? '删除失败');
                         return;
                       }
-                      toast.success(t('已删除'));
+                      toast.success('已删除');
                     }}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    {t('删除')}
+                    删除
                   </Button>
                 </div>
               )}
@@ -280,10 +276,6 @@ const FeedbackAdmin = () => {
 
 /* ─────────────────────────── 内容编辑 ─────────────────────────── */
 const ContentAdmin = () => {
-  const t = useT();
-  const { tpl } = useLocale();
-  const courses = useCourses();
-  const topics = useTopics();
   const [courseId, setCourseId] = useState(courses[0]?.id ?? '');
   const courseTopics = useMemo(
     () => topics.filter((t) => t.courseId === courseId),
@@ -311,16 +303,16 @@ const ContentAdmin = () => {
   const save = () => {
     if (!topic) return;
     if (!draft.title.trim() || !draft.content.trim()) {
-      toast.error(t('标题与正文不能为空'));
+      toast.error('标题与正文不能为空');
       return;
     }
     const res = saveOverride(topic.id, draft);
     if (!res.ok) {
-      toast.error(res.error ?? t('覆盖保存失败'));
+      toast.error(res.error ?? '覆盖保存失败');
       return;
     }
     applyTopicOverrides(topics);
-    toast.success(t('已保存，页面即将刷新'));
+    toast.success('已保存，页面即将刷新');
     // 保存后强制刷新页面，保证编辑页显示与 localStorage 覆盖层一致
     window.location.reload();
   };
@@ -333,10 +325,10 @@ const ContentAdmin = () => {
     if (!topic) return;
     const res = removeOverride(topic.id);
     if (!res.ok) {
-      toast.error(res.error ?? t('撤销失败'));
+      toast.error(res.error ?? '撤销失败');
       return;
     }
-    toast.success(t('已撤销本地覆盖，页面即将刷新恢复源码原文'));
+    toast.success('已撤销本地覆盖，页面即将刷新恢复源码原文');
     // 撤销后强制刷新页面，让内存中的 topics 回到原始源码数据
     window.location.reload();
   };
@@ -348,7 +340,7 @@ const ContentAdmin = () => {
     <div>
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1.5">
-          <Label htmlFor="dev-course-select" className="text-xs text-muted-foreground">{t('课程')}</Label>
+          <Label htmlFor="dev-course-select" className="text-xs text-muted-foreground">课程</Label>
           <Select value={courseId} onValueChange={setCourseId}>
             <SelectTrigger id="dev-course-select" className="w-56">
               <SelectValue />
@@ -363,10 +355,10 @@ const ContentAdmin = () => {
           </Select>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="dev-topic-select" className="text-xs text-muted-foreground">{tpl('知识点（{n} 个）', { n: courseTopics.length })}</Label>
+          <Label htmlFor="dev-topic-select" className="text-xs text-muted-foreground">知识点（{courseTopics.length} 个）</Label>
           <Select value={topicId} onValueChange={setTopicId}>
             <SelectTrigger id="dev-topic-select" className="w-72">
-              <SelectValue placeholder={t('选择知识点')} />
+              <SelectValue placeholder="选择知识点" />
             </SelectTrigger>
             <SelectContent>
               {courseTopics.map((t) => (
@@ -378,15 +370,15 @@ const ContentAdmin = () => {
           </Select>
         </div>
         <span className="pb-2 text-xs text-muted-foreground">
-          {tpl('本地覆盖 {n} 个', { n: overrideCount })}
-          {overridden && <span className="ml-2 text-info">· {t('当前专题已被覆盖')}</span>}
+          本地覆盖 {overrideCount} 个
+          {overridden && <span className="ml-2 text-info">· 当前专题已被覆盖</span>}
         </span>
       </div>
 
       {topic && (
         <div className="mt-5 space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="dev-title">{t('标题')}</Label>
+            <Label htmlFor="dev-title">标题</Label>
             <Input
               id="dev-title"
               value={draft.title}
@@ -394,7 +386,7 @@ const ContentAdmin = () => {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="dev-summary">{t('摘要')}</Label>
+            <Label htmlFor="dev-summary">摘要</Label>
             <Textarea
               id="dev-summary"
               value={draft.summary}
@@ -404,9 +396,9 @@ const ContentAdmin = () => {
           </div>
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <Label htmlFor="dev-content">{t('讲解正文（Markdown + LaTeX）')}</Label>
+              <Label htmlFor="dev-content">讲解正文（Markdown + LaTeX）</Label>
               <span className="text-xs text-muted-foreground">
-                {tpl('{n} 字符', { n: draft.content.length })}
+                {draft.content.length} 字符
               </span>
             </div>
             <Textarea
@@ -420,11 +412,11 @@ const ContentAdmin = () => {
           <div className="flex flex-wrap items-center gap-2">
             <Button className="gap-1.5" onClick={save} disabled={!dirty}>
               <Save className="h-4 w-4" />
-              {t('保存覆盖')}
+              保存覆盖
             </Button>
             <Button variant="outline" className="gap-1.5" onClick={reset} disabled={!dirty}>
               <RotateCcw className="h-4 w-4" />
-              {t('还原编辑')}
+              还原编辑
             </Button>
             <Button
               variant="outline"
@@ -433,17 +425,18 @@ const ContentAdmin = () => {
               disabled={!overridden}
             >
               <Trash2 className="h-4 w-4" />
-              {t('撤销本地覆盖')}
+              撤销本地覆盖
             </Button>
             <Link
               to={`/topics/${topic.id}`}
               className="ml-auto text-sm text-info hover:underline"
             >
-              {t('查看该专题 →')}
+              查看该专题 →
             </Link>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            {t('说明：覆盖保存在当前浏览器的 localStorage，仅本机可见。要让所有访客看到，需要把修改同步进源码后重新构建发布。')}
+            说明：覆盖保存在当前浏览器的 localStorage，仅本机可见。要让所有访客看到，
+            需要把修改同步进源码后重新构建发布。
           </p>
         </div>
       )}
@@ -453,22 +446,16 @@ const ContentAdmin = () => {
 
 /* ─────────────────────────── 数据概览 ─────────────────────────── */
 const StatsAdmin = () => {
-  const t = useT();
-  const { tpl } = useLocale();
   const all = useAllFeedback();
-  const courses = useCourses();
-  const topics = useTopics();
-  const problems = useProblems();
-  const formulaGroups = useFormulaGroups();
   const cards = [
-    { label: t('课程'), value: courses.length },
-    { label: t('知识专题'), value: topics.length },
-    { label: t('例题'), value: problems.length },
-    { label: t('速查公式'), value: formulaGroups.reduce((s, g) => s + g.formulas.length, 0) },
-    { label: t('反馈总数'), value: all.length },
-    { label: t('待处理反馈'), value: countPending(all) },
-    { label: t('手机号注册账户'), value: countAccounts() },
-    { label: t('本地内容覆盖'), value: countOverrides() },
+    { label: '课程', value: courses.length },
+    { label: '知识专题', value: topics.length },
+    { label: '例题', value: problems.length },
+    { label: '速查公式', value: formulaGroups.reduce((s, g) => s + g.formulas.length, 0) },
+    { label: '反馈总数', value: all.length },
+    { label: '待处理反馈', value: countPending(all) },
+    { label: '手机号注册账户', value: countAccounts() },
+    { label: '本地内容覆盖', value: countOverrides() },
   ];
 
   return (
@@ -482,18 +469,18 @@ const StatsAdmin = () => {
         ))}
       </div>
 
-      <h3 className="mt-8 font-serif text-lg font-semibold">{t('各学科方向专题分布')}</h3>
+      <h3 className="mt-8 font-serif text-lg font-semibold">各学科方向专题分布</h3>
       <div className="mt-3 space-y-2">
         {courseCategories.map((cat) => {
-          const count = topics.filter((tp) => cat.courseIds.includes(tp.courseId)).length;
+          const count = topics.filter((t) => cat.courseIds.includes(t.courseId)).length;
           const max = Math.max(
             ...courseCategories.map(
-              (c) => topics.filter((tp) => c.courseIds.includes(tp.courseId)).length,
+              (c) => topics.filter((t) => c.courseIds.includes(t.courseId)).length,
             ),
           );
           return (
             <div key={cat.id} className="flex items-center gap-3">
-              <span className="w-28 shrink-0 text-sm">{t(cat.name)}</span>
+              <span className="w-28 shrink-0 text-sm">{cat.name}</span>
               <div className="h-2 flex-1 bg-secondary">
                 <div
                   className="h-2 bg-info"
@@ -501,7 +488,7 @@ const StatsAdmin = () => {
                 />
               </div>
               <span className="w-16 shrink-0 text-right text-xs text-muted-foreground">
-                {tpl('{n} 专题', { n: count })}
+                {count} 专题
               </span>
             </div>
           );
@@ -516,8 +503,6 @@ const maskPhone = (phone: string): string =>
   phone.length === 11 ? `${phone.slice(0, 3)}****${phone.slice(-4)}` : phone;
 
 const AccountsAdmin = () => {
-  const t = useT();
-  const { tpl } = useLocale();
   const [tick, setTick] = useState(0);
   // 简单刷新：切回标签页或点击刷新按钮时重读
   const accounts = useMemo(() => listAccounts(), [tick]);
@@ -530,7 +515,7 @@ const AccountsAdmin = () => {
       await navigator.clipboard.writeText(text);
       toast.success(okMsg);
     } catch {
-      toast.error(t('复制失败，请手动选择文本复制'));
+      toast.error('复制失败，请手动选择文本复制');
     }
   };
 
@@ -544,7 +529,7 @@ const AccountsAdmin = () => {
     a.download = `account-sync-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(t('同步文件已下载'));
+    toast.success('同步文件已下载');
   };
 
   return (
@@ -552,17 +537,17 @@ const AccountsAdmin = () => {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="border border-border bg-card p-4">
           <p className="font-serif text-3xl font-semibold text-info">{total}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{t('账号总数（含内置）')}</p>
+          <p className="mt-1 text-xs text-muted-foreground">账号总数（含内置）</p>
         </div>
         <div className="border border-border bg-card p-4">
           <p className="font-serif text-3xl font-semibold text-info">{seedCount}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{t('内置登记表账号')}</p>
+          <p className="mt-1 text-xs text-muted-foreground">内置登记表账号</p>
         </div>
         <div className="border border-border bg-card p-4">
           <p className="font-serif text-3xl font-semibold text-info">
             {accounts.length - seedCount}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">{t('本机注册账号')}</p>
+          <p className="mt-1 text-xs text-muted-foreground">本机注册账号</p>
         </div>
         <div className="border border-border bg-card p-4">
           <p
@@ -572,19 +557,19 @@ const AccountsAdmin = () => {
           >
             {pending.length}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">{t('待同步进代码库')}</p>
+          <p className="mt-1 text-xs text-muted-foreground">待同步进代码库</p>
         </div>
       </div>
 
       {/* ── 同步操作区 ── */}
       <div className="mt-6 border border-border bg-card p-5">
-        <h3 className="font-serif text-lg font-semibold">{t('把新账号写入代码库')}</h3>
+        <h3 className="font-serif text-lg font-semibold">把新账号写入代码库</h3>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-          {t('新用户注册的账号默认只保存在他自己的浏览器里。导出下面的同步数据并提交进')}
+          新用户注册的账号默认只保存在他自己的浏览器里。导出下面的同步数据并提交进
           <code className="mx-1 rounded bg-secondary px-1.5 py-0.5 text-xs">
             frontend/src/data/seedAccounts.ts
           </code>
-          {t('后，该账号就能在任意设备登录，不会再「登录不上去」。')}
+          后，该账号就能在任意设备登录，不会再「登录不上去」。
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <Button
@@ -592,10 +577,10 @@ const AccountsAdmin = () => {
             size="sm"
             className="gap-1.5 bg-info text-info-foreground hover:bg-info/90"
             disabled={pending.length === 0}
-            onClick={() => copyText(buildSyncCode(), t('同步码已复制，发送给网站维护者即可'))}
+            onClick={() => copyText(buildSyncCode(), '同步码已复制，发送给网站维护者即可')}
           >
             <Save className="h-4 w-4" />
-            {tpl('复制同步码（{n}）', { n: pending.length })}
+            复制同步码（{pending.length}）
           </Button>
           <Button
             type="button"
@@ -606,33 +591,34 @@ const AccountsAdmin = () => {
             onClick={downloadSyncFile}
           >
             <Save className="h-4 w-4" />
-            {t('下载同步文件')}
+            下载同步文件
           </Button>
           <Button
             type="button"
             size="sm"
             variant="ghost"
             className="gap-1.5"
-            onClick={() => setTick((v) => v + 1)}
+            onClick={() => setTick((t) => t + 1)}
           >
             <RotateCcw className="h-4 w-4" />
-            {t('刷新列表')}
+            刷新列表
           </Button>
         </div>
         {pending.length > 0 ? (
           <p className="mt-3 text-xs text-muted-foreground">
-            {t('提示：同步码是一段 Base64 文本，直接通过聊天工具发给维护者；维护者提交并发布后，这里待同步数量会自动清零。')}
+            提示：同步码是一段 Base64 文本，直接通过聊天工具发给维护者；维护者提交并发布后，
+            这里待同步数量会自动清零。
           </p>
         ) : (
           <p className="mt-3 text-xs text-muted-foreground">
-            {t('当前没有待同步的新账号 —— 所有本机注册账号都已在代码库中生效。')}
+            当前没有待同步的新账号 —— 所有本机注册账号都已在代码库中生效。
           </p>
         )}
       </div>
 
       {/* ── 账号列表 ── */}
       <h3 className="mt-8 font-serif text-lg font-semibold">
-        {tpl('全部账号（{n}）', { n: accounts.length })}
+        全部账号（{accounts.length}）
       </h3>
       <div className="mt-3 divide-y divide-border border border-border">
         {accounts.map((a) => {
@@ -649,10 +635,10 @@ const AccountsAdmin = () => {
                 <div>
                   <p className="text-sm font-medium">{a.username}</p>
                   <p className="text-xs text-muted-foreground">
-                    {maskPhone(a.phone)} · {t('注册于')}{' '}
+                    {maskPhone(a.phone)} · 注册于{' '}
                     {new Date(a.createdAt).toLocaleDateString('zh-CN')}
                     {a.lastLoginAt
-                      ? ` · ${t('最近登录')} ${new Date(a.lastLoginAt).toLocaleDateString('zh-CN')}`
+                      ? ` · 最近登录 ${new Date(a.lastLoginAt).toLocaleDateString('zh-CN')}`
                       : ''}
                   </p>
                 </div>
@@ -664,7 +650,7 @@ const AccountsAdmin = () => {
                     : 'bg-secondary text-muted-foreground'
                 }`}
               >
-                {isSeed ? t('内置登记表') : t('本机注册')}
+                {isSeed ? '内置登记表' : '本机注册'}
               </span>
             </div>
           );
@@ -676,7 +662,6 @@ const AccountsAdmin = () => {
 
 /* ─────────────────────────── 页面 ─────────────────────────── */
 const DevMode = () => {
-  const t = useT();
   const { user } = useAuth();
 
   // 开发者模式仅对指定开发者账号（DEV_PHONE）开放，其他账号一律拒绝
@@ -688,17 +673,17 @@ const DevMode = () => {
         <div>
           <p className="mb-2 flex items-center gap-2 text-sm font-semibold tracking-wide text-info">
             <KeyRound className="h-4 w-4" />
-            {t('开发者模式')} · {user?.phone}
+            开发者模式 · {user?.phone}
           </p>
-          <h1 className="font-serif text-3xl font-semibold">{t('站点管理台')}</h1>
+          <h1 className="font-serif text-3xl font-semibold">站点管理台</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            {t('回复用户反馈、更新知识点讲解、查看数据概览。')}
+            回复用户反馈、更新知识点讲解、查看数据概览。
           </p>
         </div>
         <Button asChild variant="outline" className="gap-1.5">
           <Link to="/">
             <XCircle className="h-4 w-4" />
-            {t('退出开发者模式')}
+            退出开发者模式
           </Link>
         </Button>
       </div>
@@ -707,19 +692,19 @@ const DevMode = () => {
         <TabsList className="grid w-full max-w-2xl grid-cols-4">
           <TabsTrigger value="feedback" className="gap-1.5">
             <MessageSquare className="h-4 w-4" />
-            {t('反馈管理')}
+            反馈管理
           </TabsTrigger>
           <TabsTrigger value="content" className="gap-1.5">
             <FilePenLine className="h-4 w-4" />
-            {t('内容编辑')}
+            内容编辑
           </TabsTrigger>
           <TabsTrigger value="accounts" className="gap-1.5">
             <Users className="h-4 w-4" />
-            {t('账号管理')}
+            账号管理
           </TabsTrigger>
           <TabsTrigger value="stats" className="gap-1.5">
             <BarChart3 className="h-4 w-4" />
-            {t('数据概览')}
+            数据概览
           </TabsTrigger>
         </TabsList>
 

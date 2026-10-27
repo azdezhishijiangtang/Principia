@@ -22,8 +22,6 @@ export interface QaEntry {
   model?: string;
   /** token 用量 */
   usage?: { prompt: number; completion: number; total: number };
-  /** 模型的思考过程（原始推理文本，可选） */
-  thinking?: string;
 }
 
 /** 一次答疑引用到的文档段落 */

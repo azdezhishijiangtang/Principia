@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -16,9 +16,10 @@ import { Button } from '@/components/ui/button';
 import { FadeIn, Stagger } from '@/components/MotionPrimitives';
 import MathText, { InlineMathText, renderInline } from '@/components/MathText';
 import ProblemCard from '@/components/ProblemCard';
-import { useCourses, useProblems, useTopics } from '@/i18n/data';
-import { useT, useLocale } from '@/i18n/LocaleContext';
-import { exportTopicToDocx } from '@/lib/wordExport';
+import { courses } from '@/data/courses';
+import { topics } from '@/data/topics';
+import { problems } from '@/data/problems';
+import { elementToPdfBlob } from '@/lib/pdfExport';
 import { downloadBlob } from '@/lib/textImage';
 import { toast } from 'sonner';
 import NotFound from './NotFound';
@@ -53,21 +54,16 @@ const TopicDetail = () => {
   const { topicId } = useParams<{ topicId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const sectionParam = searchParams.get('section');
-  const t = useT();
-  const { tpl } = useLocale();
-  const topics = useTopics();
-  const courses = useCourses();
-  const problems = useProblems();
-  const topic = topics.find((tp) => tp.id === topicId);
+  const topic = topics.find((t) => t.id === topicId);
 
   const course = useMemo(
     () => (topic ? courses.find((c) => c.id === topic.courseId) : undefined),
-    [topic, courses],
+    [topic],
   );
 
   const relatedProblems = useMemo(
     () => (topic ? problems.filter((p) => p.topicId === topic.id) : []),
-    [topic, problems],
+    [topic],
   );
 
   const sections = useMemo(
@@ -78,8 +74,8 @@ const TopicDetail = () => {
   // 同课程的前后知识点
   const { prev, next } = useMemo(() => {
     if (!topic) return { prev: undefined, next: undefined };
-    const siblings = topics.filter((tp) => tp.courseId === topic.courseId);
-    const idx = siblings.findIndex((tp) => tp.id === topic.id);
+    const siblings = topics.filter((t) => t.courseId === topic.courseId);
+    const idx = siblings.findIndex((t) => t.id === topic.id);
     return { prev: idx > 0 ? siblings[idx - 1] : undefined, next: idx < siblings.length - 1 ? siblings[idx + 1] : undefined };
   }, [topic]);
 
@@ -113,27 +109,32 @@ const TopicDetail = () => {
     setSearchParams(searchParams);
   };
 
-  // Word 导出：直接由知识点数据生成（真文本 + 可编辑公式，不再栅格化）
+  // PDF 导出：渲染离屏浅色文档节点后栅格化（避开屏幕上的入场动画导致空白）
   const [exporting, setExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
 
-  const handleExportWord = async () => {
+  const handleExportPdf = async () => {
+    // 注意：离屏导出节点仅在 exporting 为 true 时才挂载，
+    // 因此必须先 setExporting(true)、等渲染提交后再取 ref（旧代码在渲染前判空，导出恒失效）。
     setExporting(true);
     try {
-      const blob = await exportTopicToDocx({
-        courseName: course.name,
-        topic: {
-          title: topic.title,
-          chapter: topic.chapter,
-          summary: topic.summary,
-          keyPoints: topic.keyPoints,
-          content: topic.content,
-        },
-      });
+      // 等待离屏节点渲染与 KaTeX/字体就绪
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      await new Promise((r) => requestAnimationFrame(() => r(null)));
+      try {
+        await document.fonts.ready;
+      } catch {
+        /* 字体 API 不可用时忽略 */
+      }
+      await new Promise((r) => setTimeout(r, 200));
+      const node = exportRef.current;
+      if (!node) throw new Error('导出节点尚未就绪');
+      const blob = await elementToPdfBlob(node);
       const safe = topic.title.replace(/[\\/:*?"<>|]/g, '_').slice(0, 60);
-      downloadBlob(blob, `Principia-知识讲解-${safe}.docx`);
-      toast.success(t('已导出 Word'));
+      downloadBlob(blob, `Principia-知识讲解-${safe}.pdf`);
+      toast.success('已导出 PDF');
     } catch (err) {
-      toast.error(tpl('导出失败：{msg}', { msg: err instanceof Error ? err.message : String(err) }));
+      toast.error('导出失败，请重试');
     } finally {
       setExporting(false);
     }
@@ -143,9 +144,9 @@ const TopicDetail = () => {
     <div className="container py-10 lg:py-14">
       {/* 面包屑 */}
       <FadeIn>
-        <nav aria-label={t('面包屑')} className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
+        <nav aria-label="面包屑" className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
           <Link to="/" className="hover:text-foreground transition-colors duration-[var(--duration-fast)]">
-            {t('首页')}
+            首页
           </Link>
           <ChevronRight className="h-3.5 w-3.5" />
           <Link
@@ -175,26 +176,25 @@ const TopicDetail = () => {
               <Button asChild className="gap-2 bg-info text-info-foreground hover:bg-info/90">
                 <Link to={`/tutor?topic=${topic.id}`}>
                   <Sparkles className="h-4 w-4" />
-                  {t('问 AI 讲解这个知识点')}
+                  问 AI 讲解这个知识点
                 </Link>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 className="gap-1.5"
-                onClick={() => void handleExportWord()}
+                onClick={() => void handleExportPdf()}
                 disabled={exporting}
-                title={t('导出为可编辑的 Word 文档（公式可在 Word 中编辑）')}
               >
                 {exporting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <FileDown className="h-4 w-4" />
                 )}
-                {exporting ? t('导出中…') : t('导出 Word')}
+                {exporting ? '导出中…' : '导出 PDF'}
               </Button>
               <span className="text-xs text-muted-foreground">
-                {t('带着本页上下文提问，问答自动记入学习档案')}
+                带着本页上下文提问，问答自动记入学习档案
               </span>
             </div>
             <div className="mt-6 h-px bg-border" />
@@ -205,14 +205,14 @@ const TopicDetail = () => {
             <div className="mt-6 flex items-center gap-3 border border-info/30 bg-info/5 px-4 py-3">
               <Sparkles className="h-4 w-4 shrink-0 text-info" />
               <p className="text-sm flex-1 min-w-0">
-                {t('正在阅读：')}
+                正在阅读：
                 <span className="text-info font-medium mx-1"><InlineMathText escape text={sectionParam} /></span>
-                <span className="text-muted-foreground">{t('（AI 答疑时会结合这一节讲解）')}</span>
+                <span className="text-muted-foreground">（AI 答疑时会结合这一节讲解）</span>
               </p>
               <button
                 onClick={clearSectionContext}
                 className="text-muted-foreground hover:text-foreground shrink-0"
-                aria-label={t('清除小节上下文')}
+                aria-label="清除小节上下文"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -224,7 +224,7 @@ const TopicDetail = () => {
             <details className="lg:hidden mt-6 border border-border bg-card">
               <summary className="flex items-center gap-2 px-4 py-3 text-sm font-medium cursor-pointer select-none">
                 <List className="h-4 w-4 text-info" />
-                {tpl('本页目录（{n} 节）', { n: tocSections.length })}
+                本页目录（{tocSections.length} 节）
               </summary>
               <ul className="border-t border-border px-4 py-2">
                 {tocSections.map((s) => (
@@ -257,10 +257,10 @@ const TopicDetail = () => {
                       <Link
                         to={`/tutor?topic=${topic.id}&section=${encodeURIComponent(s.title)}`}
                         className="group flex shrink-0 items-center gap-1.5 border border-border px-2.5 py-1.5 text-xs text-muted-foreground transition-colors duration-[var(--duration-fast)] hover:border-info/50 hover:text-info"
-                        title={tpl('让 AI 结合「{title}」这一节讲解', { title: s.title })}
+                        title={`让 AI 结合「${s.title}」这一节讲解`}
                       >
                         <Sparkles className="h-3.5 w-3.5" />
-                        {t('问 AI 这一节')}
+                        问 AI 这一节
                       </Link>
                     </div>
                   )}
@@ -275,7 +275,7 @@ const TopicDetail = () => {
             <section className="mt-12 border border-border bg-card">
               <div className="flex items-center gap-2 border-b border-border px-5 py-4">
                 <Lightbulb className="h-4 w-4 text-warning" />
-                <h2 className="font-serif text-lg font-semibold">{t('核心要点')}</h2>
+                <h2 className="font-serif text-lg font-semibold">核心要点</h2>
               </div>
               <ul className="p-5 space-y-3">
                 {topic.keyPoints.map((kp, i) => (
@@ -297,11 +297,11 @@ const TopicDetail = () => {
                 <div className="flex items-center gap-2 mb-6">
                   <FileQuestion className="h-5 w-5 text-info" />
                   <h2 className="font-serif text-2xl font-semibold">
-                    {tpl('配套例题（{n}）', { n: relatedProblems.length })}
+                    配套例题（{relatedProblems.length}）
                   </h2>
                 </div>
                 <p className="text-sm text-muted-foreground mb-6 -mt-3">
-                  {t('建议先读提示独立思考，再对照完整解答核对步骤')}
+                  建议先读提示独立思考，再对照完整解答核对步骤
                 </p>
               </FadeIn>
               <Stagger className="space-y-6" stagger={0.1}>
@@ -323,7 +323,7 @@ const TopicDetail = () => {
               >
                 <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  {t('上一个知识点')}
+                  上一个知识点
                 </span>
                 <p className="mt-2 font-serif font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
                   <InlineMathText escape text={prev.title} />
@@ -338,7 +338,7 @@ const TopicDetail = () => {
                 className="group border border-border bg-card p-5 text-right transition-colors duration-[var(--duration-normal)] hover:border-info/50"
               >
                 <span className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
-                  {t('下一个知识点')}
+                  下一个知识点
                   <ChevronRight className="h-3.5 w-3.5" />
                 </span>
                 <p className="mt-2 font-serif font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
@@ -357,7 +357,7 @@ const TopicDetail = () => {
               <div className="border border-border bg-card">
                 <div className="flex items-center gap-2 border-b border-border px-5 py-4">
                   <List className="h-4 w-4 text-info" />
-                  <h2 className="font-serif text-base font-semibold">{t('本页目录')}</h2>
+                  <h2 className="font-serif text-base font-semibold">本页目录</h2>
                 </div>
                 <nav className="p-3">
                   <ul className="space-y-0.5">
@@ -384,7 +384,7 @@ const TopicDetail = () => {
             <div className="border border-border bg-card">
               <div className="flex items-center gap-2 border-b border-border px-5 py-4">
                 <ListChecks className="h-4 w-4 text-info" />
-                <h2 className="font-serif text-base font-semibold">{t('本页要点')}</h2>
+                <h2 className="font-serif text-base font-semibold">本页要点</h2>
               </div>
               <ul className="p-4 space-y-2.5">
                 {topic.keyPoints.map((kp, i) => (
@@ -398,7 +398,7 @@ const TopicDetail = () => {
 
             {/* 课程信息 */}
             <div className="border border-border bg-card p-5">
-              <h2 className="font-serif text-base font-semibold mb-3">{t('所属课程')}</h2>
+              <h2 className="font-serif text-base font-semibold mb-3">所属课程</h2>
               <Link
                 to={`/courses/${course.id}`}
                 className="group flex items-center justify-between"
@@ -422,28 +422,28 @@ const TopicDetail = () => {
 
             {/* 快速入口 */}
             <div className="border border-border bg-card p-5">
-              <h2 className="font-serif text-base font-semibold mb-3">{t('继续学习')}</h2>
+              <h2 className="font-serif text-base font-semibold mb-3">继续学习</h2>
               <div className="space-y-2.5">
                 <Link
                   to={`/tutor?topic=${topic.id}`}
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-info transition-colors duration-[var(--duration-fast)]"
                 >
                   <Sparkles className="h-4 w-4" />
-                  {t('问 AI 讲解这个知识点')}
+                  问 AI 这个知识点
                 </Link>
                 <Link
                   to="/problems"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-info transition-colors duration-[var(--duration-fast)]"
                 >
                   <FileQuestion className="h-4 w-4" />
-                  {t('例题广场')}
+                  例题广场
                 </Link>
                 <Link
                   to="/formulas"
                   className="flex items-center gap-2 text-sm text-muted-foreground hover:text-info transition-colors duration-[var(--duration-fast)]"
                 >
                   <ListChecks className="h-4 w-4" />
-                  {t('公式速查表')}
+                  公式速查表
                 </Link>
               </div>
             </div>
@@ -451,6 +451,32 @@ const TopicDetail = () => {
         </aside>
       </div>
 
+      {/* 离屏导出文档：仅导出时渲染，供栅格化为 PDF（避开屏幕入场动画导致的空白） */}
+      {exporting && (
+        <div id="pdf-export-root" aria-hidden="true">
+          <div ref={exportRef} className="pdf-doc">
+            <p className="pdf-doc-brand">{course.name} · {topic.chapter}</p>
+            <h1 className="pdf-doc-title"><InlineMathText escape text={topic.title} /></h1>
+            <p className="pdf-doc-lead"><InlineMathText escape text={topic.summary} /></p>
+            <div className="pdf-doc-body">
+              {sections.map((s) => (
+                <section key={s.id}>
+                  {s.title && (
+                    <h2 className="pdf-doc-section-title"><InlineMathText escape text={s.title} /></h2>
+                  )}
+                  <MathText escape content={s.body} />
+                </section>
+              ))}
+              <h2 className="pdf-doc-subhead">核心要点</h2>
+              <ol>
+                {topic.keyPoints.map((kp, i) => (
+                  <li key={i} className="pdf-doc-kp"><InlineMathText escape text={kp} /></li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

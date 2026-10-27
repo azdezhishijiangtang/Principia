@@ -12,28 +12,19 @@ import { Button } from '@/components/ui/button';
 import { FadeIn, Stagger, HoverLift } from '@/components/MotionPrimitives';
 import MathText, { InlineMathText, renderMath } from '@/components/MathText';
 import CourseIcon from '@/components/CourseIcon';
-import { subjectCategories } from '@/data/courses';
-import { useT, useLocale } from '@/i18n/LocaleContext';
-import { useCourses, useTopics, useProblems, useFormulaGroups } from '@/i18n/data';
+import { courses, subjectCourses, subjectCategories } from '@/data/courses';
+import { topics } from '@/data/topics';
+import { problems } from '@/data/problems';
+import { formulaGroups } from '@/data/formulas';
 import { useSubject } from '@/lib/SubjectContext';
-import { SUBJECT_META, subjectOf, type Subject } from '@/types';
+import { SUBJECT_META, type Subject } from '@/types';
 
 const Index = () => {
-  const t = useT();
-  const { tpl } = useLocale();
   const { subject, setSubject } = useSubject();
   const meta = SUBJECT_META[subject];
   const navigate = useNavigate();
 
-  const courses = useCourses();
-  const topics = useTopics();
-  const problems = useProblems();
-  const formulaGroups = useFormulaGroups();
-
-  const subjectCourseList = useMemo(
-    () => courses.filter((c) => subjectOf(c) === subject),
-    [courses, subject],
-  );
+  const subjectCourseList = useMemo(() => subjectCourses(subject), [subject]);
   const subjectCourseIds = useMemo(
     () => new Set(subjectCourseList.map((c) => c.id)),
     [subjectCourseList],
@@ -70,7 +61,7 @@ const Index = () => {
   // Hero 精选公式：取当前学科前三组的第一条，空集时回退到数学
   const heroFormulas = useMemo(() => {
     const pick = (s: Subject) => {
-      const ids = new Set(courses.filter((c) => subjectOf(c) === s).map((c) => c.id));
+      const ids = new Set(subjectCourses(s).map((c) => c.id));
       return formulaGroups
         .filter((g) => ids.has(g.courseId))
         .slice(0, 3)
@@ -78,7 +69,7 @@ const Index = () => {
         .filter((x) => x.latex);
     };
     return pick(subject).length ? pick(subject) : pick('math');
-  }, [subject, courses, formulaGroups]);
+  }, [subject]);
 
   return (
     <div className="flex flex-col">
@@ -91,7 +82,7 @@ const Index = () => {
               <FadeIn>
                 <p className="flex items-center gap-2 text-sm text-hero-foreground/70 mb-6">
                   <Sigma className="h-4 w-4" />
-                  {t('大学数学物理本科知识解答平台')}
+                  大学数学物理本科知识解答平台
                 </p>
               </FadeIn>
               <FadeIn delay={0.1}>
@@ -99,14 +90,15 @@ const Index = () => {
                   className="font-serif font-semibold leading-[1.15] tracking-tight"
                   style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)' }}
                 >
-                  {t('把抽象的数理，')}
+                  把抽象的数理，
                   <br />
-                  <span className="text-[oklch(0.75_0.15_255)]">{t('看得懂的推理')}</span>
+                  讲成<span className="text-[oklch(0.75_0.15_255)]">看得懂的推理</span>
                 </h1>
               </FadeIn>
               <FadeIn delay={0.2}>
                 <p className="mt-6 text-lg text-hero-foreground/75 leading-relaxed max-w-xl">
-                  {t('覆盖数学系与物理系本科核心课程——分析、代数与几何、概率统计、方程与计算，经典物理、理论物理、凝聚态与粒子天体。知识点可检索、例题分步详解、公式规范排版，还有 AI 助教随身答疑。')}
+                  覆盖数学系与物理系本科核心课程——分析、代数与几何、概率统计、方程与计算，
+                  经典物理、理论物理、凝聚态与粒子天体。知识点可检索、例题分步详解、公式规范排版，还有 AI 助教随身答疑。
                 </p>
               </FadeIn>
               <FadeIn delay={0.3}>
@@ -117,7 +109,7 @@ const Index = () => {
                     className="bg-info text-info-foreground hover:bg-info/90 gap-2"
                   >
                     <Link to="/courses">
-                      {t('浏览课程')}
+                      浏览课程
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </Button>
@@ -129,7 +121,7 @@ const Index = () => {
                   >
                     <Link to="/tutor">
                       <Sparkles className="h-4 w-4" />
-                      {t('AI 答疑')}
+                      AI 答疑
                     </Link>
                   </Button>
                   <Button
@@ -140,7 +132,7 @@ const Index = () => {
                   >
                     <Link to="/knowledge">
                       <BookOpen className="h-4 w-4" />
-                      {t('知识检索')}
+                      知识检索
                     </Link>
                   </Button>
                 </div>
@@ -152,7 +144,7 @@ const Index = () => {
               <div className="border border-hero-foreground/15 bg-hero-foreground/5 backdrop-blur-sm p-8">
                 <p className="flex items-center gap-2 text-sm font-medium text-hero-foreground/70 mb-6">
                   <Sigma className="h-4 w-4" />
-                  {t('精选公式 · ')}{t(meta.short)}
+                  精选公式 · {meta.short}
                 </p>
                 <div className="space-y-7">
                   {heroFormulas.map((f, i) => (
@@ -169,7 +161,7 @@ const Index = () => {
                   to="/formulas"
                   className="mt-7 flex items-center gap-1.5 text-sm text-hero-foreground/60 hover:text-hero-foreground transition-colors duration-[var(--duration-fast)]"
                 >
-                  {tpl('查看全部 {n} 条速查公式', { n: subjectFormulaCount })}
+                  查看全部 {subjectFormulaCount} 条速查公式
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
@@ -182,16 +174,16 @@ const Index = () => {
       <section className="border-b border-border bg-card">
         <div className="container py-14">
           <FadeIn>
-            <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('选择你的学科区')}</p>
-            <h2 className="font-serif text-3xl font-semibold">{t('数学区 还是 物理区？')}</h2>
+            <p className="text-sm font-semibold text-info tracking-wide mb-2">选择你的学科区</p>
+            <h2 className="font-serif text-3xl font-semibold">数学区 还是 物理区？</h2>
             <p className="mt-3 text-muted-foreground max-w-2xl leading-relaxed">
-              {t('平台分为数学与物理两大本科知识区，内容、课程、例题与公式互不干扰。点击进入后，全站导航与搜索都会聚焦到对应学科。')}
+              平台分为数学与物理两大本科知识区，内容、课程、例题与公式互不干扰。点击进入后，全站导航与搜索都会聚焦到对应学科。
             </p>
           </FadeIn>
           <Stagger className="mt-8 grid gap-5 md:grid-cols-2" stagger={0.1}>
             {(['math', 'physics'] as Subject[]).map((s) => {
               const m = SUBJECT_META[s];
-              const list = courses.filter((c) => subjectOf(c) === s);
+              const list = subjectCourses(s);
               const ids = new Set(list.map((c) => c.id));
               const tCount = topics.filter((t) => ids.has(t.courseId)).length;
               const Icon = s === 'math' ? Sigma : Atom;
@@ -208,13 +200,13 @@ const Index = () => {
                       <Icon className="h-7 w-7" />
                     </span>
                     <h3 className="font-serif text-2xl font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
-                      {t(m.name)}
+                      {m.name}
                     </h3>
                     <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                      {tpl('{blurb}。共 {n} 门课程、{k} 个知识专题。', { blurb: t(m.blurb), n: list.length, k: tCount })}
+                      {m.blurb}。共 {list.length} 门课程、{tCount} 个知识专题。
                     </p>
                     <div className="mt-5 flex items-center gap-1.5 text-sm text-info font-medium">
-                      {tpl('进入{name}', { name: t(m.name) })}
+                      进入{m.name}
                       <ArrowRight className="h-4 w-4 transition-transform duration-[var(--duration-fast)] group-hover:translate-x-1" />
                     </div>
                   </button>
@@ -233,9 +225,9 @@ const Index = () => {
               <FadeIn key={s.label} className="px-4 py-8 text-center first:pl-0 last:pr-0">
                 <p className="font-serif text-4xl font-semibold text-info">
                   {s.value}
-                  <span className="text-xl">{t(s.suffix)}</span>
+                  <span className="text-xl">{s.suffix}</span>
                 </p>
-                <p className="mt-1.5 text-sm text-muted-foreground">{t(s.label)}</p>
+                <p className="mt-1.5 text-sm text-muted-foreground">{s.label}</p>
               </FadeIn>
             ))}
           </Stagger>
@@ -247,14 +239,14 @@ const Index = () => {
         <FadeIn>
           <div className="flex items-end justify-between gap-4 mb-10">
             <div>
-              <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('课程体系 · ')}{t(meta.name)}</p>
-              <h2 className="font-serif text-3xl font-semibold">{t('按课程开始学习')}</h2>
+              <p className="text-sm font-semibold text-info tracking-wide mb-2">课程体系 · {meta.name}</p>
+              <h2 className="font-serif text-3xl font-semibold">按课程开始学习</h2>
             </div>
             <Link
               to="/courses"
               className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-[var(--duration-fast)]"
             >
-              {t('查看全部')} <ArrowRight className="h-4 w-4" />
+              查看全部 <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </FadeIn>
@@ -279,7 +271,7 @@ const Index = () => {
                     {course.description}
                   </p>
                   <div className="mt-5 flex items-center justify-between border-t border-border pt-4">
-                    <span className="text-xs text-muted-foreground">{topicCount} {t('个知识专题')}</span>
+                    <span className="text-xs text-muted-foreground">{topicCount} 个知识专题</span>
                     <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform duration-[var(--duration-fast)] group-hover:translate-x-1 group-hover:text-info" />
                   </div>
                 </Link>
@@ -295,13 +287,13 @@ const Index = () => {
           <FadeIn>
             <div className="flex items-end justify-between gap-4 mb-8">
               <div>
-                <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('学科版图 · ')}{t(meta.name)}</p>
+                <p className="text-sm font-semibold text-info tracking-wide mb-2">学科版图 · {meta.name}</p>
                 <h2 className="font-serif text-2xl font-semibold">
-                  {tpl('{n} 大方向 · {m} 门课程全貌', { n: subjectCategories(subject).length, m: subjectCourseList.length })}
+                  {subjectCategories(subject).length} 大方向 · {subjectCourseList.length} 门课程全貌
                 </h2>
               </div>
               <span className="hidden sm:block text-sm text-muted-foreground">
-                {tpl('共 {n} 个知识专题', { n: subjectTopicCount })}
+                共 {subjectTopicCount} 个知识专题
               </span>
             </div>
           </FadeIn>
@@ -317,11 +309,11 @@ const Index = () => {
                   >
                     <div className="flex items-center justify-between">
                       <h3 className="font-serif text-lg font-semibold group-hover:text-info transition-colors duration-[var(--duration-fast)]">
-                        {t(cat.name)}
+                        {cat.name}
                       </h3>
-                      <span className="text-xs text-muted-foreground">{topicCount} {t('个知识专题')}</span>
+                      <span className="text-xs text-muted-foreground">{topicCount} 专题</span>
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">{t(cat.description)}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{cat.description}</p>
                     <p className="mt-3 text-xs text-muted-foreground leading-relaxed line-clamp-2">
                       {catCourses.map((c) => c.name).join(' · ')}
                     </p>
@@ -339,14 +331,14 @@ const Index = () => {
           <FadeIn>
             <div className="flex items-end justify-between gap-4 mb-10">
               <div>
-              <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('知识专题 · ')}{t(meta.name)}</p>
-              <h2 className="font-serif text-3xl font-semibold">{t('热门知识专题')}</h2>
+              <p className="text-sm font-semibold text-info tracking-wide mb-2">知识专题 · {meta.name}</p>
+              <h2 className="font-serif text-3xl font-semibold">热门知识专题</h2>
               </div>
               <Link
                 to="/courses"
                 className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-[var(--duration-fast)]"
               >
-                {t('全部专题')} <ArrowRight className="h-4 w-4" />
+                全部专题 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </FadeIn>
@@ -387,7 +379,7 @@ const Index = () => {
               );
             })}
             {hotTopics.length === 0 && (
-              <p className="text-muted-foreground">{t('该学科内容正在建设中，敬请期待。')}</p>
+              <p className="text-muted-foreground">该学科内容正在建设中，敬请期待。</p>
             )}
           </Stagger>
         </div>
@@ -398,17 +390,17 @@ const Index = () => {
         <FadeIn>
           <div className="flex items-end justify-between gap-4 mb-10">
             <div>
-              <p className="text-sm font-semibold text-info tracking-wide mb-2">{t('例题精讲 · ')}{t(meta.name)}</p>
-              <h2 className="font-serif text-3xl font-semibold">{t('精选例题详解')}</h2>
+              <p className="text-sm font-semibold text-info tracking-wide mb-2">例题精讲 · {meta.name}</p>
+              <h2 className="font-serif text-3xl font-semibold">精选例题详解</h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                {t('每道题都提供分步提示与完整解答——先思考，再看答案')}
+                每道题都提供分步提示与完整解答——先思考，再看答案
               </p>
             </div>
             <Link
               to="/problems"
               className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-[var(--duration-fast)]"
             >
-              {t('例题广场')} <ArrowRight className="h-4 w-4" />
+              例题广场 <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </FadeIn>
@@ -426,7 +418,7 @@ const Index = () => {
                     <span className="text-xs font-medium text-info">{course?.name}</span>
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
                       <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                      {tpl('{n} 步详解', { n: problem.solution.length })}
+                      {problem.solution.length} 步详解
                     </span>
                   </div>
                   <h3 className="font-serif text-lg font-semibold leading-snug group-hover:text-info transition-colors duration-[var(--duration-fast)]">
@@ -448,7 +440,7 @@ const Index = () => {
             );
           })}
           {featuredProblems.length === 0 && (
-            <p className="text-muted-foreground">{t('该学科例题正在建设中，敬请期待。')}</p>
+            <p className="text-muted-foreground">该学科例题正在建设中，敬请期待。</p>
           )}
         </Stagger>
       </section>
@@ -457,24 +449,25 @@ const Index = () => {
       <section className="container pb-20">
         <FadeIn>
           <div className="border border-border bg-card px-8 py-12 lg:px-14 lg:py-16 text-center">
-            <h2 className="font-serif text-3xl font-semibold">{t('准备好攻克下一个知识点了吗？')}</h2>
+            <h2 className="font-serif text-3xl font-semibold">准备好攻克下一个知识点了吗？</h2>
             <p className="mt-3 text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              {tpl('从极限到泛函，从牛顿定律到量子力学——{n} 门课程、{k} 个专题系统学，知识点随时检索，公式速查随身带，还有 AI 助教为你答疑解惑。', { n: subjectCourseList.length, k: subjectTopicCount })}
+              从极限到泛函，从牛顿定律到量子力学——{subjectCourseList.length} 门课程、{subjectTopicCount} 个专题系统学，
+              知识点随时检索，公式速查随身带，还有 AI 助教为你答疑解惑。
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Button asChild className="bg-info text-info-foreground hover:bg-info/90 gap-2">
                 <Link to="/courses">
-                  {t('开始学习')} <ArrowRight className="h-4 w-4" />
+                  开始学习 <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild variant="outline" className="gap-2">
                 <Link to="/tutor">
                   <Sparkles className="h-4 w-4" />
-                  {t('AI 答疑')}
+                  AI 答疑
                 </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link to="/formulas">{t('公式速查表')}</Link>
+                <Link to="/formulas">公式速查表</Link>
               </Button>
             </div>
           </div>

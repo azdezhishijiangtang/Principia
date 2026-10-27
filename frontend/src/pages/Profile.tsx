@@ -4,21 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { FadeIn, Stagger, HoverLift } from '@/components/MotionPrimitives';
 import { useAuth, userContact } from '@/lib/AuthContext';
-import { useCourses, useProblems } from '@/i18n/data';
-import { useLocale, useT } from '@/i18n/LocaleContext';
+import { courses } from '@/data/courses';
+import { problems } from '@/data/problems';
+
+const quickLinks = [
+  { to: '/courses', icon: BookOpen, label: '课程总览', desc: `${courses.length} 门核心课程` },
+  { to: '/problems', icon: FileQuestion, label: '例题广场', desc: `${problems.length} 道详解例题` },
+  { to: '/formulas', icon: ListChecks, label: '公式速查表', desc: '按课程归类的常用公式' },
+];
 
 const Profile = () => {
-  const t = useT();
-  const { tpl, lang } = useLocale();
   const { user, signOut } = useAuth();
-  const courseList = useCourses();
-  const problemList = useProblems();
-
-  const quickLinks = [
-    { to: '/courses', icon: BookOpen, label: t('课程总览'), desc: tpl('{n} 门核心课程', { n: courseList.length }) },
-    { to: '/problems', icon: FileQuestion, label: t('例题广场'), desc: tpl('{n} 道详解例题', { n: problemList.length }) },
-    { to: '/formulas', icon: ListChecks, label: t('公式速查表'), desc: t('按课程归类的常用公式') },
-  ];
 
   // 未登录：渲染登录引导（不做重定向，避免登出过渡动画期间的路由冲突）
   if (!user) {
@@ -28,14 +24,14 @@ const Profile = () => {
           <span className="flex h-14 w-14 mx-auto items-center justify-center bg-info/10 text-info mb-6">
             <UserRound className="h-7 w-7" />
           </span>
-          <h1 className="font-serif text-2xl font-semibold">{t('还未登录')}</h1>
+          <h1 className="font-serif text-2xl font-semibold">还未登录</h1>
           <p className="mt-3 text-muted-foreground leading-relaxed">
-            {t('登录后即可查看个人中心。使用手机号注册的账号即可体验全部功能。')}
+            登录后即可查看个人中心。使用手机号注册的账号即可体验全部功能。
           </p>
           <Button asChild className="mt-7 gap-2 bg-info text-info-foreground hover:bg-info/90">
             <Link to="/login">
               <LogIn className="h-4 w-4" />
-              {t('去登录')}
+              去登录
             </Link>
           </Button>
         </FadeIn>
@@ -47,7 +43,7 @@ const Profile = () => {
   const loginAt = user.loginAt ? new Date(user.loginAt) : null;
   const loginDate =
     loginAt && !Number.isNaN(loginAt.getTime())
-      ? loginAt.toLocaleString(lang === 'en' ? 'en-US' : 'zh-CN', {
+      ? loginAt.toLocaleString('zh-CN', {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
@@ -77,7 +73,7 @@ const Profile = () => {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5" />
-                  {tpl('登录于 {date}', { date: loginDate })}
+                  登录于 {loginDate}
                 </span>
               </div>
             </div>
@@ -87,14 +83,14 @@ const Profile = () => {
               className="gap-2 text-muted-foreground hover:text-destructive hover:border-destructive/40"
             >
               <LogOut className="h-4 w-4" />
-              {t('退出登录')}
+              退出登录
             </Button>
           </div>
 
           <div className="px-6 py-5">
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {t('欢迎回来，')}<strong className="text-foreground">{user.name}</strong>
-              {t('！这里是你的个人中心。演示模式下，学习进度与收藏功能将在接入云端账号体系后开放。')}
+              欢迎回来，<strong className="text-foreground">{user.name}</strong>
+              ！这里是你的个人中心。演示模式下，学习进度与收藏功能将在接入云端账号体系后开放。
             </p>
           </div>
         </div>
@@ -102,7 +98,7 @@ const Profile = () => {
 
       {/* 学习入口 */}
       <FadeIn delay={0.1}>
-        <h2 className="font-serif text-xl font-semibold mt-12 mb-5">{t('继续学习')}</h2>
+        <h2 className="font-serif text-xl font-semibold mt-12 mb-5">继续学习</h2>
       </FadeIn>
       <Stagger className="grid gap-4 sm:grid-cols-3" stagger={0.08}>
         {quickLinks.map((link) => (
@@ -127,7 +123,7 @@ const Profile = () => {
       <FadeIn delay={0.2}>
         <div className="mt-12 flex items-center justify-center gap-2 text-xs text-muted-foreground">
           <Sigma className="h-3.5 w-3.5" />
-          {t('Principia · 手机号账号体系')}
+          Principia · 手机号账号体系
         </div>
       </FadeIn>
     </div>

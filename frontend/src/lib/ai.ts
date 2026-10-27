@@ -2,7 +2,6 @@
  * AI 答疑服务：OpenAI 兼容接口的配置管理与流式对话。
  * 用户的 API Key 仅保存在浏览器 localStorage，不会上传到任何服务器。
  */
-import { isEn } from '@/i18n/lang';
 
 /** AI 服务配置 */
 export interface AiConfig {
@@ -406,81 +405,41 @@ export const writeRagBoost = (on: boolean): void => {
 export const RAG_BOOST_TOPK = 8;
 
 /** 多路径：单路求解的系统提示词附加要求（鼓励独立、完整地给出解法） */
-export const MULTI_PATH_SOLVE_PROMPT = (): string =>
-  isEn()
-    ? `Solve the following problem independently and completely, giving key steps and the final conclusion. Reason carefully from your own approach; do not consult any other solution, and do not skip key steps.`
-    : `请独立、完整地解答下面的问题，给出关键步骤与最终结论。从你自己的思路出发认真推导，不必参考任何他人解法，也不要省略关键步骤。`;
+export const MULTI_PATH_SOLVE_PROMPT = `请独立、完整地解答下面的问题，给出关键步骤与最终结论。从你自己的思路出发认真推导，不必参考任何他人解法，也不要省略关键步骤。`;
 
 /** 多路径：仲裁合成的系统提示词附加要求 */
-export const MULTI_PATH_SYNTH_PROMPT = (): string =>
-  isEn()
-    ? `You are a rigorous answer arbitrator. Several independent solutions to the same problem are given below. Please:
-1) Verify each derivation and final result line by line;
-2) If the majority/all agree, give the consensus final answer and present the clearest derivation in full;
-3) If there is disagreement, judge which solution (or approach) is correct and explain where the others went wrong;
-4) Finally output exactly one correct, complete authoritative solution (with key steps). Do not list all original solutions, and do not repeat the problem.`
-    : `你是严谨的答卷仲裁者。下面给出了同一道题的多份独立解答。请：
+export const MULTI_PATH_SYNTH_PROMPT = `你是严谨的答卷仲裁者。下面给出了同一道题的多份独立解答。请：
 1) 逐份核对每一条推导与最终结果；
 2) 若多数/全部一致，给出共识的最终答案，并采用其中最清晰的一种推导完整呈现；
 3) 若存在分歧，判定哪个（或哪种思路）正确，并说明其余错在哪里；
 4) 最终只输出一份正确的、完整的权威解答（含关键步骤）。不要罗列全部原始解答，也不要复述原题。`;
 
 /** 双模型交叉验证：第二模型独立求解的系统提示词附加要求 */
-export const CROSS_CHECK_SOLVE_PROMPT = (): string =>
-  isEn()
-    ? `Solve the following problem independently and completely, giving key steps and the final conclusion. Do not consult any existing solution; rely on your own reasoning, and do not skip key steps.`
-    : `请独立、完整地解答下面的问题，给出关键步骤与最终结论。不要参考任何已有解答，凭你自己的推理完成，也不要省略关键步骤。`;
+export const CROSS_CHECK_SOLVE_PROMPT = `请独立、完整地解答下面的问题，给出关键步骤与最终结论。不要参考任何已有解答，凭你自己的推理完成，也不要省略关键步骤。`;
 
 /** 双模型交叉验证：比对仲裁的系统提示词附加要求 */
-export const CROSS_CHECK_VERIFY_PROMPT = (): string =>
-  isEn()
-    ? `You are a rigorous cross-validation arbitrator. Two independent solutions to the same problem are given below (from different models). Please:
-1) Verify the derivations and final results of each;
-2) If they agree, confirm the conclusion and give the clearest complete derivation;
-3) If they disagree, judge which is correct (or which approach is right) and explain where the other went wrong, providing your own correct derivation if needed;
-4) Finally output one correct, complete authoritative solution, and begin with one or two sentences stating whether the two agree and which one is taken as the basis.`
-    : `你是严谨的交叉验证仲裁者。下面给出同一道题的两份独立解答（分别来自不同模型）。请：
+export const CROSS_CHECK_VERIFY_PROMPT = `你是严谨的交叉验证仲裁者。下面给出同一道题的两份独立解答（分别来自不同模型）。请：
 1) 逐份核对推导与最终结果；
 2) 若两份一致，确认结论并给出最清晰的完整推导；
 3) 若不一致，判定哪一份（或哪种思路）正确，并说明另一份错在哪里，必要时给出你自己的正确推导；
 4) 最终输出一份正确的、完整的权威解答，并在开头用一两句话说明两份解答是否一致、以谁为准。`;
 
 /** 智能自检的复核指令：追加在「问题 + 原回答」之后，要求模型批判性复核 */
-export const SELF_CHECK_PROMPT = (): string =>
-  isEn()
-    ? `You are a rigorous answer reviewer. Based on the student's original problem, critically review the teaching assistant's answer above:
-1) Check for computational or derivation errors, miscopied symbols/constants, or jumps that invalidate the conclusion;
-2) Look for logical gaps, unverified hidden assumptions, or conclusions whose scope is wrongly widened/narrowed;
-3) Note any clearly faster or safer method.
-If you find errors, directly give the corrected complete solution (with key steps); if it is overall correct, confirm in 2-3 sentences and point out the most error-prone spot. Do not repeat the problem or the already-correct parts.`
-    : `你是严谨的答卷复核员。请基于学生的原始问题，批判性审查上面助教的回答：
+export const SELF_CHECK_PROMPT = `你是严谨的答卷复核员。请基于学生的原始问题，批判性审查上面助教的回答：
 1) 计算或推导是否有误、符号/常数是否抄错、跳步是否导致结论不成立；
 2) 是否存在逻辑漏洞、未被验证的隐含假设、或结论范围被错误扩大/缩小；
 3) 是否有明显更快或更稳妥的解法。
 若发现错误，直接给出修正后的完整正确解答（含关键步骤）；若整体无误，只用 2-3 句话简要确认并指出最易出错的地方。不要重复原题与已有且正确的部分。`;
 
 /** 联动模式：由独立第二模型对多路径解答做仲裁的系统提示词附加要求 */
-export const LINK_SYNTH_PROMPT = (): string =>
-  isEn()
-    ? `You are an independent, rigorous third-party arbitrator (different from the model that produced these solutions). Several independent solutions to the same problem are given below. Please:
-1) Verify each derivation and final result, identifying common conclusions and disagreements;
-2) Judge independently based on mathematical/physical correctness, selecting (or synthesizing) the most reliable answer rather than following the majority blindly;
-3) If there is disagreement, clearly state which solution (or approach) is correct and where the others went wrong;
-4) Finally output exactly one complete authoritative solution (with key steps), and begin with one or two sentences stating which solution (or approach) you take as the basis and whether it matches the majority. Do not list all original solutions, and do not repeat the problem.`
-    : `你是独立、严谨的第三方仲裁者（不同于生成这些解答的模型）。下面给出同一道题的多份独立解答。请：
+export const LINK_SYNTH_PROMPT = `你是独立、严谨的第三方仲裁者（不同于生成这些解答的模型）。下面给出同一道题的多份独立解答。请：
 1) 逐份核对推导与最终结果，识别共性结论与分歧点；
 2) 基于数学/物理正确性独立判断，选出（或综合出）最可靠的答案，不要盲从多数；
 3) 若存在分歧，明确指出哪一份（或哪种思路）正确、其余错在哪里；
 4) 最终只输出一份完整的权威解答（含关键步骤），并在开头用一两句话说明你以哪份（或哪种思路）为准、是否与多数一致。不要罗列全部原始解答，也不要复述原题。`;
 
 /** RAG 难题专精：加强检索后的强约束作答要求（追加到资料上下文之后） */
-export const RAG_BOOST_PROMPT = (): string =>
-  isEn()
-    ? `Note: this is a hard problem. Make full use of the retrieved material above:
-- For key derivations and conclusions, give the source from the material and cite it item by item (e.g. "According to <XX>, paragraph N…");
-- If multiple sources conflict or are inconsistent, point it out and choose the better one, explaining why with your knowledge if needed;
-- Steps not covered by the material may be supplemented with your knowledge, but clearly distinguish "from the material" from "your supplement".`
-    : `注意：这是一道较难的题，请【充分利用】上面检索到的资料作答：
+export const RAG_BOOST_PROMPT = `注意：这是一道较难的题，请【充分利用】上面检索到的资料作答：
 - 对关键推导与结论务必给出资料依据，并逐条注明出处（如"根据《XX》第 N 段…"）；
 - 若多份资料之间有冲突或表述不一致，明确指出并择优采用，必要时结合你的知识说明原因；
 - 资料未覆盖的步骤可用你的知识补充，但必须清晰区分"来自资料"与"你的补充"。`;
@@ -552,18 +511,8 @@ export interface ChatMessage {
   content: string;
 }
 
-/** 数学助教的系统提示词（按语言返回） */
-export const MATH_TUTOR_SYSTEM_PROMPT = (): string =>
-  isEn()
-    ? `You are the undergraduate mathematics and physics teaching assistant of Principia, serving math and physics majors as well as graduate-entrance-exam students.
-
-Answering guidelines:
-1. Write in English with the patience of a teaching assistant: give the intuition first, then a step-by-step derivation, and finally highlight the key point.
-2. Always use LaTeX for formulas: inline math with $...$ (e.g. $f'(x)$), and display math on its own line with $$...$$. Backslashes and braces must follow standard LaTeX.
-3. When citing a theorem, give its name and conditions of applicability; analyze the problem type before choosing a method.
-4. If the problem is under-specified or you are unsure, say so explicitly. Never fabricate theorems or data.
-5. Keep answers to the necessary length: explain concepts thoroughly, show key steps fully for computations, and avoid filler.`
-    : `你是 Principia 的本科数学与物理助教，服务对象是数学、物理专业本科生与考研学生。
+/** 数学助教的系统提示词 */
+export const MATH_TUTOR_SYSTEM_PROMPT = `你是 Principia 的本科数学与物理助教，服务对象是数学、物理专业本科生与考研学生。
 
 回答规范：
 1. 使用简体中文，语气像耐心的助教：先给直观思路，再分步推导，最后点明关键。
@@ -572,42 +521,29 @@ Answering guidelines:
 4. 如果题目条件不足或你有不确定的地方，明确说明，绝不编造定理或数据。
 5. 回答控制在必要长度：概念问题讲透为止，计算问题完整呈现关键步骤，不要堆砌废话。`;
 
-/** 把网络/接口错误翻译成用户看得懂的提示（按语言） */
+/** 把网络/接口错误翻译成用户看得懂的中文提示 */
 export const describeAiError = (err: unknown): string => {
-  const en = isEn();
   if (err instanceof DOMException && err.name === 'AbortError') {
-    return en ? 'Generation stopped.' : '已停止生成。';
+    return '已停止生成。';
   }
   const msg = err instanceof Error ? err.message : String(err);
   if (/failed to fetch|networkerror|load failed/i.test(msg)) {
-    return en
-      ? 'Network request failed: the network may be down, or the provider may block browser cross-origin requests (CORS). Try another provider or check your proxy settings.'
-      : '网络请求失败：可能是网络不通，或该服务商不允许浏览器跨域直连（CORS）。可尝试更换服务商，或检查网络代理设置。';
+    return '网络请求失败：可能是网络不通，或该服务商不允许浏览器跨域直连（CORS）。可尝试更换服务商，或检查网络代理设置。';
   }
   if (/401|invalid.*api key|unauthorized/i.test(msg)) {
-    return en
-      ? 'API Key is invalid or expired (401). Check that the key is correct and the account is not out of credit.'
-      : 'API Key 无效或已过期（401），请检查密钥是否正确、账户是否欠费。';
+    return 'API Key 无效或已过期（401），请检查密钥是否正确、账户是否欠费。';
   }
   if (/403|forbidden/i.test(msg)) {
-    return en
-      ? 'Access denied (403): the key may lack permission for this model, or the provider\'s access limit was triggered.'
-      : '访问被拒绝（403）：密钥可能没有该模型的权限，或触发了服务商的访问限制。';
+    return '访问被拒绝（403）：密钥可能没有该模型的权限，或触发了服务商的访问限制。';
   }
   if (/429|rate limit/i.test(msg)) {
-    return en
-      ? 'Too many requests (429): you have been rate-limited by the provider. Please wait a moment and try again.'
-      : '请求过于频繁（429），已被服务商限流。请稍等片刻再试。';
+    return '请求过于频繁（429），已被服务商限流。请稍等片刻再试。';
   }
   if (/404|model.*not/i.test(msg)) {
-    return en
-      ? 'Endpoint or model not found (404): check that the base URL and model name match (model names differ across providers).'
-      : '接口或模型不存在（404）：请检查接口地址与模型名是否匹配（不同服务商的模型名不同）。';
+    return '接口或模型不存在（404）：请检查接口地址与模型名是否匹配（不同服务商的模型名不同）。';
   }
   if (/500|502|503/i.test(msg)) {
-    return en
-      ? 'Provider internal error (5xx): possibly a temporary outage. Retry later or switch provider.'
-      : '服务商内部错误（5xx），可能是临时故障，稍后重试或更换服务商。';
+    return '服务商内部错误（5xx），可能是临时故障，稍后重试或更换服务商。';
   }
   return msg;
 };

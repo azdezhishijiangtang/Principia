@@ -2,21 +2,19 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BookOpen, FileQuestion, List } from 'lucide-react';
 import { FadeIn, Stagger, HoverLift } from '@/components/MotionPrimitives';
+import { courses } from '@/data/courses';
+import { topics } from '@/data/topics';
 import { InlineMathText } from '@/components/MathText';
-import { useT } from '@/i18n/LocaleContext';
-import { useCourse, useTopics, useProblems } from '@/i18n/data';
+import { problems } from '@/data/problems';
 import NotFound from './NotFound';
 
 const CourseDetail = () => {
-  const t = useT();
   const { courseId } = useParams<{ courseId: string }>();
-  const course = useCourse(courseId);
-  const topics = useTopics();
-  const problems = useProblems();
+  const course = courses.find((c) => c.id === courseId);
 
   const courseTopics = useMemo(
     () => (course ? topics.filter((t) => t.courseId === course.id) : []),
-    [course, topics],
+    [course],
   );
 
   const chapters = useMemo(() => {
@@ -42,7 +40,7 @@ const CourseDetail = () => {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors duration-[var(--duration-fast)] mb-8"
         >
           <ArrowLeft className="h-4 w-4" />
-          {t('返回课程列表')}
+          返回课程列表
         </Link>
       </FadeIn>
 
@@ -60,9 +58,9 @@ const CourseDetail = () => {
               </span>
               <span>{course.semester}</span>
               <span className="text-border">|</span>
-              <span>{courseTopics.length} {t('个知识专题')}</span>
+              <span>{courseTopics.length} 个知识专题</span>
               <span className="text-border">|</span>
-              <span>{problemCount} {t('道例题')}</span>
+              <span>{problemCount} 道例题</span>
             </div>
             <p className="mt-5 text-muted-foreground leading-relaxed max-w-2xl">
               {course.description}
@@ -101,12 +99,12 @@ const CourseDetail = () => {
                             <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <BookOpen className="h-3.5 w-3.5" />
-                                {topic.keyPoints.length} {t('个要点')}
+                                {topic.keyPoints.length} 个要点
                               </span>
                               {topicProblems.length > 0 && (
                                 <span className="flex items-center gap-1">
                                   <FileQuestion className="h-3.5 w-3.5" />
-                                  {topicProblems.length} {t('道例题')}
+                                  {topicProblems.length} 道例题
                                 </span>
                               )}
                             </div>
@@ -125,7 +123,7 @@ const CourseDetail = () => {
         <aside className="lg:col-span-4">
           <div className="sticky top-24 border border-border bg-card">
             <div className="border-b border-border px-5 py-4">
-              <h2 className="font-serif text-base font-semibold">{t('章节目录')}</h2>
+              <h2 className="font-serif text-base font-semibold">章节目录</h2>
             </div>
             <nav className="p-3">
               {chapters.map(([chapter, chapterTopics]) => (
@@ -150,7 +148,7 @@ const CourseDetail = () => {
                 to="/problems"
                 className="flex items-center justify-between text-sm text-info font-medium hover:underline"
               >
-                {t('浏览全部例题')}
+                浏览全部例题
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

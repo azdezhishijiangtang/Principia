@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useT } from '@/i18n/LocaleContext';
 import { KeyRound, Check, Eye, EyeOff, AlertCircle, Save, Trash2, Zap, Sparkles, RefreshCw, ListTree, CloudDownload, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -32,7 +31,6 @@ import {
   writeLink,
   readRagBoost,
   writeRagBoost,
-  type ThinkingMode,
 } from '@/lib/ai';
 import {
   getCatalog,
@@ -62,7 +60,6 @@ const emptyForm = (): AiProfile => ({
  * 可随时切换当前生效的存档。API Key 只写入浏览器 localStorage。
  */
 const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
-  const t = useT();
   const [profiles, setProfiles] = useState<(AiProfile | null)[]>(() => readAiProfiles());
   const [active, setActive] = useState<number>(() => getActiveProfile());
   const [slot, setSlot] = useState<number>(() => getActiveProfile());
@@ -95,13 +92,6 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const [ragBoost, setRagBoost] = useState<boolean>(() => readRagBoost());
   /** 当前生效的思考偏好（兼容旧存档里只存了 reasoningEffort 的情况） */
   const mode = thinkingModePref(form);
-  /** 思考强度帮助文案（按语言） */
-  const THINKING_HELP: Record<ThinkingMode, string> = {
-    off: t('不启用额外推理，直接给出结论和关键步骤。'),
-    low: t('少量推理，适合概念理解与简单练习。'),
-    medium: t('平衡推理深度与响应速度，适合日常解题。'),
-    high: t('分配更多推理预算，适合复杂计算、证明与综合题。'),
-  };
 
   useEffect(() => {
     setSaved(false);
@@ -217,16 +207,16 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
     <div className={compact ? 'space-y-4' : 'border border-border bg-card p-6 space-y-5'}>
       <div className="flex items-center gap-2">
         <KeyRound className="h-4 w-4 text-info" />
-        <h3 className="font-serif text-base font-semibold">{t('API 密钥设置')}</h3>
+        <h3 className="font-serif text-base font-semibold">API 密钥设置</h3>
         <span className="ml-auto text-xs text-muted-foreground">
-          {t('三套存档 · 当前生效：')}
-          <span className="text-success font-medium">{t(AI_PROFILE_LABELS[active])}</span>
+          三套存档 · 当前生效：
+          <span className="text-success font-medium">{AI_PROFILE_LABELS[active]}</span>
         </span>
       </div>
 
       {/* 三个存档切换 */}
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">{t('接口存档（三套独立配置，互不覆盖）')}</Label>
+        <Label className="text-xs text-muted-foreground">接口存档（三套独立配置，互不覆盖）</Label>
         <div className="grid grid-cols-3 gap-1.5">
           {Array.from({ length: AI_PROFILE_COUNT }, (_, i) => {
             const p = profiles[i];
@@ -244,15 +234,15 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
                 }`}
               >
                 <span className="flex items-center gap-1 text-xs font-medium">
-                  {t(AI_PROFILE_LABELS[i])}
+                  {AI_PROFILE_LABELS[i]}
                   {isActive && (
                     <span className="text-[10px] px-1 bg-success/15 text-success border border-success/30">
-                      {t('使用中')}
+                      使用中
                     </span>
                   )}
                 </span>
                 <span className="text-[11px] text-muted-foreground truncate w-full">
-                  {p ? t(p.name || p.model) : t('未配置')}
+                  {p ? p.name || p.model : '未配置'}
                 </span>
               </button>
             );
@@ -261,29 +251,29 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
         {slot !== active && profiles[slot] && (
           <Button variant="outline" size="sm" onClick={() => handleUse(slot)} className="gap-1.5">
             <Zap className="h-3.5 w-3.5" />
-            {t('启用') + t(AI_PROFILE_LABELS[slot])}
+            启用{AI_PROFILE_LABELS[slot]}
           </Button>
         )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="ai-name">{t('存档备注名（选填）')}</Label>
+        <Label htmlFor="ai-name">存档备注名（选填）</Label>
         <Input
           id="ai-name"
           value={form.name ?? ''}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-          placeholder={t('例如：DeepSeek 主力 / 备用 Key')}
+          placeholder="例如：DeepSeek 主力 / 备用 Key"
           className="text-sm"
         />
       </div>
 
       {/* 服务商预设 */}
       <div className="space-y-2">
-        <Label className="text-xs text-muted-foreground">{t('快速选择服务商')}</Label>
+        <Label className="text-xs text-muted-foreground">快速选择服务商</Label>
         <div className="flex flex-wrap gap-1.5">
           {AI_PRESETS.map((p, i) => (
             <button
-              key={t(p.name)}
+              key={p.name}
               type="button"
               onClick={() => applyPreset(i)}
               title={p.hint}
@@ -293,7 +283,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
                   : 'border-border text-muted-foreground hover:border-info/50 hover:text-foreground'
               }`}
             >
-              {t(p.name)}
+              {p.name}
             </button>
           ))}
           {/* 其他：自定义任意 OpenAI 兼容接口地址 */}
@@ -307,13 +297,13 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
                 : 'border-border text-muted-foreground hover:border-info/50 hover:text-foreground'
             }`}
           >
-            {t('＋ 其他')}
+            ＋ 其他
           </button>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="ai-baseurl">{t('接口地址（Base URL）')}</Label>
+        <Label htmlFor="ai-baseurl">接口地址（Base URL）</Label>
         <Input
           id="ai-baseurl"
           ref={baseUrlRef}
@@ -324,14 +314,15 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
         />
         {form.baseUrl.trim() === '' && (
           <p className="text-[11px] leading-relaxed text-info">
-            {t('填入你的 OpenAI 兼容接口地址（如 OpenRouter、Ollama 本地、或任意第三方兼容网关），保存 API Key 后会')}<b>{t('自动检测可用模型')}</b>{t('；若服务商不支持自动检测，可手动填写模型名。')}
+            填入你的 OpenAI 兼容接口地址（如 OpenRouter、Ollama 本地、或任意第三方兼容网关），保存 API Key
+            后会<b>自动检测可用模型</b>；若服务商不支持自动检测，可手动填写模型名。
           </p>
         )}
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="ai-model">{t('模型名称')}</Label>
+          <Label htmlFor="ai-model">模型名称</Label>
           <button
             type="button"
             onClick={() => void loadModels(form.baseUrl, form.apiKey, { force: true })}
@@ -339,7 +330,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
             className="flex items-center gap-1 text-xs text-info hover:underline disabled:text-muted-foreground disabled:no-underline disabled:cursor-not-allowed"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loadingModels ? 'animate-spin' : ''}`} />
-            {loadingModels ? t('正在获取…') : t('刷新模型列表')}
+            {loadingModels ? '正在获取…' : '刷新模型列表'}
           </button>
         </div>
 
@@ -352,7 +343,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           >
             {/* 列表不含当前值时兜底保留，避免已保存配置被清空 */}
             {form.model && !catalog.models.includes(form.model) && (
-              <option value={form.model}>{form.model}{t('（当前）')}</option>
+              <option value={form.model}>{form.model}（当前）</option>
             )}
             {catalog.models.map((m) => (
               <option key={m} value={m}>
@@ -365,7 +356,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
             id="ai-model"
             value={form.model}
             onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
-            placeholder={'deepseek-flash' + t('（点击上方按钮可自动列出可用模型）')}
+            placeholder="deepseek-flash（点击上方按钮可自动列出可用模型）"
             className="font-mono text-sm"
           />
         )}
@@ -382,13 +373,13 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               {catalog.source === 'remote' ? (
                 <>
                   <CloudDownload className="h-3.5 w-3.5 shrink-0 text-success" />
-                  {t('服务商实时列表 · ')}{catalog.models.length}{t(' 个模型 · 更新于 ')}{describeCatalogAge(catalog.fetchedAt)}
-                  {catalog.stale && t('（已过期，建议刷新）')}
+                  服务商实时列表 · {catalog.models.length} 个模型 · 更新于 {describeCatalogAge(catalog.fetchedAt)}
+                  {catalog.stale && '（已过期，建议刷新）'}
                 </>
               ) : (
                 <>
                   <Database className="h-3.5 w-3.5 shrink-0 text-warning" />
-                  {t('内置参考列表 · ')}{catalog.models.length}{t(' 个模型（实时拉取失败，可手动输入）')}
+                  内置参考列表 · {catalog.models.length} 个模型（实时拉取失败，可手动输入）
                 </>
               )}
             </span>
@@ -396,18 +387,18 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
             <span className="text-muted-foreground flex items-center gap-1">
               <ListTree className="h-3.5 w-3.5 shrink-0" />
               {loadingModels
-                ? t('正在从服务商获取最新模型列表…')
-                : t('填入 Key 后自动列出该服务商的最新模型（随服务商更新）')}
+                ? '正在从服务商获取最新模型列表…'
+                : '填入 Key 后自动列出该服务商的最新模型（随服务商更新）'}
             </span>
           )}
           {catalog.models.length > 0 && !manualModel && (
             <button type="button" onClick={() => setManualModel(true)} className="text-muted-foreground hover:text-foreground underline">
-              {t('手动输入')}
+              手动输入
             </button>
           )}
           {catalog.models.length > 0 && manualModel && (
             <button type="button" onClick={() => setManualModel(false)} className="text-muted-foreground hover:text-foreground underline">
-              {t('返回列表选择')}
+              返回列表选择
             </button>
           )}
         </div>
@@ -417,8 +408,8 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           <p className="flex items-start gap-1.5 text-xs text-warning leading-relaxed">
             <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
             <span>
-              {t('模型 ')}<span className="font-mono">{form.model}</span>{t(' 已被服务商退役或更名，建议更换为 ')}
-              <span className="font-mono">{retiredModelHint(form.model)}</span>{t('。')}
+              模型 <span className="font-mono">{form.model}</span> 已被服务商退役或更名，建议更换为{' '}
+              <span className="font-mono">{retiredModelHint(form.model)}</span>。
             </span>
           </p>
         )}
@@ -426,8 +417,8 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="thinking-intensity">{t('思考强度')}</Label>
-          <span className="text-xs font-medium text-info">{t(THINKING_LABELS[mode])}</span>
+          <Label htmlFor="thinking-intensity">思考强度</Label>
+          <span className="text-xs font-medium text-info">{THINKING_LABELS[mode]}</span>
         </div>
         <div className="border border-input bg-muted/20 px-3 py-3 space-y-2">
           <input
@@ -437,7 +428,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
             max={3}
             step={1}
             value={THINKING_LEVELS.indexOf(mode)}
-            aria-valuetext={t(THINKING_LABELS[mode])}
+            aria-valuetext={THINKING_LABELS[mode]}
             aria-describedby="thinking-intensity-help"
             onChange={(e) => setForm((f) => ({ ...f, reasoningEffort: THINKING_LEVELS[Number(e.target.value)] }))}
             className="w-full cursor-pointer accent-[var(--info)]"
@@ -451,21 +442,21 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
                 onClick={() => setForm((f) => ({ ...f, reasoningEffort: level }))}
                 className={`min-h-8 min-w-8 rounded px-1 focus-visible:outline-2 focus-visible:outline-ring ${mode === level ? 'font-semibold text-info' : 'hover:text-foreground'}`}
               >
-                {t(THINKING_LABELS[level])}
+                {THINKING_LABELS[level]}
               </button>
             ))}
           </div>
           <p id="thinking-intensity-help" className="text-[11px] leading-relaxed text-muted-foreground">
-            {THINKING_HELP[mode]}
+            {{ off: '不启用额外推理，直接给出结论和关键步骤。', low: '少量推理，适合概念理解与简单练习。', medium: '平衡推理深度与响应速度，适合日常解题。', high: '分配更多推理预算，适合复杂计算、证明与综合题。' }[mode]}
           </p>
         </div>
         <p className="text-[11px] text-muted-foreground">
-          {t('保存后生效，系统不会自动改变档位。强度越高通常耗时、用量越多；实际支持程度取决于模型，仅支持开关的接口会将低/中/高均映射为开启。')}
+          保存后生效，系统不会自动改变档位。强度越高通常耗时、用量越多；实际支持程度取决于模型，仅支持开关的接口会将低/中/高均映射为开启。
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label>{t('模型选择')}</Label>
+        <Label>模型选择</Label>
         <button
           type="button"
           onClick={() => {
@@ -481,10 +472,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           <span>
             <span className="flex items-center gap-1.5 text-sm font-medium">
               <Sparkles className="h-3.5 w-3.5" />
-              {t('智能选模型（自动）')}
+              智能选模型（自动）
             </span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
-              {t('按题目难度在已配置存档中自动路由：简单题用便宜快的模型，难题用旗舰推理模型。')}
+              按题目难度在已配置存档中自动路由：简单题用便宜快的模型，难题用旗舰推理模型。
             </span>
           </span>
           <span
@@ -492,18 +483,18 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               autoModel ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
             }`}
           >
-            {autoModel ? t('已开启') : t('手动')}
+            {autoModel ? '已开启' : '手动'}
           </span>
         </button>
         {autoModel && (
           <p className="text-[11px] text-muted-foreground">
-            {t('需至少配置 2 个模型存档才会真正路由；当前仅 1 个或 0 个时仍使用当前激活存档。手动选择存档依然可用。')}
+            需至少配置 2 个模型存档才会真正路由；当前仅 1 个或 0 个时仍使用当前激活存档。手动选择存档依然可用。
           </p>
         )}
       </div>
 
       <div className="space-y-3 border-t border-border pt-4">
-        <Label className="text-xs text-muted-foreground">{t('智能增强（榨干算力）')}</Label>
+        <Label className="text-xs text-muted-foreground">智能增强（榨干算力）</Label>
 
         <button
           type="button"
@@ -520,10 +511,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           <span>
             <span className="flex items-center gap-1.5 text-sm font-medium">
               <Sparkles className="h-3.5 w-3.5" />
-              {t('智能自检（自动复核）')}
+              智能自检（自动复核）
             </span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
-              {t('回答生成后自动再让模型复核一遍：揪出计算/逻辑错误、跳步或更优解，把额外算力花在「纠错题」上。')}
+              回答生成后自动再让模型复核一遍：揪出计算/逻辑错误、跳步或更优解，把额外算力花在「纠错题」上。
             </span>
           </span>
           <span
@@ -531,7 +522,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               selfCheck ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
             }`}
           >
-            {selfCheck ? t('已开启') : t('已关闭')}
+            {selfCheck ? '已开启' : '已关闭'}
           </span>
         </button>
 
@@ -550,10 +541,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           <span>
             <span className="flex items-center gap-1.5 text-sm font-medium">
               <Sparkles className="h-3.5 w-3.5" />
-              {t('智能容错（失败自动切换）')}
+              智能容错（失败自动切换）
             </span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
-              {t('当前模型彻底失败时，自动用下一个已配置存档的模型重试，最大化「一定能拿到答案」的概率。')}
+              当前模型彻底失败时，自动用下一个已配置存档的模型重试，最大化「一定能拿到答案」的概率。
             </span>
           </span>
           <span
@@ -561,7 +552,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               fallback ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
             }`}
           >
-            {fallback ? t('已开启') : t('已关闭')}
+            {fallback ? '已开启' : '已关闭'}
           </span>
         </button>
 
@@ -580,10 +571,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           <span>
             <span className="flex items-center gap-1.5 text-sm font-medium">
               <Sparkles className="h-3.5 w-3.5" />
-              {t('多路径自洽（Self-Consistency）')}
+              多路径自洽（Self-Consistency）
             </span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
-              {t('中高强度思考或难题时，并发生成多条独立思路，再由模型仲裁取最可靠答案——数学题正确率提升最明显。')}
+              中高强度思考或难题时，并发生成多条独立思路，再由模型仲裁取最可靠答案——数学题正确率提升最明显。
             </span>
           </span>
           <span
@@ -591,13 +582,13 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               multiPath ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
             }`}
           >
-            {multiPath ? t('已开启') : t('已关闭')}
+            {multiPath ? '已开启' : '已关闭'}
           </span>
         </button>
 
         {multiPath && (
           <div className="ml-1 flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground">{t('并发路数')}</span>
+            <span className="text-[11px] text-muted-foreground">并发路数</span>
             <div className="flex gap-1">
               {[2, 3, 4].map((n) => (
                 <button
@@ -614,16 +605,16 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
                       : 'border-input text-muted-foreground hover:border-info/50'
                   }`}
                 >
-                  {n}{t(' 路')}
+                  {n} 路
                 </button>
               ))}
             </div>
-            <span className="text-[11px] text-warning">{t('约 ')}{multiPathCount}{t('× 算力')}</span>
+            <span className="text-[11px] text-warning">约 {multiPathCount}× 算力</span>
           </div>
         )}
         {multiPath && (
           <p className="text-[11px] text-muted-foreground">
-            {t('仅在中高强度思考或识别为难题（证明/计算/推导等）时生效；关闭或低强度且为简单题时自动跳过，不额外消耗算力。')}
+            仅在中高强度思考或识别为难题（证明/计算/推导等）时生效；关闭或低强度且为简单题时自动跳过，不额外消耗算力。
           </p>
         )}
 
@@ -642,10 +633,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           <span>
             <span className="flex items-center gap-1.5 text-sm font-medium">
               <Sparkles className="h-3.5 w-3.5" />
-              {t('极致模式 · 双模型交叉验证')}
+              极致模式 · 双模型交叉验证
             </span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
-              {t('用第二个已配置模型独立重做同一题，再交叉比对、标注分歧，把「单一模型唯一答案」的偶然错误风险降到最低。')}
+              用第二个已配置模型独立重做同一题，再交叉比对、标注分歧，把「单一模型唯一答案」的偶然错误风险降到最低。
             </span>
           </span>
           <span
@@ -653,12 +644,12 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               crossCheck ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
             }`}
           >
-            {crossCheck ? t('已开启') : t('已关闭')}
+            {crossCheck ? '已开启' : '已关闭'}
           </span>
         </button>
         {crossCheck && (
           <p className="text-[11px] text-muted-foreground">
-            {t('需至少配置 2 个模型存档才会真正启用；否则自动跳过。开启后单题算力约 2–3 倍。')}
+            需至少配置 2 个模型存档才会真正启用；否则自动跳过。开启后单题算力约 2–3 倍。
           </p>
         )}
 
@@ -677,10 +668,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           <span>
             <span className="flex items-center gap-1.5 text-sm font-medium">
               <Sparkles className="h-3.5 w-3.5" />
-              {t('多路径 + 交叉验证联动')}
+              多路径 + 交叉验证联动
             </span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
-              {t('多路径生成的多份解答，改由【第二个已配置模型】独立仲裁（而非主模型自己合成）：兼得多路采样的多样性与第三方公正性。')}
+              多路径生成的多份解答，改由【第二个已配置模型】独立仲裁（而非主模型自己合成）：兼得多路采样的多样性与第三方公正性。
             </span>
           </span>
           <span
@@ -688,12 +679,12 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               link ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
             }`}
           >
-            {link ? t('已开启') : t('已关闭')}
+            {link ? '已开启' : '已关闭'}
           </span>
         </button>
         {link && (
           <p className="text-[11px] text-muted-foreground">
-            {t('需同时开启「多路径自洽」且至少 2 个已配置存档才会真正生效；否则自动回退为普通多路径合成。')}
+            需同时开启「多路径自洽」且至少 2 个已配置存档才会真正生效；否则自动回退为普通多路径合成。
           </p>
         )}
 
@@ -712,10 +703,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           <span>
             <span className="flex items-center gap-1.5 text-sm font-medium">
               <Sparkles className="h-3.5 w-3.5" />
-              {t('RAG 检索增强 · 难题专精')}
+              RAG 检索增强 · 难题专精
             </span>
             <span className="mt-0.5 block text-xs text-muted-foreground">
-              {t('中高强度思考或难题时，额外加强文档检索（召回更多相关段落）并强制依据资料作答、逐条注明出处，把权威资料用足。')}
+              中高强度思考或难题时，额外加强文档检索（召回更多相关段落）并强制依据资料作答、逐条注明出处，把权威资料用足。
             </span>
           </span>
           <span
@@ -723,12 +714,12 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
               ragBoost ? 'bg-info text-info-foreground' : 'bg-muted text-muted-foreground'
             }`}
           >
-            {ragBoost ? t('已开启') : t('已关闭')}
+            {ragBoost ? '已开启' : '已关闭'}
           </span>
         </button>
         {ragBoost && (
           <p className="text-[11px] text-muted-foreground">
-            {t('仅在中高强度思考或识别为难题时生效（检索召回 4 → 8 段）；关闭或低强度且为简单题时自动跳过，不额外消耗 token。')}
+            仅在中高强度思考或识别为难题时生效（检索召回 4 → 8 段）；关闭或低强度且为简单题时自动跳过，不额外消耗 token。
           </p>
         )}
       </div>
@@ -748,7 +739,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
             type="button"
             onClick={() => setShowKey((v) => !v)}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-            aria-label={showKey ? t('隐藏密钥') : t('显示密钥')}
+            aria-label={showKey ? '隐藏密钥' : '显示密钥'}
           >
             {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
@@ -758,7 +749,8 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
       <div className="flex items-center gap-2 text-xs text-muted-foreground bg-secondary/60 px-3 py-2.5 leading-relaxed">
         <AlertCircle className="h-3.5 w-3.5 shrink-0 mt-0.5 text-warning" />
         <span>
-          {t('三个存档各自独立保存（含接口地址、模型、思考模式与密钥），只存在你自己的浏览器 localStorage，不会上传到服务器；请求由浏览器直连你所选服务商。')}
+          三个存档各自独立保存（含接口地址、模型、思考模式与密钥），只存在你自己的浏览器
+          localStorage，不会上传到服务器；请求由浏览器直连你所选服务商。
         </span>
       </div>
 
@@ -769,18 +761,18 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
           className="bg-info text-info-foreground hover:bg-info/90 gap-1.5"
         >
           <Save className="h-4 w-4" />
-          {t('保存到') + t(AI_PROFILE_LABELS[slot]) + t('并启用')}
+          保存到{AI_PROFILE_LABELS[slot]}并启用
         </Button>
         {profiles[slot] && (
           <Button variant="outline" onClick={() => handleClear(slot)} className="gap-1.5">
             <Trash2 className="h-4 w-4" />
-            {t('清除该存档')}
+            清除该存档
           </Button>
         )}
         {saved && (
           <span className="self-center text-xs text-success flex items-center gap-1">
             <Check className="h-3.5 w-3.5" />
-            {t('已保存，可以开始提问了')}
+            已保存，可以开始提问了
           </span>
         )}
       </div>

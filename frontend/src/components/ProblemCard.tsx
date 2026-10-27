@@ -4,8 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { FadeIn, Stagger } from '@/components/MotionPrimitives';
 import MathText, { InlineMathText } from './MathText';
-import { useT } from '@/i18n/LocaleContext';
-import { tpl } from '@/i18n/translate';
 import type { Problem } from '@/types';
 
 const difficultyLabel: Record<number, { text: string; className: string }> = {
@@ -21,7 +19,6 @@ interface ProblemCardProps {
 }
 
 const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
-  const t = useT();
   const [hintsShown, setHintsShown] = useState(0);
   const [solutionOpen, setSolutionOpen] = useState(false);
   const [answerOpen, setAnswerOpen] = useState(false);
@@ -36,7 +33,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
       {/* 题头 */}
       <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 py-4 sm:px-6">
         <Badge variant="outline" className={`${diff.className} font-medium`}>
-          {t(diff.text)}
+          {diff.text}
         </Badge>
         <h3 className="font-serif text-base font-semibold flex-1 min-w-0"><InlineMathText escape text={problem.title} /></h3>
         {showTopicLink && (
@@ -49,7 +46,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
 
       {/* 题目 */}
       <div className="px-5 py-5 sm:px-6">
-        <p className="text-xs font-semibold text-muted-foreground mb-2 tracking-wide">{t('题目')}</p>
+        <p className="text-xs font-semibold text-muted-foreground mb-2 tracking-wide">题目</p>
         <MathText escape content={problem.question} className="text-[0.95rem]" />
 
         {/* 操作区 */}
@@ -65,12 +62,12 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
           >
             <Lightbulb className="h-3.5 w-3.5" />
             {problem.hints.length === 0
-              ? t('暂无提示')
+              ? '暂无提示'
               : hintsShown >= problem.hints.length
-                ? t('收起提示')
+                ? '收起提示'
                 : hintsShown === 0
-                  ? t('查看提示')
-                  : tpl('再看下一条（{a}/{b}）', { a: hintsShown, b: problem.hints.length })}
+                  ? '查看提示'
+                  : `再看下一条（${hintsShown}/${problem.hints.length}）`}
           </Button>
           <Button
             size="sm"
@@ -83,7 +80,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
             aria-controls={`solution-${problem.id}`}
           >
             <ListOrdered className="h-3.5 w-3.5" />
-            {solutionOpen ? t('收起完整解答') : t('查看完整解答')}
+            {solutionOpen ? '收起完整解答' : '查看完整解答'}
             {solutionOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </Button>
         </div>
@@ -91,18 +88,18 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
         {/* 分步提示（渐进揭示） */}
         {hintsShown > 0 && (
           <Stagger id={`hints-${problem.id}`} className="mt-4 border-l-2 border-warning/60 bg-warning/8 py-3 pl-4 pr-4" stagger={0.08}>
-            <p className="text-xs font-semibold text-warning mb-2">{t('思路提示')}</p>
+            <p className="text-xs font-semibold text-warning mb-2">思路提示</p>
             <ol className="space-y-2">
               {problem.hints.slice(0, hintsShown).map((hint, idx) => (
                 <FadeIn key={idx} className="text-sm text-foreground/90 leading-relaxed flex gap-2">
-                  <span className="font-mono text-xs text-warning shrink-0 mt-0.5">{t('提示 ')}{idx + 1}</span>
+                  <span className="font-mono text-xs text-warning shrink-0 mt-0.5">提示 {idx + 1}</span>
                   <MathText escape content={hint} className="flex-1 [&_p]:my-0" />
                 </FadeIn>
               ))}
             </ol>
             {hintsShown < problem.hints.length && (
               <p className="mt-2 text-xs text-muted-foreground">
-                {tpl('还有 {n} 条提示，先自己想一想', { n: problem.hints.length - hintsShown })}
+                还有 {problem.hints.length - hintsShown} 条提示，先自己想一想
               </p>
             )}
           </Stagger>
@@ -111,7 +108,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
         {/* 完整解答 */}
         {solutionOpen && (
           <div id={`solution-${problem.id}`} className="mt-5 border-t border-border pt-5">
-            <p className="text-xs font-semibold text-info mb-4 tracking-wide">{t('完整解答')}</p>
+            <p className="text-xs font-semibold text-info mb-4 tracking-wide">完整解答</p>
             <Stagger className="space-y-5" stagger={0.1}>
               {problem.solution.map((step, idx) => (
                 <FadeIn key={idx} className="relative pl-9">
@@ -130,7 +127,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
                 <FadeIn className="flex items-start gap-3 border border-success/40 bg-success/8 px-4 py-3.5">
                   <Check className="h-5 w-5 text-success shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-xs font-semibold text-success mb-1">{t('最终答案')}</p>
+                    <p className="text-xs font-semibold text-success mb-1">最终答案</p>
                     <MathText escape content={problem.answer} className="text-sm font-medium [&_p]:my-0" />
                   </div>
                 </FadeIn>
@@ -142,7 +139,7 @@ const ProblemCard = ({ problem, showTopicLink = true }: ProblemCardProps) => {
                   className="gap-1.5 border-success/40 text-success hover:bg-success/8 hover:text-success"
                 >
                   <Check className="h-3.5 w-3.5" />
-                  {t('显示最终答案')}
+                  显示最终答案
                 </Button>
               )}
             </div>

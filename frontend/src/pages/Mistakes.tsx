@@ -10,8 +10,7 @@ import { FadeIn } from '@/components/MotionPrimitives';
 import MathText from '@/components/MathText';
 import { useAuth } from '@/lib/AuthContext';
 import { useSubject } from '@/lib/SubjectContext';
-import { useCourses } from '@/i18n/data';
-import { useLocale, useT } from '@/i18n/LocaleContext';
+import { courses, subjectCourses } from '@/data/courses';
 import {
   MAX_MISTAKE_IMAGES,
   addMistake,
@@ -25,15 +24,9 @@ import {
 } from '@/lib/mistakeBook';
 
 const Mistakes = () => {
-  const t = useT();
-  const { tpl } = useLocale();
   const { user } = useAuth();
   const { subject } = useSubject();
-  const allCourses = useCourses();
-  const subjectCourseList = useMemo(
-    () => allCourses.filter((c) => (c.subject ?? 'math') === subject),
-    [allCourses, subject],
-  );
+  const subjectCourseList = subjectCourses(subject);
   const userId = user?.id ?? 'guest';
   const [activeCourse, setActiveCourse] = useState('all');
   // 订阅错题数据变更（本地写操作/跨标签页），counts 随数据实时刷新
@@ -59,14 +52,14 @@ const Mistakes = () => {
   useEffect(() => {
     if (subject === lastSubjectRef.current) return;
     lastSubjectRef.current = subject;
-    const firstCourseId = subjectCourseList[0]?.id ?? '';
+    const firstCourseId = subjectCourses(subject)[0]?.id ?? '';
     setActiveCourse(firstCourseId);
     setCourseId(firstCourseId);
   }, [subject]);
 
   const submit = () => {
     if (!title.trim() || !content.trim()) {
-      toast.error(t('请填写标题与题目内容'));
+      toast.error('请填写标题与题目内容');
       return;
     }
     const res = addMistake({
@@ -81,7 +74,7 @@ const Mistakes = () => {
       toast.error(res.error);
       return;
     }
-    toast.success(t('已加入错题本'));
+    toast.success('已加入错题本');
     setTitle('');
     setContent('');
     setImages([]);
@@ -96,7 +89,7 @@ const Mistakes = () => {
       try {
         next.push({ name: f.name, dataUrl: await readImageFile(f) });
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : t('图片读取失败'));
+        toast.error(err instanceof Error ? err.message : '图片读取失败');
       }
     }
     setImages(next);
@@ -107,11 +100,12 @@ const Mistakes = () => {
       <FadeIn>
         <p className="mb-2 flex items-center gap-2 text-sm font-semibold tracking-wide text-info">
           <BookX className="h-4 w-4" />
-          {t('错题本')}
+          错题本
         </p>
-        <h1 className="font-serif text-3xl font-semibold">{t('我的专属错题集')}</h1>
+        <h1 className="font-serif text-3xl font-semibold">我的专属错题集</h1>
         <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-          {t('每门课一个独立错题集：AI 专项练习可一键收录，也可以手动录入文字、代码或题目图片。掌握后可标记，随时回顾。')}
+          每门课一个独立错题集：AI 专项练习可一键收录，也可以手动录入文字、代码或题目图片。
+          掌握后可标记，随时回顾。
         </p>
       </FadeIn>
 
@@ -123,7 +117,7 @@ const Mistakes = () => {
           onClick={() => setActiveCourse('all')}
           className={activeCourse === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}
         >
-          {tpl('全部 {n}', { n: Object.values(counts).reduce((a, b) => a + b, 0) })}
+          全部 {Object.values(counts).reduce((a, b) => a + b, 0)}
         </Button>
         {courseOptions.map((c) => (
           <Button
@@ -138,7 +132,7 @@ const Mistakes = () => {
         ))}
         <Button size="sm" className="ml-auto gap-1.5 bg-info text-info-foreground hover:bg-info/90" onClick={() => setShowForm((v) => !v)}>
           {showForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-          {t('手动录入错题')}
+          手动录入错题
         </Button>
       </div>
 
@@ -147,7 +141,7 @@ const Mistakes = () => {
         <FadeIn className="mt-5 border border-border bg-card p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">{t('所属课程')}</Label>
+              <Label className="text-xs text-muted-foreground">所属课程</Label>
               <select
                 value={courseId}
                 onChange={(e) => setCourseId(e.target.value)}
@@ -159,19 +153,19 @@ const Mistakes = () => {
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">{t('标题 *')}</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder={t('如：中值定理证明题·构造函数失误')} />
+              <Label className="text-xs text-muted-foreground">标题 *</Label>
+              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="如：中值定理证明题·构造函数失误" />
             </div>
           </div>
           <div className="mt-4 space-y-1.5">
             <Label className="text-xs text-muted-foreground">
-              {t('题目与错因（支持 Markdown / LaTeX 公式 / ``` 代码块）*')}
+              题目与错因（支持 Markdown / LaTeX 公式 / ``` 代码块）*
             </Label>
             <Textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={6}
-              placeholder={t('题目：设 f 在 [0,1] 连续……\n\n我的错解：……\n\n错因：……\n\n```python\n# 代码版错题可粘贴代码\n```')}
+              placeholder={'题目：设 f 在 [0,1] 连续……\n\n我的错解：……\n\n错因：……\n\n```python\n# 代码版错题可粘贴代码\n```'}
             />
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -188,10 +182,10 @@ const Mistakes = () => {
             />
             <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => imgInputRef.current?.click()}>
               <ImagePlus className="h-4 w-4" />
-              {t('上传题目图片（≤1.5MB/张）')}
+              上传题目图片（≤1.5MB/张）
             </Button>
             <span className="text-xs text-muted-foreground">{images.length}/{MAX_MISTAKE_IMAGES}</span>
-            <Button className="ml-auto gap-1.5" onClick={submit}>{t('保存到错题本')}</Button>
+            <Button className="ml-auto gap-1.5" onClick={submit}>保存到错题本</Button>
           </div>
           {images.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -200,7 +194,7 @@ const Mistakes = () => {
                   <img src={im.dataUrl} alt={im.name} className="h-14 w-14 border border-border object-cover" />
                   <button
                     onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
-                    aria-label={tpl('移除图片 {name}', { name: im.name })}
+                    aria-label={`移除图片 ${im.name}`}
                     className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center bg-destructive text-destructive-foreground"
                   >
                     <X className="h-3 w-3" />
@@ -216,18 +210,18 @@ const Mistakes = () => {
       <div className="mt-8 space-y-5">
         {mistakes.length === 0 ? (
           <div className="border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
-            {t('这个集合还没有错题。去「学习档案」把 AI 练习题一键收录，或点右上角手动录入。')}
+            这个集合还没有错题。去「学习档案」把 AI 练习题一键收录，或点右上角手动录入。
           </div>
         ) : (
           mistakes.map((m) => {
-            const course = allCourses.find((c) => c.id === m.courseId);
+            const course = courses.find((c) => c.id === m.courseId);
             return (
               <FadeIn key={m.id}>
                 <div className={`border bg-card transition-opacity ${m.mastered ? 'border-success/30 opacity-75' : 'border-border'}`}>
                   <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3">
                     <div className="min-w-0">
                       <span className={`mr-2 border px-1.5 py-0.5 text-xs ${m.source === 'ai' ? 'border-info/40 bg-info/10 text-info' : 'border-border bg-secondary text-muted-foreground'}`}>
-                        {m.source === 'ai' ? t('AI 练习收录') : t('手动录入')}
+                        {m.source === 'ai' ? 'AI 练习收录' : '手动录入'}
                       </span>
                       <span className="text-xs text-muted-foreground">{course?.name ?? m.courseId} · {new Date(m.createdAt).toLocaleDateString('zh-CN')}</span>
                     </div>
@@ -238,7 +232,7 @@ const Mistakes = () => {
                         className={m.mastered ? 'gap-1.5 border-success/40 text-success' : 'gap-1.5'}
                         onClick={() => toggleMastered(m.id)}
                       >
-                        {m.mastered ? <><Check className="h-3.5 w-3.5" />{t('已掌握')}</> : <><RotateCcw className="h-3.5 w-3.5" />{t('标记掌握')}</>}
+                        {m.mastered ? <><Check className="h-3.5 w-3.5" />已掌握</> : <><RotateCcw className="h-3.5 w-3.5" />标记掌握</>}
                       </Button>
                       <Button
                         size="sm"
@@ -247,7 +241,7 @@ const Mistakes = () => {
                         onClick={() => deleteMistake(m.id)}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
-                        {t('删除')}
+                        删除
                       </Button>
                     </div>
                   </div>

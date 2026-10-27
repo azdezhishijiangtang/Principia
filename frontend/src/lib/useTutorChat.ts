@@ -41,8 +41,6 @@ import { addQaEntry, type QaSource } from '@/lib/qaHistory';
 import { retrieveChunks } from '@/lib/docLibrary';
 import { getTopic } from '@/data/topics';
 import { getCourse } from '@/data/courses';
-import { localizeTopic, localizeCourse } from '@/i18n/data';
-import { useLocale } from '@/i18n/LocaleContext';
 import type { Topic } from '@/types';
 
 export interface TutorMessage {
@@ -144,14 +142,13 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
   }, []);
   const abortRef = useRef<AbortController | null>(null);
 
-  const { lang } = useLocale();
   const topic: Topic | undefined = useMemo(
-    () => (topicId ? localizeTopic(getTopic(topicId)!) : undefined),
-    [topicId, lang],
+    () => (topicId ? getTopic(topicId) : undefined),
+    [topicId],
   );
   const course = useMemo(
-    () => (topic ? localizeCourse(getCourse(topic.courseId)!) : undefined),
-    [topic, lang],
+    () => (topic ? getCourse(topic.courseId) : undefined),
+    [topic],
   );
 
   useEffect(() => () => abortRef.current?.abort(), []);
@@ -184,7 +181,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       const intensive = effMode === 'medium' || effMode === 'high';
       const autoUsed = autoModelOn; // auto 仅表示本次由「智能选模型」自动挑了模型
       const modeGuidance = getModeGuidance(effMode);
-      const systemPrompt = `${MATH_TUTOR_SYSTEM_PROMPT()}\n\n${modeGuidance}`;
+      const systemPrompt = `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}`;
       const history: ChatMessage[] = [
         { role: 'system', content: systemPrompt },
       ];
@@ -225,7 +222,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
               .join('\n\n');
             const baseReq = `学生上传了学习资料。以下是与问题最相关的段落：\n\n${docContext}\n\n回答要求：优先依据上述资料作答并注明出处（如"根据《XX》…"）；资料未覆盖的内容用你的知识补充，并明确区分哪些来自资料、哪些是你的补充。若资料与问题无关，忽略资料直接回答。`;
             const boostReq = ragBoostOn && hardQ
-              ? `\n\n${RAG_BOOST_PROMPT()}`
+              ? `\n\n${RAG_BOOST_PROMPT}`
               : '';
             history.push({
               role: 'system',
@@ -356,7 +353,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       if (doMulti) {
         const K = readMultiPathCount();
         try {
-          const solveSystem = `${MATH_TUTOR_SYSTEM_PROMPT()}\n\n${modeGuidance}\n\n${MULTI_PATH_SOLVE_PROMPT()}`;
+          const solveSystem = `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${MULTI_PATH_SOLVE_PROMPT}`;
           const solveHistory: ChatMessage[] = [{ role: 'system', content: solveSystem }, ...history.slice(1)];
           const solves = await Promise.all(
             Array.from({ length: K }, async () => {
@@ -380,9 +377,9 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
               linkUsed = true;
               linkModelName = second.model;
             }
-            const synthPrompt = linkUsed ? LINK_SYNTH_PROMPT() : MULTI_PATH_SYNTH_PROMPT();
+            const synthPrompt = linkUsed ? LINK_SYNTH_PROMPT : MULTI_PATH_SYNTH_PROMPT;
             const synthHistory: ChatMessage[] = [
-              { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT()}\n\n${modeGuidance}\n\n${synthPrompt}` },
+              { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${synthPrompt}` },
               {
                 role: 'user',
                 content: `原始问题：\n${trimmed}\n\n以下是 ${got.length} 份独立解答：\n\n${got
@@ -463,14 +460,14 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
         if (second) {
           const secondCfg: AiConfig = { baseUrl: second.baseUrl, apiKey: second.apiKey, model: second.model, reasoningEffort: effMode };
           try {
-            const secondSystem = `${MATH_TUTOR_SYSTEM_PROMPT()}\n\n${modeGuidance}\n\n${CROSS_CHECK_SOLVE_PROMPT()}`;
+            const secondSystem = `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${CROSS_CHECK_SOLVE_PROMPT}`;
             const secondHistory: ChatMessage[] = [{ role: 'system', content: secondSystem }, ...history.slice(1)];
             const secondSolve = await chatOnce(secondCfg, secondHistory, controller.signal);
             if (secondSolve.trim()) {
               crossModel = second.model;
               crossCheck = secondSolve;
               const verifyHistory: ChatMessage[] = [
-                { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT()}\n\n${modeGuidance}\n\n${CROSS_CHECK_VERIFY_PROMPT()}` },
+                { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}\n\n${CROSS_CHECK_VERIFY_PROMPT}` },
                 {
                   role: 'user',
                   content: `原始问题：\n${trimmed}\n\n【模型A 解答】\n${acc}\n\n【模型B（${second.model}）解答】\n${secondSolve}`,
@@ -536,10 +533,10 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       if (readSelfCheck() && acc.trim()) {
         try {
           const checkHistory: ChatMessage[] = [
-            { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT()}\n\n${modeGuidance}` },
+            { role: 'system', content: `${MATH_TUTOR_SYSTEM_PROMPT}\n\n${modeGuidance}` },
             { role: 'user', content: trimmed },
             { role: 'assistant', content: acc },
-            { role: 'user', content: SELF_CHECK_PROMPT() },
+            { role: 'user', content: SELF_CHECK_PROMPT },
           ];
           let checkAcc = '';
           for await (const c of streamChat(usedCfg, checkHistory, controller.signal)) {
@@ -567,9 +564,6 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
         topicTitle: topic?.title,
         sources: sources.length > 0 ? sources : undefined,
         model: modelName ?? lastModel,
-        // 学习档案留存：token 消耗量与思考过程
-        usage: lastUsage,
-        ...(reasoningAcc.trim() ? { thinking: reasoningAcc } : {}),
       });
       setStreaming(false);
       setStatus('idle');

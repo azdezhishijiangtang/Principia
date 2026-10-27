@@ -15,7 +15,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth, userContact } from '@/lib/AuthContext';
 import { useTheme } from '@/lib/ThemeContext';
 import { useSubject } from '@/lib/SubjectContext';
-import { useLocale } from '@/i18n/LocaleContext';
 import { SUBJECT_META, type Subject } from '@/types';
 
 const navLinks = [
@@ -26,6 +25,7 @@ const navLinks = [
   { to: '/problems', label: '例题广场' },
   { to: '/formulas', label: '公式速查' },
   { to: '/mistakes', label: '错题本' },
+  { to: '/forum', label: '论坛' },
   { to: '/about', label: '关于' },
 ];
 
@@ -42,7 +42,6 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
   const { user, signOut } = useAuth();
   const { theme, toggle: toggleTheme, themeLabel } = useTheme();
   const { subject, setSubject } = useSubject();
-  const { lang, setLang, t } = useLocale();
 
   const isActive = (to: string) =>
     to === '/' ? location.pathname === '/' : location.pathname.startsWith(to);
@@ -89,7 +88,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
                 isActive(link.to) ? 'text-foreground' : 'text-muted-foreground'
               }`}
             >
-              {t(link.label)}
+              {link.label}
               {isActive(link.to) && (
                 <span className="block h-0.5 w-full bg-info mt-0.5" />
               )}
@@ -103,11 +102,11 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
             variant="outline"
             onClick={onOpenSearch}
             className="hidden sm:flex items-center gap-2 text-muted-foreground font-normal w-44 lg:w-56 justify-between"
-            aria-label={t('搜索知识点与例题')}
+            aria-label="搜索知识点与例题"
           >
             <span className="flex items-center gap-2">
               <Search className="h-4 w-4" />
-              <span className="text-sm">{t('搜索知识 / 例题')}</span>
+              <span className="text-sm">搜索知识 / 例题</span>
             </span>
             <kbd className="pointer-events-none hidden lg:inline-flex h-5 select-none items-center gap-0.5 border border-border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground">
               ⌘K
@@ -118,7 +117,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
             size="icon"
             onClick={onOpenSearch}
             className="sm:hidden"
-            aria-label={t('搜索')}
+            aria-label="搜索"
           >
             <Search className="h-5 w-5" />
           </Button>
@@ -129,7 +128,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
               <button
                 key={s}
                 onClick={() => setSubject(s)}
-                aria-label={t(`切换到${SUBJECT_META[s].name}`)}
+                aria-label={`切换到${SUBJECT_META[s].name}`}
                 aria-pressed={subject === s}
                 className={`px-2.5 py-1 text-xs font-medium rounded transition-colors duration-[var(--duration-fast)] ${
                   subject === s
@@ -137,30 +136,18 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                {t(SUBJECT_META[s].short)}
+                {SUBJECT_META[s].short}
               </button>
             ))}
           </div>
-
-          {/* 中 / EN 语言切换 */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLang(lang === 'en' ? 'zh' : 'en')}
-            className="hidden sm:inline-flex gap-1 px-2 font-medium"
-            aria-label={t('切换语言')}
-            title={t('切换语言')}
-          >
-            {lang === 'en' ? '中文' : 'EN'}
-          </Button>
 
           {/* 日光 / 月光模式切换 */}
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            aria-label={t(`切换到${theme === 'dark' ? '日光模式' : '月光模式'}`)}
-            title={t(themeLabel)}
+            aria-label={`切换到${theme === 'dark' ? '日光模式' : '月光模式'}`}
+            title={themeLabel}
           >
             {theme === 'dark' ? (
               <Sun className="h-5 w-5" />
@@ -177,7 +164,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
                   variant="ghost"
                   size="icon"
                   className="rounded-full"
-                  aria-label={`${t('用户菜单')}：${user.name}`}
+                  aria-label={`用户菜单：${user.name}`}
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.avatarUrl} alt={user.name} />
@@ -198,13 +185,13 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
                 <DropdownMenuItem asChild>
                   <Link to="/profile" className="cursor-pointer gap-2">
                     <User className="h-4 w-4" />
-                    {t('个人中心')}
+                    个人中心
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <Link to="/study" className="cursor-pointer gap-2">
                     <BookOpen className="h-4 w-4" />
-                    {t('学习档案')}
+                    学习档案
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -212,7 +199,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
                   className="cursor-pointer gap-2 text-destructive focus:text-destructive"
                 >
                   <LogOut className="h-4 w-4" />
-                  {t('退出登录')}
+                  退出登录
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -220,7 +207,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
             <Button asChild size="sm" className="gap-1.5 bg-info text-info-foreground hover:bg-info/90">
               <Link to="/login">
                 <LogIn className="h-4 w-4" />
-                <span className="hidden sm:inline">{t('登录')}</span>
+                <span className="hidden sm:inline">登录</span>
               </Link>
             </Button>
           )}
@@ -232,7 +219,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
             className="md:hidden"
             onClick={() => setMobileOpen((v) => !v)}
             ref={toggleRef}
-            aria-label={mobileOpen ? t('关闭菜单') : t('打开菜单')}
+            aria-label={mobileOpen ? '关闭菜单' : '打开菜单'}
             aria-expanded={mobileOpen}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -259,7 +246,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
                   isActive(link.to) ? 'text-info' : 'text-muted-foreground'
                 }`}
               >
-                {t(link.label)}
+                {link.label}
               </Link>
             ))}
             {user ? (
@@ -269,20 +256,20 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
                   onClick={() => setMobileOpen(false)}
                   className="py-3 text-sm font-medium border-b border-border text-muted-foreground"
                 >
-                  {t('学习档案')}
+                  学习档案
                 </Link>
                 <Link
                   to="/profile"
                   onClick={() => setMobileOpen(false)}
                   className="py-3 text-sm font-medium border-b border-border text-muted-foreground"
                 >
-                  {t('个人中心')}
+                  个人中心
                 </Link>
                 <button
                   onClick={handleSignOut}
                   className="py-3 text-sm font-medium text-left text-destructive"
                 >
-                  {t('退出登录')}
+                  退出登录
                 </button>
               </>
             ) : (
@@ -291,7 +278,7 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
                 onClick={() => setMobileOpen(false)}
                 className="py-3 text-sm font-medium text-info"
               >
-                {t('登录')}
+                登录
               </Link>
             )}
           </div>
