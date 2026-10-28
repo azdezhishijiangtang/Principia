@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { CheckCircle2, Clock3, Inbox, MessageSquarePlus, Send } from 'lucide-react';
+import { CheckCircle2, Clock3, Github, Inbox, Mail, MessageSquarePlus, Send } from 'lucide-react';
+
+/** 反馈直达通道配置：仓库（GitHub Issue 通道）与邮箱（留空则隐藏邮件按钮） */
+const PRINCIPIA_REPO = 'azdezhishijiangtang/Principia';
+const FEEDBACK_EMAIL = ''; // 例：'someone@example.com'——填上后反馈窗口会出现「邮件发送」按钮
 import {
   Dialog,
   DialogContent,
@@ -28,6 +32,8 @@ import {
   FEEDBACK_TYPE_LABELS,
   addFeedback,
   encodeFeedbackReport,
+  loadUnreported,
+  markAllReported,
   useUserFeedback,
   type FeedbackStatus,
   type FeedbackType,
@@ -190,20 +196,81 @@ const FeedbackDialog = ({ open, onOpenChange }: FeedbackDialogProps) => {
 
           {/* ── 我的反馈 ── */}
           <TabsContent value="mine" className="mt-5">
-            {/* 送达开发者：本站无服务器，反馈保存在本机，靠上报码人工送达 */}
-            <div className="mb-4 border border-border bg-muted/30 p-4">
+            {/* 送达开发者：GitHub Issue 直达（主）/ 邮件（可选）/ 上报码（兜底） */}
+            <div className="mb-4 border border-border bg-muted/30 p-4 space-y-3">
               <p className="flex items-center gap-2 text-sm font-medium">
                 <Send className="h-4 w-4 text-info" />
-                {t('把反馈送达开发者')}
+                {t('把反馈直达开发者')}
               </p>
-              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                {t('本站没有服务器，反馈只保存在你的浏览器里。点下面的按钮生成「上报码」并发给开发者（微信等均可），开发者导入后就能看到并在这里回复你。')}
-              </p>
-              <div className="mt-3 flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   size="sm"
-                  variant="outline"
                   className="gap-1.5"
+                  onClick={() => {
+                    const items = loadUnreported();
+                    if (items.length === 0) {
+                      toast.info(t('没有待发送的反馈（都已送达过）'));
+                      return;
+                    }
+                    const list = items
+                      .map(
+                        (e, i) =>
+                          `${i + 1}. 【${FEEDBACK_TYPE_LABELS[e.type]}】${e.title}\n${e.content}${e.contact ? `\n   ${t('联系方式：')}${e.contact}` : ''}`,
+                      )
+                      .join('\n\n');
+                    const title =
+                      items.length === 1
+                        ? `【${FEEDBACK_TYPE_LABELS[items[0].type]}】${items[0].title}`
+                        : `【用户反馈】${items.length} 条打包（${items[0].userName}）`;
+                    const body = `${list}\n\n——\n${t('来自：')}${items[0].userName} · ${items[0].pageUrl ?? '/'}\n（${t('此 Issue 由站内反馈窗口生成；Issue 公开可见，请勿填写敏感信息。')}）`;
+                    window.open(
+                      `https://github.com/${PRINCIPIA_REPO}/issues/new?title=${encodeURIComponent(title.slice(0, 120))}&body=${encodeURIComponent(body.slice(0, 4000))}`,
+                      '_blank',
+                    );
+                    markAllReported();
+                    toast.success(t('已打开 GitHub：登录后点 Submit new issue 即送达，开发者会立刻收到通知'));
+                  }}
+                >
+                  <Github className="h-3.5 w-3.5" />
+                  {t('GitHub 直达（推荐）')}
+                </Button>
+                {FEEDBACK_EMAIL && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    onClick={() => {
+                      const items = loadUnreported();
+                      if (items.length === 0) {
+                        toast.info(t('没有待发送的反馈（都已送达过）'));
+                        return;
+                      }
+                      const list = items
+                        .map(
+                          (e, i) =>
+                            `${i + 1}. 【${FEEDBACK_TYPE_LABELS[e.type]}】${e.title}\n${e.content}${e.contact ? `\n   ${t('联系方式：')}${e.contact}` : ''}`,
+                        )
+                        .join('\n\n');
+                      const subject =
+                        items.length === 1
+                          ? `【Principia 反馈】${items[0].title}`
+                          : `【Principia 反馈】${items.length} 条打包（${items[0].userName}）`;
+                      window.location.href = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(list)}`;
+                      markAllReported();
+                      toast.success(t('已唤起邮件客户端：发送即送达'));
+                    }}
+                  >
+                    <Mail className="h-3.5 w-3.5" />
+                    {t('邮件发送')}
+                  </Button>
+                )}
+              </div>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                {t('GitHub 通道会自动填好反馈内容，登录后一键提交，开发者即时收到通知（无需加微信）。')}
+                {!mine.some((e) => !e.reportedAt) && mine.length > 0 ? t('当前没有待发送的反馈。') : ''}
+                {t('没有 GitHub / 邮箱？')}
+                <button
+                  className="text-info hover:underline"
                   onClick={() => {
                     const r = encodeFeedbackReport();
                     if ('error' in r) {
@@ -216,15 +283,9 @@ const FeedbackDialog = ({ open, onOpenChange }: FeedbackDialogProps) => {
                     );
                   }}
                 >
-                  <Send className="h-3.5 w-3.5" />
-                  {t('生成上报码并复制')}
-                </Button>
-                {mine.some((e) => !e.reportedAt) && (
-                  <span className="text-xs text-muted-foreground">
-                    {tpl('{n} 条待上报', { n: mine.filter((e) => !e.reportedAt).length })}
-                  </span>
-                )}
-              </div>
+                  {t('生成上报码发给开发者')}
+                </button>
+              </p>
             </div>
             {mine.length === 0 ? (
               <div className="border border-dashed border-border py-14 text-center">

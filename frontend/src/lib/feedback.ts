@@ -245,3 +245,13 @@ export const importFeedbackReport = (incoming: FeedbackEntry[]): { added: number
 
 /** 本机待上报的反馈条数（供 UI 提示） */
 export const countUnreported = (): number => readAll().filter((e) => !e.reportedAt).length;
+
+/** 本机未上报的反馈（最新在前）——供 GitHub Issue / 邮件直发打包 */
+export const loadUnreported = (): FeedbackEntry[] =>
+  readAll()
+    .filter((e) => !e.reportedAt)
+    .sort((a, b) => b.createdAt - a.createdAt);
+
+/** 全部标记为已上报：GitHub Issue / 邮件直发成功后调用，避免重复打包 */
+export const markAllReported = (): WriteResult =>
+  writeAll(readAll().map((e) => (e.reportedAt ? e : { ...e, reportedAt: Date.now() })));
