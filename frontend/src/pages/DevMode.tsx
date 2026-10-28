@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import {
   BarChart3,
   CheckCircle2,
+  ClipboardPaste,
   FilePenLine,
   KeyRound,
   LogIn,
@@ -15,6 +16,13 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -34,7 +42,9 @@ import {
   FEEDBACK_STATUS_LABELS,
   FEEDBACK_TYPE_LABELS,
   countPending,
+  decodeFeedbackReport,
   deleteFeedback,
+  importFeedbackReport,
   replyFeedback,
   setFeedbackStatus,
   useAllFeedback,
@@ -116,8 +126,27 @@ const FeedbackAdmin = () => {
   const [filter, setFilter] = useState<'all' | FeedbackStatus>('all');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
+  // 收集用户上报：本站无服务器，用户端生成「反馈上报码」发过来，这里粘贴导入
+  const [importOpen, setImportOpen] = useState(false);
+  const [reportCode, setReportCode] = useState('');
 
   const list = filter === 'all' ? all : all.filter((e) => e.status === filter);
+
+  const handleImportReport = () => {
+    const decoded = decodeFeedbackReport(reportCode);
+    if (!decoded.ok) {
+      toast.error(decoded.error);
+      return;
+    }
+    const res = importFeedbackReport(decoded.entries);
+    if (!res.ok) {
+      toast.error(res.error ?? t('导入失败'));
+      return;
+    }
+    toast.success(tpl('导入成功，新增 {n} 条反馈（按 id 去重，重复导入安全）', { n: res.added }));
+    setReportCode('');
+    setImportOpen(false);
+  };
 
   const submitReply = (id: string) => {
     if (!draft.trim()) {
@@ -143,7 +172,7 @@ const FeedbackAdmin = () => {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {filters.map((f) => (
           <Button
             key={f.key}
@@ -155,7 +184,43 @@ const FeedbackAdmin = () => {
             {f.label}
           </Button>
         ))}
+        {/* 收集用户上报：粘贴用户发来的反馈上报码，合并进本机反馈池 */}
+        <span className="flex-1" />
+        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setImportOpen(true)}>
+          <ClipboardPaste className="h-4 w-4" />
+          {t('导入反馈码')}
+        </Button>
       </div>
+
+      {/* 反馈上报码导入对话框 */}
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ClipboardPaste className="h-5 w-5 text-info" />
+              {t('导入反馈上报码')}
+            </DialogTitle>
+            <DialogDescription>
+              {t('用户在反馈窗口生成上报码发给你（微信等），粘贴到这里即可把反馈收进本机反馈池，按条目 id 去重、可安全重复导入。')}
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={reportCode}
+            onChange={(e) => setReportCode(e.target.value)}
+            placeholder={t('粘贴上报码（一长串 Base64 文本）……')}
+            className="h-40 w-full resize-none border border-border bg-background p-3 font-mono text-xs outline-none focus:border-info"
+          />
+          <div className="flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setImportOpen(false)}>
+              {t('取消')}
+            </Button>
+            <Button onClick={handleImportReport} className="gap-1.5">
+              <ClipboardPaste className="h-4 w-4" />
+              {t('确认导入')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {list.length === 0 ? (
         <div className="mt-8 border border-dashed border-border py-16 text-center text-sm text-muted-foreground">

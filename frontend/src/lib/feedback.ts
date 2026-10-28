@@ -42,6 +42,8 @@ export interface FeedbackEntry {
   createdAt: number;
   status: FeedbackStatus;
   replies: FeedbackReply[];
+  /** 上报标记：生成上报码的时间戳（上报侧本机使用；导入侧不设置） */
+  reportedAt?: number;
 }
 
 const STORAGE_KEY = 'mathlens-feedback-v1';
@@ -161,3 +163,85 @@ export const useUserFeedback = (userId: string): FeedbackEntry[] => {
 /** 统计：未处理数量 */
 export const countPending = (entries: FeedbackEntry[]): number =>
   entries.filter((e) => e.status === 'pending').length;
+
+/* ─────────────────── 反馈上报：跨设备送达开发者（无服务器方案） ─────────────────── */
+/**
+ * 本站没有服务器：用户提交的反馈只存在他自己设备的浏览器里，开发者看不到。
+ * 这里复用「账号同步码」的既有模式：
+ *   用户侧：反馈对话框 → 生成「反馈上报码」→ 微信等聊天工具发给开发者；
+ *   开发者侧：开发者模式（/dev）反馈管理 → 粘贴上报码导入 → 立即可见、可回复。
+ * 上报码按条目 id 去重，重复导入安全；上报后本机打上 reportedAt 标记，避免重复搬运。
+ */
+
+/** UTF-8 安全的 base64（与 archiveSync.ts 同实现） */
+const toB64 = (s: string): string => {
+  const bytes = new TextEncoder().encode(s);
+  let bin = '';
+  bytes.forEach((b) => { bin += String.fromCharCode(b); });
+  return btoa(bin);
+};
+
+const fromB64 = (s: string): string => {
+  const bin = atob(s.replace(/\s+/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+};
+
+export interface FeedbackReportPayload {
+  source: 'principia-feedback-report';
+  version: 1;
+  exportedAt: number;
+  entries: FeedbackEntry[];
+}
+
+/** 生成反馈上报码：打包本机全部「未上报」反馈，并就地打上已上报标记 */
+export const encodeFeedbackReport = (): { code: string; count: number } | { error: string } => {
+  const all = readAll();
+  const pending = all.filter((e) => !e.reportedAt);
+  if (pending.length === 0) return { error: '没有待上报的反馈（都已打包过，新提交后可再次生成）' };
+  const payload: FeedbackReportPayload = {
+    source: 'principia-feedback-report',
+    version: 1,
+    exportedAt: Date.now(),
+    entries: pending,
+  };
+  const marked = all.map((e) => (e.reportedAt ? e : { ...e, reportedAt: Date.now() }));
+  const res = writeAll(marked);
+  if (!res.ok) return { error: res.error ?? '保存失败' };
+  return { code: toB64(JSON.stringify(payload)), count: pending.length };
+};
+
+/** 解析反馈上报码；给出可读的中文错误 */
+export const decodeFeedbackReport = (
+  code: string,
+): { ok: true; entries: FeedbackEntry[] } | { ok: false; error: string } => {
+  const trimmed = code.trim();
+  if (!trimmed) return { ok: false, error: '请先粘贴反馈上报码' };
+  let payload: FeedbackReportPayload;
+  try {
+    payload = JSON.parse(fromB64(trimmed)) as FeedbackReportPayload;
+  } catch {
+    return { ok: false, error: '上报码格式不正确：请确认完整复制、没有缺字符' };
+  }
+  if (!payload || payload.source !== 'principia-feedback-report' || !Array.isArray(payload.entries)) {
+    return { ok: false, error: '这不是 Principia 的反馈上报码' };
+  }
+  const clean = payload.entries.filter(
+    (e) => e && typeof e.id === 'string' && typeof e.title === 'string' && typeof e.content === 'string',
+  );
+  if (clean.length === 0) return { ok: false, error: '上报码里没有有效反馈' };
+  return { ok: true, entries: clean };
+};
+
+/** 开发者导入：按 id 去重合并进本机反馈池，导入后反馈管理列表立即可见（订阅自动刷新） */
+export const importFeedbackReport = (incoming: FeedbackEntry[]): { added: number } & WriteResult => {
+  const existing = readAll();
+  const ids = new Set(existing.map((e) => e.id));
+  const fresh = incoming.filter((e) => !ids.has(e.id));
+  const res = writeAll([...existing, ...fresh]);
+  return res.ok ? { added: fresh.length, ok: true } : { added: 0, ok: false, error: res.error };
+};
+
+/** 本机待上报的反馈条数（供 UI 提示） */
+export const countUnreported = (): number => readAll().filter((e) => !e.reportedAt).length;

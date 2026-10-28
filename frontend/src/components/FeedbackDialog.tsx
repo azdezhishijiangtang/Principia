@@ -27,6 +27,7 @@ import {
   FEEDBACK_STATUS_LABELS,
   FEEDBACK_TYPE_LABELS,
   addFeedback,
+  encodeFeedbackReport,
   useUserFeedback,
   type FeedbackStatus,
   type FeedbackType,
@@ -189,6 +190,42 @@ const FeedbackDialog = ({ open, onOpenChange }: FeedbackDialogProps) => {
 
           {/* ── 我的反馈 ── */}
           <TabsContent value="mine" className="mt-5">
+            {/* 送达开发者：本站无服务器，反馈保存在本机，靠上报码人工送达 */}
+            <div className="mb-4 border border-border bg-muted/30 p-4">
+              <p className="flex items-center gap-2 text-sm font-medium">
+                <Send className="h-4 w-4 text-info" />
+                {t('把反馈送达开发者')}
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                {t('本站没有服务器，反馈只保存在你的浏览器里。点下面的按钮生成「上报码」并发给开发者（微信等均可），开发者导入后就能看到并在这里回复你。')}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5"
+                  onClick={() => {
+                    const r = encodeFeedbackReport();
+                    if ('error' in r) {
+                      toast.info(t(r.error));
+                      return;
+                    }
+                    navigator.clipboard?.writeText(r.code).then(
+                      () => toast.success(tpl('已复制 {n} 条反馈的上报码——粘贴发给开发者即可', { n: r.count })),
+                      () => toast.error(t('复制失败：请手动复制生成的内容')),
+                    );
+                  }}
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  {t('生成上报码并复制')}
+                </Button>
+                {mine.some((e) => !e.reportedAt) && (
+                  <span className="text-xs text-muted-foreground">
+                    {tpl('{n} 条待上报', { n: mine.filter((e) => !e.reportedAt).length })}
+                  </span>
+                )}
+              </div>
+            </div>
             {mine.length === 0 ? (
               <div className="border border-dashed border-border py-14 text-center">
                 <Inbox className="mx-auto h-8 w-8 text-muted-foreground/60" />
