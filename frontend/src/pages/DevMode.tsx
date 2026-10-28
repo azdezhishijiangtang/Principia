@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -287,20 +287,28 @@ const ContentAdmin = () => {
   const [courseId, setCourseId] = useState(courses[0]?.id ?? '');
   const courseTopics = useMemo(
     () => topics.filter((t) => t.courseId === courseId),
-    [courseId],
+    [topics, courseId],
   );
-  const [topicId, setTopicId] = useState(courseTopics[0]?.id ?? '');
-  const [draft, setDraft] = useState({ title: '', summary: '', content: '' });
-
-  useEffect(() => {
-    setTopicId(topics.find((t) => t.courseId === courseId)?.id ?? '');
-  }, [courseId]);
+  // 当前选中知识点不属于本课程时（典型：刚切换课程）回退到该课程第一个知识点。
+  // 用派生值代替 effect + setState 联动，切换时不再触发级联渲染。
+  const [topicIdInput, setTopicId] = useState(courseTopics[0]?.id ?? '');
+  const topicId = courseTopics.some((t) => t.id === topicIdInput)
+    ? topicIdInput
+    : (courseTopics[0]?.id ?? '');
 
   const topic = topics.find((t) => t.id === topicId);
 
-  useEffect(() => {
-    if (topic) setDraft({ title: topic.title, summary: topic.summary, content: topic.content });
-  }, [topicId]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 草稿 = 当前知识点原文 + 用户尚未保存的改动。改动记录它所属的 topicId，
+  // 所以切换知识点后自动回落到新知识点的原文，不需要额外 effect 重置。
+  type Draft = { title: string; summary: string; content: string };
+  const [draftEdits, setDraftEdits] = useState<{ topicId: string; value: Draft } | null>(null);
+  const baseDraft: Draft = topic
+    ? { title: topic.title, summary: topic.summary, content: topic.content }
+    : { title: '', summary: '', content: '' };
+  const draft = draftEdits?.topicId === topicId ? draftEdits.value : baseDraft;
+  const setDraft = (next: Draft | ((d: Draft) => Draft)) => {
+    setDraftEdits({ topicId, value: typeof next === 'function' ? next(draft) : next });
+  };
 
   const dirty =
     !!topic &&
@@ -520,7 +528,9 @@ const AccountsAdmin = () => {
   const { tpl } = useLocale();
   const [tick, setTick] = useState(0);
   // 简单刷新：切回标签页或点击刷新按钮时重读
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- tick 是手动刷新计数器，用来强制重读外部存储
   const accounts = useMemo(() => listAccounts(), [tick]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- tick 是手动刷新计数器，用来强制重读外部存储
   const pending = useMemo(() => listPendingSyncAccounts(), [tick]);
   const seedCount = countSeedAccounts();
   const total = countAccounts();

@@ -50,6 +50,7 @@ import { formulaGroups } from '@/data/formulas';
 
 export function useCourses(): Course[] {
   const { lang } = useLocale();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- localize* 通过闭包读取语言，lang 变了必须重算本地化数据
   return useMemo(() => courses.map(localizeCourse), [lang]);
 }
 
@@ -60,6 +61,7 @@ export function useCourse(id: string | undefined): Course | undefined {
 
 export function useTopics(): Topic[] {
   const { lang } = useLocale();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- localize* 通过闭包读取语言，lang 变了必须重算本地化数据
   return useMemo(() => topics.map(localizeTopic), [lang]);
 }
 
@@ -70,6 +72,7 @@ export function useTopic(id: string | undefined): Topic | undefined {
 
 export function useProblems(): Problem[] {
   const { lang } = useLocale();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- localize* 通过闭包读取语言，lang 变了必须重算本地化数据
   return useMemo(() => problems.map(localizeProblem), [lang]);
 }
 
@@ -80,5 +83,6 @@ export function useProblem(id: string | undefined): Problem | undefined {
 
 export function useFormulaGroups(): FormulaGroup[] {
   const { lang } = useLocale();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- localize* 通过闭包读取语言，lang 变了必须重算本地化数据
   return useMemo(() => formulaGroups.map(localizeFormulaGroup), [lang]);
 }

@@ -57,9 +57,12 @@ const Navbar = ({ onOpenSearch }: NavbarProps) => {
     document.addEventListener('keydown', onKeyDown);
     const firstFocusable = drawerRef.current?.querySelector<HTMLElement>('a[href], button:not([disabled])');
     firstFocusable?.focus();
+    // 在 effect 执行时就把触发按钮存下来：cleanup 阶段再读 ref.current
+    // 可能已经指向别的元素，焦点会还给错的节点。
+    const toggleEl = toggleRef.current;
     return () => {
       document.removeEventListener('keydown', onKeyDown);
-      toggleRef.current?.focus();
+      toggleEl?.focus();
     };
   }, [mobileOpen]);
 

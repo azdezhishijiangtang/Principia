@@ -68,7 +68,10 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   const [slot, setSlot] = useState<number>(() => getActiveProfile());
   const [form, setForm] = useState<AiProfile>(() => readAiProfiles()[getActiveProfile()] ?? emptyForm());
   const [showKey, setShowKey] = useState(false);
-  const [saved, setSaved] = useState(false);
+  // 「已保存」提示改为快照比较：保存成功后记下当时表单的序列化值，
+  // 之后用户一改动表单，快照就不相等，提示自动消失——不需要用 effect 监听 form。
+  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
+  const saved = savedSnapshot === JSON.stringify(form);
   const [catalog, setCatalog] = useState<CatalogEntry>({ models: [], source: 'builtin', fetchedAt: 0 });
   const [loadingModels, setLoadingModels] = useState(false);
   const [modelError, setModelError] = useState<string | null>(null);
@@ -103,9 +106,6 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
     high: t('分配更多推理预算，适合复杂计算、证明与综合题。'),
   };
 
-  useEffect(() => {
-    setSaved(false);
-  }, [form]);
 
   /**
    * 拉取模型目录（随服务商自动更新）。
@@ -132,6 +132,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
   // 挂载即自动拉取一次（缓存新鲜则秒回，过期则后台静默刷新）
   useEffect(() => {
     if (form.baseUrl.trim() && form.apiKey.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 挂载后拉取模型目录属于与外部服务同步，loading 标志需同步置位
       void loadModels(form.baseUrl, form.apiKey, { silent: true });
     }
     // 仅在挂载时执行一次
@@ -145,7 +146,6 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
       void loadModels(form.baseUrl, form.apiKey, { silent: true });
     }, 800);
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [form.baseUrl, form.apiKey]);
 
   /** 切换正在编辑的存档 */
@@ -153,7 +153,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
     setSlot(i);
     const p = profiles[i];
     setForm(p ?? emptyForm());
-    setSaved(false);
+    setSavedSnapshot(null);
     setCatalog({ models: [], source: 'builtin', fetchedAt: 0 });
     setModelError(null);
     setManualModel(false);
@@ -195,7 +195,7 @@ const AiSettingsCard = ({ onSaved, compact = false }: AiSettingsCardProps) => {
     saveAiProfile(slot, next);
     setProfiles(readAiProfiles());
     setActive(slot);
-    setSaved(true);
+    setSavedSnapshot(JSON.stringify(form));
     onSaved?.();
   };
 

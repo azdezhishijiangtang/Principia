@@ -85,6 +85,7 @@ const SelectionImageLauncher = () => {
   // 从根本上杜绝 SVG 注入（比 sanitize 黑名单更可靠）；下载/复制仍用原始 SVG。
   useEffect(() => {
     if (!svg) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- 依据 svg 派生预览用 blob URL，属于资源生命周期同步
       setSvgBlobUrl(null);
       return;
     }
@@ -249,7 +250,7 @@ const SelectionImageLauncher = () => {
         abortRef.current = null;
       }
     }
-  }, [modelIndex, text, kind]);
+  }, [modelIndex, text, kind, t]);
 
   // 打开后自动生成一次
   useEffect(() => {

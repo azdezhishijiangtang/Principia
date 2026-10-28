@@ -376,7 +376,7 @@ export const exportPracticeToDocx = async (opts: {
       new Paragraph({
         spacing: { before: 320, after: 80 },
         border: { bottom: { style: 'single', size: 6, color: 'BFBFBF', space: 4 } },
-        children: [new TextRun({ text: `题目 ${idx + 1}　${p.title}`.trimEnd(), bold: true, size: 22 })],
+        children: [new TextRun({ text: `题目 ${idx + 1}\u3000${p.title}`.trimEnd(), bold: true, size: 22 })],
       }),
     );
     for (const para of parseBlocks(p.question)) children.push(para);
@@ -406,7 +406,7 @@ export const exportTopicToDocx = async (opts: {
       spacing: { after: 100 },
       children: parseInline(normalizeMathDelimiters(topic.title)) as unknown as TextRun[],
     }),
-    metaLine(`${courseName}　·　${topic.chapter}`),
+    metaLine(`${courseName}\u3000·\u3000${topic.chapter}`),
   ];
 
   if (topic.summary?.trim()) {

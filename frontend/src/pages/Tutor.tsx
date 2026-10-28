@@ -95,6 +95,7 @@ const Tutor = () => {
 
   // 未配置密钥时自动展开设置卡片
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 错误来自异步对话流，一旦出现即展开密钥设置卡片
     if (error?.includes('API Key')) setShowSettings(true);
   }, [error]);
 
@@ -112,6 +113,7 @@ const Tutor = () => {
 
   // 配置就绪后自动拉取模型目录（缓存新鲜则秒回，过期则后台静默刷新）
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 配置就绪后拉取模型目录，loading 标志需同步置位
     if (config) void loadCatalog();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config?.baseUrl, config?.apiKey]);

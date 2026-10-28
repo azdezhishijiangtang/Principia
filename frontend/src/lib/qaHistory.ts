@@ -101,6 +101,21 @@ export const clearQaHistory = (userId: string): void => {
   writeAll(readAll().filter((e) => e.userId !== userId));
 };
 
+/**
+ * 批量合并答疑记录（跨设备导入用）。
+ * 按 id 去重：已存在的记录保留本机版本，只补进新记录。返回实际新增条数。
+ */
+export const mergeQaEntries = (entries: QaEntry[]): number => {
+  const existing = readAll();
+  const ids = new Set(existing.map((e) => e.id));
+  const incoming = entries.filter(
+    (e) => e && typeof e.id === 'string' && typeof e.ts === 'number' && !ids.has(e.id),
+  );
+  if (incoming.length === 0) return 0;
+  writeAll([...existing, ...incoming]);
+  return incoming.length;
+};
+
 /** 统计概览 */
 export interface QaStats {
   total: number;

@@ -134,7 +134,7 @@ export const normalizeQuery = (raw: string): string =>
     .toLowerCase()
     .replace(/[\uff01-\uff5e]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0))
     .replace(/[\s\u3000]+/g, '')
-    .replace(/[，。、；：？！“”‘’（）《》【】,.!?;:'"()\[\]<>{}|\\/-]/g, '');
+    .replace(/[，。、；：？！“”‘’（）《》【】,.!?;:'"()[\]<>{}|\\/-]/g, '');
 
 /** 提取查询词：整个查询 + 同义词展开 + 去停用词后的口语核心 */
 export const expandQuery = (raw: string): { terms: { text: string; weight: number }[]; core: string } => {

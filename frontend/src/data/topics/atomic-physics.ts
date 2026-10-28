@@ -13,7 +13,7 @@ export const atomic_physicsTopics: Topic[] = [
       '汤姆逊模型把正电荷均匀分布于球体，电子嵌在其中，无法解释大角度散射',
       '卢瑟福α粒子散射实验发现少数粒子被大角度弹回，说明正电荷集中于微小原子核',
       '散射公式定量给出库仑斥力下的偏转，奠定了核式原子模型',
-      '原子核尺度约 $10^{-15}\,\\text{m}$，远小于原子尺度 $10^{-10}\,\\text{m}$',
+      '原子核尺度约 $10^{-15}\\,\\text{m}$，远小于原子尺度 $10^{-10}\\,\\text{m}$',
     ],
     relatedProblemIds: ['atomic-physics-p1'],
     content: String.raw`
@@ -121,8 +121,8 @@ $$\frac{d\sigma}{d\Omega} = \left(\frac{79 e^2}{16\pi\varepsilon_0\cdot 5\,\text
     keyPoints: [
       '定态假设：电子在特定圆轨道上运动时不辐射，处于能量确定的定态',
       '角动量量子化 $L = n\\hbar$ 是玻尔模型的核心人为条件',
-      '玻尔半径 $a_0 = 4\\pi\\varepsilon_0\\hbar^2/(m_e e^2) \\approx 0.529\,\\text{Å}$',
-      '氢原子能级 $E_n = -13.6\,\\text{eV}/n^2$，里德伯常量可由此导出',
+      '玻尔半径 $a_0 = 4\\pi\\varepsilon_0\\hbar^2/(m_e e^2) \\approx 0.529\\,\\text{Å}$',
+      '氢原子能级 $E_n = -13.6\\,\\text{eV}/n^2$，里德伯常量可由此导出',
       '玻尔模型成功解释氢原子光谱，却无法处理多电子原子与谱线强度',
     ],
     relatedProblemIds: ['atomic-physics-p2'],
@@ -315,7 +315,7 @@ $$E_{\text{ion}} = |E_2| = \frac{54.4}{4}\ \mathrm{eV} = 13.6\ \mathrm{eV},\qqua
     keyPoints: [
       '里德伯公式 $\\dfrac{1}{\\lambda} = R\\left(\\dfrac{1}{n_f^2} - \\dfrac{1}{n_i^2}\\right)$ 统一描述氢谱线',
       '巴尔末系对应 $n_f=2$，落在可见光区；莱曼系 $n_f=1$ 在紫外',
-      '里德伯常量 $R_\\infty \\approx 1.097\\times 10^7\,\\text{m}^{-1}$，考虑核质量后为 $R_H$',
+      '里德伯常量 $R_\\infty \\approx 1.097\\times 10^7\\,\\text{m}^{-1}$，考虑核质量后为 $R_H$',
       '谱线系极限对应电离到连续区，能量即为电离能',
       '精细结构使每条主线分裂为靠得很近的双重线',
     ],

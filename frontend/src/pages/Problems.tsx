@@ -39,7 +39,7 @@ const Problems = () => {
         if (difficultyFilter !== 'all' && String(p.difficulty) !== difficultyFilter) return false;
         return true;
       }),
-    [courseFilter, difficultyFilter, subjectCourseIds],
+    [courseFilter, difficultyFilter, subjectCourseIds, problems],
   );
 
   return (

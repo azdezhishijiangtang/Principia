@@ -81,7 +81,7 @@ const TopicDetail = () => {
     const siblings = topics.filter((tp) => tp.courseId === topic.courseId);
     const idx = siblings.findIndex((tp) => tp.id === topic.id);
     return { prev: idx > 0 ? siblings[idx - 1] : undefined, next: idx < siblings.length - 1 ? siblings[idx + 1] : undefined };
-  }, [topic]);
+  }, [topic, topics]);
 
   // 目录滚动高亮：取最后一个顶部越过阈值的可见小节
   const [activeId, setActiveId] = useState<string>(sections[0]?.id ?? '');
@@ -100,6 +100,11 @@ const TopicDetail = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, [sections]);
 
+  // Word 导出：直接由知识点数据生成（真文本 + 可编辑公式，不再栅格化）
+  // 注意：所有 Hook 必须在此 early return 之前调用，否则 topic 存在性变化时
+  // Hook 调用顺序会改变，React 会抛 "Rendered fewer hooks than expected"。
+  const [exporting, setExporting] = useState(false);
+
   if (!topic || !course) return <NotFound />;
 
   const tocSections = sections.filter((s) => s.title);
@@ -112,9 +117,6 @@ const TopicDetail = () => {
     searchParams.delete('section');
     setSearchParams(searchParams);
   };
-
-  // Word 导出：直接由知识点数据生成（真文本 + 可编辑公式，不再栅格化）
-  const [exporting, setExporting] = useState(false);
 
   const handleExportWord = async () => {
     setExporting(true);

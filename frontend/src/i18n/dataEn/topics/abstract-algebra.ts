@@ -112,7 +112,7 @@ Mnemonic: "Four laws—closure, associativity, identity, inverse, all in place; 
     keyPoints: [
       'The four group axioms: closure, associativity, identity, inverse',
       'Lagrange: the order of a subgroup divides the group order; a group of prime order is cyclic',
-      'Only a normal subgroup yields a quotient; fundamental homomorphism theorem $G/\ker\cong\operatorname{im}$',
+      'Only a normal subgroup yields a quotient; fundamental homomorphism theorem $G/\\ker\\cong\\operatorname{im}$',
       'Classification of finite simple groups: four families plus 26 sporadic groups',
     ],
   },
@@ -219,9 +219,9 @@ Key points:
 
 Mnemonic: "Add, subtract, multiply—rings in three tiers; a field divides with inverses overflowing; ideals absorb so quotients stand; Euclidean leads to PID, then unique analysis."`,
     keyPoints: [
-      'Field = a commutative ring where every nonzero element is invertible; $\mathbb{Z}_p$ is a field $\iff$ $p$ prime',
+      'Field = a commutative ring where every nonzero element is invertible; $\\mathbb{Z}_p$ is a field $\\iff$ $p$ prime',
       'An ideal absorbs multiplication; the quotient ring $R/I$ collapses the ideal to zero',
-      'Euclidean domain $\implies$ PID $\implies$ UFD; $\mathbb{Z}[\sqrt{-5}]$ warns that unique factorization can fail',
+      'Euclidean domain $\\implies$ PID $\\implies$ UFD; $\\mathbb{Z}[\\sqrt{-5}]$ warns that unique factorization can fail',
       'Finite fields have order $p^n$; the Chinese Remainder Theorem = coprime decomposition',
     ],
   },
@@ -329,9 +329,9 @@ Key points:
 Mnemonic: "To solve equations we chain extensions; the Galois group reveals symmetry; when the group is solvable radicals appear; $S_5$ unsolvable leaves the quintic hanging."`,
     keyPoints: [
       'Splitting field + Galois group = a precise measure of an equation\'s symmetry',
-      'Galois correspondence: intermediate fields $\leftrightarrow$ subgroups, with reversed inclusion',
-      'Solvable by radicals $\iff$ Galois group solvable; $S_5$ not solvable so no general quintic solution',
-      'Straightedge-and-compass $\iff$ a chain of quadratic extensions: the three classical problems are thus ruled out',
+      'Galois correspondence: intermediate fields $\\leftrightarrow$ subgroups, with reversed inclusion',
+      'Solvable by radicals $\\iff$ Galois group solvable; $S_5$ not solvable so no general quintic solution',
+      'Straightedge-and-compass $\\iff$ a chain of quadratic extensions: the three classical problems are thus ruled out',
     ],
   },
   'group-actions': {
@@ -433,8 +433,8 @@ Key points:
 
 Mnemonic: "A group acting on a set reveals its true form; orbits and stabilizers multiply; Sylow embeds prime-power subgroups; congruence and uniqueness determine structure."`,
     keyPoints: [
-      'Group action = homomorphism $G\to\operatorname{Sym}(X)$; orbits are equivalence classes, stabilizers are subgroups',
-      'Orbit-stabilizer theorem: $|G| = |\operatorname{Orb}(x)|\cdot|\operatorname{Stab}(x)|$',
+      'Group action = homomorphism $G\to\\operatorname{Sym}(X)$; orbits are equivalence classes, stabilizers are subgroups',
+      'Orbit-stabilizer theorem: $|G| = |\\operatorname{Orb}(x)|\\cdot|\\operatorname{Stab}(x)|$',
       'A Sylow $p$-subgroup has order $p^k$ (the highest power dividing the group order); Sylow theorems guarantee its existence and conjugacy',
       'Applications of Sylow theorems: proving some groups are not simple, determining group structure',
       'The conjugation action is key to understanding normalizers and the class equation',
@@ -540,17 +540,17 @@ Key points:
 Mnemonic: "Unique factorization relies on UFD; irreducible and prime lean on each other; Gauss makes primitive products fixed; coefficients and fractions all reduced to one."`,
     keyPoints: [
       'UFD definition: every nonzero non-unit factors, essentially uniquely, into irreducibles',
-      'Gauss\'s lemma: product of primitive polynomials is primitive; $R$ a UFD $\implies$ $R[x]$ a UFD',
+      'Gauss\'s lemma: product of primitive polynomials is primitive; $R$ a UFD $\\implies$ $R[x]$ a UFD',
       'Divisibility and greatest common divisors are well defined in a UFD',
       'Irreducible and prime coincide in a UFD',
-      'Polynomials over a field are always a UFD; the integer polynomial ring $\mathbb{Z}[x]$ is also a UFD',
+      'Polynomials over a field are always a UFD; the integer polynomial ring $\\mathbb{Z}[x]$ is also a UFD',
     ],
   },
   'field-extensions': {
     chapter: 'Chapter 5 Field Extensions',
     title: 'Algebraic Extensions and Finite Fields',
     summary:
-      'Field extensions embed a smaller field in a larger one; algebraic extensions are controlled by minimal polynomials, and the finite field $\mathbb{F}_{p^n}$ is the algebraic foundation of coding and cryptography.',
+      'Field extensions embed a smaller field in a larger one; algebraic extensions are controlled by minimal polynomials, and the finite field $\\mathbb{F}_{p^n}$ is the algebraic foundation of coding and cryptography.',
     content: String.raw`
 
 The reals contain the rationals, the complexes contain the reals—these are all "field extensions". Why nest fields within fields? Because we want to solve equations that were unsolvable before: $x^2-2=0$ has no solution in $\mathbb{Q}$, but extending to $\mathbb{Q}(\sqrt2)$ provides one. An extension is the natural way to "introduce new numbers while keeping the old operations".
@@ -649,8 +649,8 @@ Key points:
 Mnemonic: "See extension degree as dimension; tower multiplication climbs step by step; algebraic minimal polynomial; finite field order a prime power."`,
     keyPoints: [
       'Extension degree $[K:F]$ is the vector-space dimension; tower theorem $[K:F]=[K:E][E:F]$',
-      'An algebraic element has a minimal polynomial; simple algebraic extension $K(\alpha)\cong K[x]/(\min_\alpha)$',
-      'A finite field has order $p^n$; $\mathbb{F}_{p^n}$ is unique and $\mathbb{F}_{p^m}\subset\mathbb{F}_{p^n}$ $\iff$ $m\mid n$',
+      'An algebraic element has a minimal polynomial; simple algebraic extension $K(\\alpha)\\cong K[x]/(\\min_\\alpha)$',
+      'A finite field has order $p^n$; $\\mathbb{F}_{p^n}$ is unique and $\\mathbb{F}_{p^m}\\subset\\mathbb{F}_{p^n}$ $\\iff$ $m\\mid n$',
       'Primitive element theorem: a finite separable extension is a simple extension',
       'Algebraic closure and the classification of algebraic extensions',
     ],

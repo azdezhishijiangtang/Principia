@@ -76,14 +76,14 @@ const Knowledge = () => {
     return searchAll(query, 200, subject).topics
       .filter((h) => courseFilter === 'all' || h.topic.courseId === courseFilter)
       .slice(0, 24);
-  }, [query, courseFilter, subject, subjectCourseIds]);
+  }, [query, courseFilter, subject, subjectCourseIds, topics]);
 
   // 每个课程的专题数
   const topicCountByCourse = useMemo(() => {
     const m = new Map<string, number>();
     for (const t of topics) m.set(t.courseId, (m.get(t.courseId) ?? 0) + 1);
     return m;
-  }, []);
+  }, [topics]);
 
   return (
     <div className="container py-10 lg:py-14">

@@ -147,10 +147,12 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
   const { lang } = useLocale();
   const topic: Topic | undefined = useMemo(
     () => (topicId ? localizeTopic(getTopic(topicId)!) : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 本地化模型名/提示词依赖语言，lang 变了必须重算
     [topicId, lang],
   );
   const course = useMemo(
     () => (topic ? localizeCourse(getCourse(topic.courseId)!) : undefined),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- 本地化模型名/提示词依赖语言，lang 变了必须重算
     [topic, lang],
   );
 
@@ -575,7 +577,7 @@ export const useTutorChat = (options: UseTutorChatOptions) => {
       setStatus('idle');
       abortRef.current = null;
     },
-    [streaming, messages, topic, course, userId, useDocs, options],
+    [streaming, messages, topic, course, userId, useDocs, options, images, lastModel, section],
   );
 
   const stop = useCallback(() => abortRef.current?.abort(), []);

@@ -39,6 +39,7 @@ const Mistakes = () => {
   // 订阅错题数据变更（本地写操作/跨标签页），counts 随数据实时刷新
   const [countsVersion, setCountsVersion] = useState(0);
   useEffect(() => subscribeMistakes(() => setCountsVersion((v) => v + 1)), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- countsVersion 订阅错题数据变更，用来强制重算统计
   const counts = useMemo(() => countMistakesByCourse(userId), [userId, countsVersion]);
   const mistakes = useMistakes(userId, activeCourse);
 
@@ -62,7 +63,7 @@ const Mistakes = () => {
     const firstCourseId = subjectCourseList[0]?.id ?? '';
     setActiveCourse(firstCourseId);
     setCourseId(firstCourseId);
-  }, [subject]);
+  }, [subject, subjectCourseList]);
 
   const submit = () => {
     if (!title.trim() || !content.trim()) {

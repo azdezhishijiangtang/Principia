@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookMarked, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
@@ -24,19 +24,23 @@ const Formulas = () => {
 
   const validGroups = useMemo(
     () => formulaGroups.filter((g) => subjectCourseIds.has(g.courseId)),
-    [subjectCourseIds],
+    [formulaGroups, subjectCourseIds],
   );
   const [activeCourse, setActiveCourse] = useState(formulaGroups[0].courseId);
 
-  // 切换学科时，若当前课程不属于该学科，则切到该学科第一门有公式的课程
-  useEffect(() => {
-    if (!validGroups.some((g) => g.courseId === activeCourse)) {
-      setActiveCourse(validGroups[0]?.courseId ?? '');
-    }
-  }, [subject, validGroups, activeCourse]);
+  // 当前学科下若选中的课程没有公式（典型场景：刚切换了学科），回退到该学科
+  // 第一门有公式的课程。这是纯派生值，不需要 effect + setState 兜底，
+  // 否则每次切换都会多一次级联渲染。
+  const effectiveCourse = useMemo(
+    () =>
+      validGroups.some((g) => g.courseId === activeCourse)
+        ? activeCourse
+        : (validGroups[0]?.courseId ?? ''),
+    [validGroups, activeCourse],
+  );
 
-  const groups = formulaGroups.filter((g) => g.courseId === activeCourse);
-  const activeCourseObj = courses.find((c) => c.id === activeCourse);
+  const groups = formulaGroups.filter((g) => g.courseId === effectiveCourse);
+  const activeCourseObj = courses.find((c) => c.id === effectiveCourse);
   const courseById = useMemo(() => new Map(courses.map((c) => [c.id, c])), [courses]);
 
   // 每门课程一个标签（按当前学科课程聚合）
@@ -64,7 +68,7 @@ const Formulas = () => {
       <FadeIn delay={0.1}>
         <div className="mt-10 flex flex-wrap gap-2 border-b border-border pb-4">
           {courseTabs.map(({ course, count }) => {
-            const isActive = activeCourse === course.id;
+            const isActive = effectiveCourse === course.id;
             return (
               <Button
                 key={course.id}

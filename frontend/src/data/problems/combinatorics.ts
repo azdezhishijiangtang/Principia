@@ -27,7 +27,7 @@ export const combinatoricsProblems: Problem[] = [
       {
         title: '读系数',
         detail:
-          '$\\frac{1}{1-ax} = \\sum a^n x^n$，故$$F_n = \\frac{\\varphi^n - \\\hat\\varphi^n}{\\sqrt{5}}$$即比内公式。',
+          '$\\frac{1}{1-ax} = \\sum a^n x^n$，故$$F_n = \\frac{\\varphi^n - \\hat\\varphi^n}{\\sqrt{5}}$$即比内公式。',
       },
     ],
     answer: '$F_n = \\dfrac{\\varphi^n - \\hat{\\varphi}^n}{\\sqrt{5}}$（$\\varphi = \\frac{1+\\sqrt5}{2}$，$\\hat\\varphi = \\frac{1-\\sqrt5}{2}$）。',

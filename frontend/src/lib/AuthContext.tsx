@@ -5,6 +5,7 @@ import {
   registerPhoneAccount,
   type PhoneAccount,
 } from '@/lib/accountStore';
+import { SEED_ACCOUNTS } from '@/data/seedAccounts';
 
 /** 用户（本地会话，无真实后端） */
 export interface DemoUser {
@@ -68,8 +69,13 @@ const userFromAccount = (account: PhoneAccount): DemoUser => ({
 export const DEV_PHONE = '17736095542';
 
 /** 当前登录用户是否为开发者账号 */
-export const isDevUser = (user: DemoUser | null): boolean =>
-  Boolean(user && user.loginType === 'phone' && user.phone === DEV_PHONE);
+export const isDevUser = (user: DemoUser | null): boolean => {
+  if (!user || user.loginType !== 'phone' || user.phone !== DEV_PHONE) return false;
+  // 光比对手机号不够：会话存在 localStorage 里，访客可以把 phone 改成开发者号码。
+  // 这里再要求「会话里的账号 id 与内置登记表一致」——只有真的用开发者账号登录过，
+  // id 才对得上。
+  return SEED_ACCOUNTS.some((s) => s.phone === DEV_PHONE && s.id === user.id);
+};
 
 /** 侧栏/个人页展示的联系方式：邮箱优先，否则脱敏手机号 */
 export const userContact = (user: DemoUser): string => {

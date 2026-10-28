@@ -1,5 +1,5 @@
 /** 论坛：综合讨论区 + 课程分区；发帖分享理解/方法/知识与文档附件 */
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { MessagesSquare, Paperclip, Plus, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -68,10 +68,12 @@ const Forum = () => {
   const [replyText, setReplyText] = useState('');
   const openPost: ForumPost | undefined = posts.find((p) => p.id === openPostId);
 
-  // 切换帖子时清空回复输入框，避免把上一条帖子的草稿误发到另一条
-  useEffect(() => {
+  // 切换帖子时清空回复输入框，避免把上一条帖子的草稿误发到另一条。
+  // 直接在事件里清空，不用 effect 监听 openPostId，省掉一次级联渲染。
+  const switchPost = (id: string | null) => {
+    setOpenPostId(id);
     setReplyText('');
-  }, [openPostId]);
+  };
 
   const pickAttachments = async (files: FileList | null) => {
     if (!files) return;
@@ -165,7 +167,7 @@ const Forum = () => {
                   key={sec.id}
                   onClick={() => {
                     setSection(sec.id);
-                    setOpenPostId(null);
+                    switchPost(null);
                   }}
                   className={`block w-full px-2.5 py-2 text-left text-sm transition-colors ${
                     section === sec.id
@@ -249,7 +251,7 @@ const Forum = () => {
             {openPost ? (
               <div className="border border-border bg-card">
                 <div className="border-b border-border px-5 py-4">
-                  <button onClick={() => setOpenPostId(null)} className="text-xs text-info hover:underline">
+                  <button onClick={() => switchPost(null)} className="text-xs text-info hover:underline">
                     ← {t('返回列表')}
                   </button>
                   <h3 className="mt-2 font-serif text-xl font-semibold">
@@ -269,7 +271,7 @@ const Forum = () => {
                       className="mt-4 gap-1.5 text-destructive hover:text-destructive"
                       onClick={() => {
                         if (deletePost(openPost.id, userId)) {
-                          setOpenPostId(null);
+                          switchPost(null);
                           toast.success(t('已删除'));
                         }
                       }}
@@ -314,7 +316,7 @@ const Forum = () => {
               posts.map((p) => (
                 <FadeIn key={p.id}>
                   <button
-                    onClick={() => setOpenPostId(p.id)}
+                    onClick={() => switchPost(p.id)}
                     className="group block w-full border border-border bg-card p-4 text-left transition-colors hover:border-info/50"
                   >
                     <div className="flex items-center justify-between gap-3">

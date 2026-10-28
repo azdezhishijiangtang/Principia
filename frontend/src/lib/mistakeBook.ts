@@ -76,6 +76,21 @@ export const deleteMistake = (id: string): void => {
   writeAll(readAll().filter((e) => e.id !== id));
 };
 
+/**
+ * 批量合并错题（跨设备导入用）。
+ * 按 id 去重：已存在的保留本机版本，只补进新记录。返回实际新增条数。
+ */
+export const mergeMistakes = (entries: MistakeEntry[]): { added: number; ok: boolean; error?: string } => {
+  const existing = readAll();
+  const ids = new Set(existing.map((e) => e.id));
+  const incoming = entries.filter(
+    (e) => e && typeof e.id === 'string' && typeof e.createdAt === 'number' && !ids.has(e.id),
+  );
+  if (incoming.length === 0) return { added: 0, ok: true };
+  const res = writeAll([...existing, ...incoming]);
+  return { added: incoming.length, ...res };
+};
+
 export const listMistakes = (userId: string, courseId?: string): MistakeEntry[] =>
   readAll()
     .filter((e) => e.userId === userId && (!courseId || courseId === 'all' || e.courseId === courseId))

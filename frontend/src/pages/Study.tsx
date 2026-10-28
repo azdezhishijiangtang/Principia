@@ -14,6 +14,8 @@ import { BookX,
   History,
   Clock,
   FileDown,
+  Upload,
+  Archive,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -73,6 +75,13 @@ import {
   exportPracticeToDocx,
 } from '@/lib/wordExport';
 import { downloadBlob } from '@/lib/textImage';
+import {
+  buildArchive,
+  encodeArchive,
+  decodeArchive,
+  importArchive,
+  archiveEntryCount,
+} from '@/lib/archiveSync';
 
 const formatDate = (ts: number) => {
   const d = new Date(ts);
@@ -164,6 +173,11 @@ const Study = () => {
     reload();
     return subscribeSummaries(reload);
   }, [userId]);
+
+  // 跨设备档案同步：导出为文件、在另一台设备粘贴导入
+  const [importOpen, setImportOpen] = useState(false);
+  const [importCode, setImportCode] = useState('');
+  const [importMsg, setImportMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
   // 已配置的存档列表（供下拉选择模型）
   const isSet = (p: AiProfile | null) =>
     Boolean(p && p.baseUrl && p.apiKey && p.model);
@@ -206,7 +220,7 @@ const Study = () => {
   const exportChosen = archive.filter((s) => exportSel.has(s.id));
 
   // 练习题生成
-  const [practiceCourse, setPracticeCourse] = useState(
+  const [practiceCourseInput, setPracticeCourse] = useState(
     () => subjectCourseList[0]?.id ?? 'calculus',
   );
   const [practiceCount, setPracticeCount] = useState('3');
@@ -216,10 +230,15 @@ const Study = () => {
   const [practiceError, setPracticeError] = useState<string | null>(null);
   const [revealed, setRevealed] = useState<Record<number, boolean>>({});
 
-  // 学科切换时，练习课程重置为该学科课程列表的第一项，避免沿用旧学科课程
-  useEffect(() => {
-    setPracticeCourse(subjectCourseList[0]?.id ?? 'calculus');
-  }, [subject]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 学科切换后若原先选中的课程已不属于当前学科，回退到该学科第一门课程。
+  // 用派生值而非 effect + setState，避免切换学科时多一次级联渲染。
+  const practiceCourse = useMemo(
+    () =>
+      subjectCourseList.some((c) => c.id === practiceCourseInput)
+        ? practiceCourseInput
+        : (subjectCourseList[0]?.id ?? 'calculus'),
+    [subjectCourseList, practiceCourseInput],
+  );
 
   const practiceProblems = useMemo(
     () => parseGeneratedProblems(practiceRaw),
@@ -354,6 +373,53 @@ const Study = () => {
     setExportSel(new Set());
     setExportMode('merge');
     setExportOpen(true);
+  };
+
+  /**
+   * 导出全部学习档案（总结 + 答疑 + 错题）为一段同步码文件。
+   * 本站没有服务器，档案只在本机浏览器里，换设备必须靠这份文件搬过去。
+   */
+  const handleExportArchive = () => {
+    const payload = buildArchive(userId, { username: user?.username, phone: user?.phone });
+    const total = archiveEntryCount(payload);
+    if (total === 0) {
+      toast.error(t('当前账号还没有可导出的档案'));
+      return;
+    }
+    const blob = new Blob([encodeArchive(payload)], { type: 'text/plain;charset=utf-8' });
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadBlob(blob, `Principia-学习档案-${stamp}.txt`);
+    toast.success(
+      tpl('已导出 {n} 条档案（总结 {a} · 答疑 {b} · 错题 {c}），在另一台设备点「导入档案」即可恢复', {
+        n: total,
+        a: payload.summaries.length,
+        b: payload.qa.length,
+        c: payload.mistakes.length,
+      }),
+    );
+  };
+
+  /** 粘贴同步码导入；按 id 去重，可安全重复导入 */
+  const handleImportArchive = () => {
+    const decoded = decodeArchive(importCode);
+    if (!decoded.ok) {
+      setImportMsg({ type: 'err', text: decoded.error });
+      return;
+    }
+    const res = importArchive(decoded.payload, userId);
+    // 总结列表是手动 state，导入后要显式刷新；答疑与错题有订阅，会自动更新
+    setArchive(loadSummaries(userId));
+    const parts: string[] = [];
+    if (res.summaries > 0) parts.push(tpl('总结 {n}', { n: res.summaries }));
+    if (res.qa > 0) parts.push(tpl('答疑 {n}', { n: res.qa }));
+    if (res.mistakes > 0) parts.push(tpl('错题 {n}', { n: res.mistakes }));
+    if (parts.length === 0) {
+      setImportMsg({ type: 'ok', text: t('导入完成：这些记录本机都已经有了，没有新增') });
+    } else {
+      setImportMsg({ type: 'ok', text: tpl('导入完成，新增 {list}', { list: parts.join('、') }) });
+    }
+    if (res.error) setImportMsg({ type: 'err', text: res.error });
+    setImportCode('');
   };
 
   const toggleExport = (id: string) =>
@@ -722,6 +788,30 @@ const Study = () => {
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
+                  {/* 跨设备搬运：本站没有服务器，档案只在本机，靠这两个入口搬 */}
+                  <Button
+                    onClick={handleExportArchive}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    title={t('把学习总结、答疑历史、错题本打包成一个文件，带到另一台设备导入')}
+                  >
+                    <Archive className="h-4 w-4" />
+                    {t('导出全部档案')}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setImportMsg(null);
+                      setImportOpen(true);
+                    }}
+                    size="sm"
+                    variant="outline"
+                    className="gap-1.5"
+                    title={t('粘贴另一台设备导出的档案内容，恢复到这里')}
+                  >
+                    <Upload className="h-4 w-4" />
+                    {t('导入档案')}
+                  </Button>
                   {archive.length > 0 && (
                     <Button
                       onClick={openExportDialog}
@@ -980,6 +1070,38 @@ const Study = () => {
       </div>
 
       {/* ── 导出 Word 对话框 ── */}
+      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{t('导入学习档案')}</DialogTitle>
+            <DialogDescription>
+              {t('在另一台设备点「导出全部档案」，把下载到的文件内容完整粘贴到这里。导入按记录去重，已有的不会重复，可以放心多次导入。')}
+            </DialogDescription>
+          </DialogHeader>
+          <textarea
+            value={importCode}
+            onChange={(e) => setImportCode(e.target.value)}
+            placeholder={t('把档案文件里的内容完整粘贴到这里')}
+            spellCheck={false}
+            className="mt-2 h-48 w-full resize-none border border-border bg-background p-3 font-mono text-xs outline-none focus:border-info"
+          />
+          {importMsg && (
+            <p className={importMsg.type === 'ok' ? 'text-xs text-info' : 'text-xs text-destructive'}>
+              {importMsg.text}
+            </p>
+          )}
+          <div className="mt-4 flex justify-end gap-3">
+            <Button variant="outline" onClick={() => setImportOpen(false)}>
+              {t('关闭')}
+            </Button>
+            <Button onClick={handleImportArchive} className="gap-1.5">
+              <Upload className="h-4 w-4" />
+              {t('确认导入')}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={exportOpen} onOpenChange={setExportOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>

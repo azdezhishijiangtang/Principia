@@ -24,8 +24,12 @@ export interface PhoneAccount {
   phone: string;
   /** 全局唯一用户名 */
   username: string;
-  /** SHA-256（hex） */
+  /** 密码摘要（hex）。hashVersion=2 时为 hash(salt + 明文)，否则为历史无盐摘要 */
   passwordHash: string;
+  /** 哈希方案版本：2 = 加盐（hex 盐 + SHA-256）；缺省表示旧版无盐摘要 */
+  hashVersion?: 2;
+  /** 随机盐（hex），仅 hashVersion=2 的账号有 */
+  salt?: string;
   createdAt: number;
   lastLoginAt?: number;
 }
@@ -76,8 +80,8 @@ const readAll = (): PhoneAccount[] => [
 export const PHONE_RE = /^1[3-9]\d{9}$/;
 export const USERNAME_RE = /^[\u4e00-\u9fa5A-Za-z0-9_]{2,16}$/;
 
-/** SHA-256 hex；无 WebCrypto 环境时退化为非加密摘要（仅演示） */
-export const hashPassword = async (text: string): Promise<string> => {
+/** SHA-256（hex）。仅当环境提供 WebCrypto（安全上下文）时可用，否则返回 null */
+const sha256Hex = async (text: string): Promise<string | null> => {
   try {
     if (typeof globalThis.crypto !== 'undefined' && globalThis.crypto.subtle) {
       const buf = await globalThis.crypto.subtle.digest(
@@ -89,8 +93,13 @@ export const hashPassword = async (text: string): Promise<string> => {
         .join('');
     }
   } catch {
-    /* 落入回退 */
+    /* 无 WebCrypto */
   }
+  return null;
+};
+
+/** 非安全上下文（http）下的降级摘要。绝不可当作密码学安全哈希使用 */
+const fallbackHex = (text: string): string => {
   let h1 = 0xdeadbeef ^ text.length;
   let h2 = 0x41c6ce57 ^ text.length;
   for (let i = 0; i < text.length; i++) {
@@ -101,6 +110,53 @@ export const hashPassword = async (text: string): Promise<string> => {
   h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return (h2 >>> 0).toString(16).padStart(8, '0') + (h1 >>> 0).toString(16).padStart(8, '0');
+};
+
+/** 密码摘要：优先 SHA-256，无 WebCrypto 时退化为非加密摘要 */
+export const hashPassword = async (text: string): Promise<string> =>
+  (await sha256Hex(text)) ?? fallbackHex(text);
+
+/** 生成 16 字节随机盐（hex） */
+const randomSalt = (): string => {
+  const bytes = new Uint8Array(16);
+  if (typeof globalThis.crypto !== 'undefined' && globalThis.crypto.getRandomValues) {
+    globalThis.crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < bytes.length; i += 1) bytes[i] = Math.floor(Math.random() * 256);
+  }
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+};
+
+/** 用指定密码生成加盐凭据 */
+const makeSalted = async (
+  password: string,
+): Promise<{ passwordHash: string; salt: string; hashVersion: 2 }> => {
+  const salt = randomSalt();
+  return { passwordHash: await hashPassword(salt + password), salt, hashVersion: 2 };
+};
+
+/**
+ * 校验密码，并给出可写回的升级凭据。
+ *
+ * 历史账号（hashVersion 缺省）的摘要是无盐的，且生成时的环境可能支持
+ * WebCrypto 也可能不支持，所以两种算法都要试一遍；一旦匹配就顺手升级成
+ * 加盐格式，避免同一站点在 http / https 之间切换时登录失败。
+ */
+const verifyPassword = async (
+  password: string,
+  account: PhoneAccount,
+): Promise<{ ok: boolean; upgraded?: { passwordHash: string; salt: string; hashVersion: 2 } }> => {
+  if (account.hashVersion === 2 && account.salt) {
+    const h = await hashPassword(account.salt + password);
+    return { ok: h === account.passwordHash };
+  }
+  const sha = await sha256Hex(password);
+  const matched =
+    (sha !== null && sha === account.passwordHash) || fallbackHex(password) === account.passwordHash;
+  if (!matched) return { ok: false };
+  return { ok: true, upgraded: await makeSalted(password) };
 };
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -142,7 +198,8 @@ export const registerPhoneAccount = async (input: {
     id: `acc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     phone,
     username,
-    passwordHash: await hashPassword(password),
+    // 加盐存储：同一密码在不同账号上得到不同摘要，避免彩虹表直接命中
+    ...(await makeSalted(password)),
     createdAt: Date.now(),
   };
   writeLocal([...readLocal(), account]);
@@ -167,18 +224,20 @@ export const authenticateAccount = async (
   }
 
   await delay(500);
-  const hash = await hashPassword(password);
-  if (hash !== account.passwordHash) {
+  const verified = await verifyPassword(password, account);
+  if (!verified.ok) {
     throw new Error('密码不正确，请重试');
   }
 
-  // 仅回写本机副本（内置层账号的 lastLoginAt 不落库到代码）
+  // 仅回写本机副本（内置层账号的 lastLoginAt 与哈希升级都不落库到代码）。
+  // 历史无盐账号在这里顺手升级为加盐格式；内置账号写不回去，下次登录重算一遍即可。
+  const upgraded = verified.upgraded;
   writeLocal(
     readLocal().map((a) =>
-      a.id === account.id ? { ...a, lastLoginAt: Date.now() } : a,
+      a.id === account.id ? { ...a, ...(upgraded ?? {}), lastLoginAt: Date.now() } : a,
     ),
   );
-  return account;
+  return { ...account, ...(upgraded ?? {}) };
 };
 
 /** 全部注册账户（注册时间倒序） */

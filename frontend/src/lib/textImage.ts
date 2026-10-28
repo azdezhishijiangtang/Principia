@@ -132,7 +132,9 @@ export const downloadBlob = (blob: Blob, filename: string): void => {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // 不要立刻撤销：导出 docx / 大图时，慢设备上浏览器还没真正读完 blob，
+  // URL 就先失效会导致下载中断。留足时间，blob 本身不因此多占内存。
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 };
 
 export const svgFilenameBase = (text: string): string => {

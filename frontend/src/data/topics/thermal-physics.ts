@@ -243,7 +243,7 @@ $$v_p = \sqrt{\frac{2RT}{M}} = \sqrt{\frac{2\times8.314\times300}{0.032}} \appro
     keyPoints: [
       '第一定律数学形式 $\\Delta U = Q - W$（$W$ 为系统对外做功）',
       '内能是状态函数，功与热量是过程量',
-      '准静态过程的功 $W = \\int p\,dV$',
+      '准静态过程的功 $W = \\int p\\,dV$',
       '等容过程 $W=0$，等压过程 $W=p\\Delta V$，等温理想气体 $W=nRT\\ln(V_2/V_1)$',
       '理想气体内能只与温度有关，$U = \\frac{i}{2}nRT$',
     ],
