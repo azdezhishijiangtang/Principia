@@ -1,32 +1,5 @@
 /** UI 组件文案英文映射（FeedbackDialog / Footer / ProblemCard / SelectionImageLauncher / ThinkingPanel） */
 const dict: Record<string, string> = {
-  // ── FeedbackDialog ──
-  '请填写标题和详细描述': 'Please fill in the title and a detailed description',
-  '访客': 'Guest',
-  '反馈提交失败': 'Feedback submission failed',
-  '反馈已提交，感谢你的建议！': 'Feedback submitted. Thank you for your suggestion!',
-  '建议反馈': 'Feedback',
-  '发现内容错误、功能异常，或希望增加什么？告诉我们，开发者会在此回复你。':
-    'Found a content error, a bug, or want to suggest something? Tell us and the developer will reply here.',
-  '提交反馈': 'Submit Feedback',
-  '我的反馈': 'My Feedback',
-  '（{n}）': '({n})',
-  '反馈类型': 'Feedback Type',
-  '联系方式（选填）': 'Contact (optional)',
-  '邮箱 / 微信，方便进一步沟通': 'Email / WeChat, so we can follow up',
-  '标题': 'Title',
-  '一句话概括你的反馈': 'Summarize your feedback in one sentence',
-  '详细描述': 'Description',
-  '请尽量描述清楚：出现在哪个页面、期望的效果、复现步骤等':
-    'Please describe clearly: which page, expected behavior, steps to reproduce, etc.',
-  '当前身份：': 'Current identity: ',
-  '访客（未登录）': 'Guest (not signed in)',
-  '还没有提交过反馈，去「提交反馈」说说你的想法吧':
-    "Haven't submitted any feedback yet? Go to “Submit Feedback” and share your thoughts.",
-  ' · 来自 {url}': ' · from {url}',
-  '回复 · ': ' replied · ',
-  '已收到，等待开发者处理': 'Received. Waiting for the developer to process.',
-
   // ── Footer ──
   '面向大学本科生与考研学生的数学、物理知识解答平台。以清晰的讲解、规范的公式排版与分步详解，陪伴你理解每一个数学与物理概念。':
     'A math and physics Q&A platform for undergraduates and graduate-school candidates. With clear explanations, well-formatted formulas, and step-by-step solutions, we help you understand every concept.',
@@ -40,13 +13,11 @@ const dict: Record<string, string> = {
   '公式速查表': 'Formulas',
   'AI 答疑': 'AI Tutor',
   '学习档案': 'Study Archive',
-  '支持与反馈': 'Support & Feedback',
+  '支持': 'Support',
   '关于开发者': 'About the Developer',
   '打赏开发者': 'Support the Developer',
   '功能定制共建': 'Custom Feature Co-building',
   '开发者模式': 'Developer Mode',
-  '发现内容错误或想增加功能？提交反馈后，开发者会在「我的反馈」中回复。':
-    'Found an error or want a new feature? After submitting feedback, the developer will reply in “My Feedback”.',
   '大学数学物理本科知识解答平台': 'Undergraduate Math & Physics Q&A Platform',
   '公式由 KaTeX 渲染 · 内容仅供学习交流': 'Formulas rendered by KaTeX · For study and discussion only',
 

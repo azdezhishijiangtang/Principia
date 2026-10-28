@@ -87,7 +87,7 @@ const Footer = () => {
 
           {/* 支持与反馈 */}
           <div>
-            <h3 className="text-sm font-semibold mb-4">{t('支持与反馈')}</h3>
+            <h3 className="text-sm font-semibold mb-4">{t('支持')}</h3>
             <ul className="space-y-2.5 text-sm text-muted-foreground">
               <li>
                 <Link
