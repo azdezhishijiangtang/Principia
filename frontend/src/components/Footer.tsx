@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { MessageSquarePlus, KeyRound, HandCoins, Users, Wrench } from 'lucide-react';
+import { KeyRound, HandCoins, Users, Wrench } from 'lucide-react';
 import BrandMark from '@/components/BrandMark';
-import FeedbackDialog from '@/components/FeedbackDialog';
 import { courseCategories } from '@/data/courses';
 import { useCourses, useTopics } from '@/i18n/data';
 import { useT } from '@/i18n/LocaleContext';
@@ -10,7 +8,6 @@ import { isDevUser, useAuth } from '@/lib/AuthContext';
 
 const Footer = () => {
   const t = useT();
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { user } = useAuth();
   const devAllowed = isDevUser(user);
   const courses = useCourses();
@@ -119,15 +116,6 @@ const Footer = () => {
                   {t('功能定制共建')}
                 </Link>
               </li>
-              <li>
-                <button
-                  onClick={() => setFeedbackOpen(true)}
-                  className="flex items-center gap-1.5 hover:text-foreground transition-colors duration-[var(--duration-fast)]"
-                >
-                  <MessageSquarePlus className="h-4 w-4" />
-                  {t('建议反馈')}
-                </button>
-              </li>
               {devAllowed && (
                 <li>
                   <Link
@@ -141,7 +129,7 @@ const Footer = () => {
               )}
             </ul>
             <p className="mt-4 text-xs text-muted-foreground leading-relaxed">
-              {t('发现内容错误或想增加功能？提交反馈后，开发者会在「我的反馈」中回复。')}
+              {t('Principia 持续更新中——新内容与功能会不定期上线。')}
             </p>
           </div>
         </div>
@@ -151,8 +139,6 @@ const Footer = () => {
           <p>{t('公式由 KaTeX 渲染 · 内容仅供学习交流')}</p>
         </div>
       </div>
-
-      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </footer>
   );
 };

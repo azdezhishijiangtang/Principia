@@ -3,12 +3,9 @@ import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   BarChart3,
-  CheckCircle2,
-  ClipboardPaste,
   FilePenLine,
   KeyRound,
   LogIn,
-  MessageSquare,
   RotateCcw,
   Save,
   ShieldX,
@@ -16,13 +13,6 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,18 +28,6 @@ import {
 import { courseCategories } from '@/data/courses';
 import { useCourses, useFormulaGroups, useProblems, useTopics } from '@/i18n/data';
 import { useLocale, useT } from '@/i18n/LocaleContext';
-import {
-  FEEDBACK_STATUS_LABELS,
-  FEEDBACK_TYPE_LABELS,
-  countPending,
-  decodeFeedbackReport,
-  deleteFeedback,
-  importFeedbackReport,
-  replyFeedback,
-  setFeedbackStatus,
-  useAllFeedback,
-  type FeedbackStatus,
-} from '@/lib/feedback';
 import {
   applyTopicOverrides,
   countOverrides,
@@ -68,21 +46,6 @@ import {
 } from '@/lib/accountStore';
 import { isDevUser, useAuth } from '@/lib/AuthContext';
 import { InlineMathText } from '@/components/MathText';
-
-const formatTime = (ts: number): string =>
-  new Date(ts).toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
-const statusStyle: Record<FeedbackStatus, string> = {
-  pending: 'border-warning/40 bg-warning/10 text-warning',
-  replied: 'border-success/40 bg-success/10 text-success',
-  closed: 'border-border bg-secondary text-muted-foreground',
-};
 
 /* ─────────────────────────── 无权访问页 ─────────────────────────── */
 const AccessDenied = ({ loggedIn }: { loggedIn: boolean }) => {
@@ -118,230 +81,6 @@ const AccessDenied = ({ loggedIn }: { loggedIn: boolean }) => {
   );
 };
 
-/* ─────────────────────────── 反馈管理 ─────────────────────────── */
-const FeedbackAdmin = () => {
-  const t = useT();
-  const { tpl } = useLocale();
-  const all = useAllFeedback();
-  const [filter, setFilter] = useState<'all' | FeedbackStatus>('all');
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [draft, setDraft] = useState('');
-  // 收集用户上报：本站无服务器，用户端生成「反馈上报码」发过来，这里粘贴导入
-  const [importOpen, setImportOpen] = useState(false);
-  const [reportCode, setReportCode] = useState('');
-
-  const list = filter === 'all' ? all : all.filter((e) => e.status === filter);
-
-  const handleImportReport = () => {
-    const decoded = decodeFeedbackReport(reportCode);
-    if (!decoded.ok) {
-      toast.error(decoded.error);
-      return;
-    }
-    const res = importFeedbackReport(decoded.entries);
-    if (!res.ok) {
-      toast.error(res.error ?? t('导入失败'));
-      return;
-    }
-    toast.success(tpl('导入成功，新增 {n} 条反馈（按 id 去重，重复导入安全）', { n: res.added }));
-    setReportCode('');
-    setImportOpen(false);
-  };
-
-  const submitReply = (id: string) => {
-    if (!draft.trim()) {
-      toast.error(t('回复内容不能为空'));
-      return;
-    }
-    const res = replyFeedback(id, draft.trim());
-    if (!res.ok) {
-      toast.error(res.error ?? t('回复保存失败'));
-      return;
-    }
-    setDraft('');
-    setActiveId(null);
-    toast.success(t('回复已发送'));
-  };
-
-  const filters: { key: 'all' | FeedbackStatus; label: string }[] = [
-    { key: 'all', label: tpl('全部 {n}', { n: all.length }) },
-    { key: 'pending', label: tpl('待处理 {n}', { n: all.filter((e) => e.status === 'pending').length }) },
-    { key: 'replied', label: tpl('已回复 {n}', { n: all.filter((e) => e.status === 'replied').length }) },
-    { key: 'closed', label: tpl('已关闭 {n}', { n: all.filter((e) => e.status === 'closed').length }) },
-  ];
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-center gap-2">
-        {filters.map((f) => (
-          <Button
-            key={f.key}
-            size="sm"
-            variant={filter === f.key ? 'default' : 'outline'}
-            onClick={() => setFilter(f.key)}
-            className={filter === f.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}
-          >
-            {f.label}
-          </Button>
-        ))}
-        {/* 收集用户上报：粘贴用户发来的反馈上报码，合并进本机反馈池 */}
-        <span className="flex-1" />
-        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setImportOpen(true)}>
-          <ClipboardPaste className="h-4 w-4" />
-          {t('导入反馈码')}
-        </Button>
-      </div>
-
-      {/* 反馈上报码导入对话框 */}
-      <Dialog open={importOpen} onOpenChange={setImportOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ClipboardPaste className="h-5 w-5 text-info" />
-              {t('导入反馈上报码')}
-            </DialogTitle>
-            <DialogDescription>
-              {t('用户在反馈窗口生成上报码发给你（微信等），粘贴到这里即可把反馈收进本机反馈池，按条目 id 去重、可安全重复导入。')}
-            </DialogDescription>
-          </DialogHeader>
-          <Textarea
-            value={reportCode}
-            onChange={(e) => setReportCode(e.target.value)}
-            placeholder={t('粘贴上报码（一长串 Base64 文本）……')}
-            className="h-40 w-full resize-none border border-border bg-background p-3 font-mono text-xs outline-none focus:border-info"
-          />
-          <div className="flex justify-end gap-3">
-            <Button variant="outline" onClick={() => setImportOpen(false)}>
-              {t('取消')}
-            </Button>
-            <Button onClick={handleImportReport} className="gap-1.5">
-              <ClipboardPaste className="h-4 w-4" />
-              {t('确认导入')}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {list.length === 0 ? (
-        <div className="mt-8 border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
-          {t('暂无反馈')}
-        </div>
-      ) : (
-        <div className="mt-5 space-y-3">
-          {list.map((item) => (
-            <div key={item.id} className="border border-border bg-card p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{item.title}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {item.userName} · {formatTime(item.createdAt)}
-                    {item.contact ? ` · ${t('联系：')}${item.contact}` : ''}
-                    {item.pageUrl ? ` · ${item.pageUrl}` : ''}
-                  </p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5">
-                  <span className="border border-border bg-secondary px-1.5 py-0.5 text-xs">
-                    {t(FEEDBACK_TYPE_LABELS[item.type])}
-                  </span>
-                  <span className={`border px-1.5 py-0.5 text-xs ${statusStyle[item.status]}`}>
-                    {t(FEEDBACK_STATUS_LABELS[item.status])}
-                  </span>
-                </div>
-              </div>
-
-              <p className="mt-3 whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">
-                {item.content}
-              </p>
-
-              {item.replies.length > 0 && (
-                <div className="mt-3 space-y-2 border-l-2 border-info/40 pl-3">
-                  {item.replies.map((r) => (
-                    <div key={r.id}>
-                      <p className="text-xs font-medium text-info">
-                        {r.by} · {formatTime(r.at)}
-                      </p>
-                      <p className="mt-0.5 whitespace-pre-wrap text-sm">{r.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {activeId === item.id ? (
-                <div className="mt-3 space-y-2">
-                  <Textarea
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    rows={3}
-                    placeholder={t('输入官方回复……')}
-                    autoFocus
-                  />
-                  <div className="flex gap-2">
-                    <Button size="sm" className="gap-1.5" onClick={() => submitReply(item.id)}>
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      {t('发送回复')}
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => setActiveId(null)}>
-                      {t('取消')}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1.5"
-                    onClick={() => {
-                      setActiveId(item.id);
-                      setDraft('');
-                    }}
-                  >
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    {t('回复')}
-                  </Button>
-                  {item.status !== 'closed' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5"
-                    onClick={() => {
-                      const res = setFeedbackStatus(item.id, 'closed');
-                      if (!res.ok) {
-                        toast.error(res.error ?? t('状态更新失败'));
-                        return;
-                      }
-                      toast.success(t('已关闭'));
-                    }}
-                    >
-                      <XCircle className="h-3.5 w-3.5" />
-                      {t('关闭')}
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1.5 text-destructive hover:text-destructive"
-                    onClick={() => {
-                      const res = deleteFeedback(item.id);
-                      if (!res.ok) {
-                        toast.error(res.error ?? t('删除失败'));
-                        return;
-                      }
-                      toast.success(t('已删除'));
-                    }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    {t('删除')}
-                  </Button>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 /* ─────────────────────────── 内容编辑 ─────────────────────────── */
 const ContentAdmin = () => {
@@ -528,7 +267,6 @@ const ContentAdmin = () => {
 const StatsAdmin = () => {
   const t = useT();
   const { tpl } = useLocale();
-  const all = useAllFeedback();
   const courses = useCourses();
   const topics = useTopics();
   const problems = useProblems();
@@ -538,8 +276,6 @@ const StatsAdmin = () => {
     { label: t('知识专题'), value: topics.length },
     { label: t('例题'), value: problems.length },
     { label: t('速查公式'), value: formulaGroups.reduce((s, g) => s + g.formulas.length, 0) },
-    { label: t('反馈总数'), value: all.length },
-    { label: t('待处理反馈'), value: countPending(all) },
     { label: t('手机号注册账户'), value: countAccounts() },
     { label: t('本地内容覆盖'), value: countOverrides() },
   ];
@@ -778,12 +514,8 @@ const DevMode = () => {
         </Button>
       </div>
 
-      <Tabs defaultValue="feedback" className="mt-8">
-        <TabsList className="grid w-full max-w-2xl grid-cols-4">
-          <TabsTrigger value="feedback" className="gap-1.5">
-            <MessageSquare className="h-4 w-4" />
-            {t('反馈管理')}
-          </TabsTrigger>
+      <Tabs defaultValue="content" className="mt-8">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="content" className="gap-1.5">
             <FilePenLine className="h-4 w-4" />
             {t('内容编辑')}
@@ -798,9 +530,6 @@ const DevMode = () => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="feedback" className="mt-6">
-          <FeedbackAdmin />
-        </TabsContent>
         <TabsContent value="content" className="mt-6">
           <ContentAdmin />
         </TabsContent>
