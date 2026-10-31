@@ -32,10 +32,12 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
+      - name: 类型检查
+        run: pnpm exec tsc -b
       - name: 构建（base=/Principia/）
-        # 项目站路径是 /Principia/（仓库名首字母大写），base 必须完全一致，
-        # 否则构建产物的资源路径会 404。
-        run: pnpm run build -- --base=/Principia/
+        # 直接调 vite 并显式传 --base。不要写成 `pnpm run build -- --base=...`：
+        # 那个 `--` 会被 vite 当成选项结束符，导致 base 被忽略、产物资源路径丢前缀。
+        run: pnpm exec vite build --base=/Principia/
       - name: SPA 回退（404.html 兜底客户端路由）
         run: cp dist/index.html dist/404.html
       - uses: actions/configure-pages@v5
