@@ -17,6 +17,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        # 前端工程在 frontend/ 子目录，所有命令都在这里执行
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -26,15 +30,19 @@ jobs:
         with:
           node-version: 22
           cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
       - run: pnpm install --frozen-lockfile
-      - name: 构建（base=/principia/）
-        run: pnpm build --base=/principia/
+      - name: 构建（base=/Principia/）
+        # 项目站路径是 /Principia/（仓库名首字母大写），base 必须完全一致，
+        # 否则构建产物的资源路径会 404。
+        run: pnpm run build -- --base=/Principia/
       - name: SPA 回退（404.html 兜底客户端路由）
         run: cp dist/index.html dist/404.html
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          # path 相对仓库根目录
+          path: frontend/dist
 
   deploy:
     needs: build
